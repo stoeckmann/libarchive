@@ -176,11 +176,6 @@ jobs:
           mingw-w64-x86_64-bzip2
           mingw-w64-x86_64-xz
           mingw-w64-x86_64-zstd
-    - name: Install library dependencies
-      run: ./build/ci/github_actions/ci.cmd deplibs
-      shell: cmd
-      env:
-        BE: ${{ matrix.be }}
     - name: Configure
       run: ./build/ci/github_actions/ci.cmd configure
       shell: cmd

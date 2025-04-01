@@ -191,6 +191,8 @@ FILE_seek(struct archive *a, void *client_data, int64_t request, int whence)
 		    (((int64_t)1 << (skip_bits - 1)) - 1) * 2 + 1;
 		if (request > max_skip)
 			skip = max_skip;
+		else if (request < ~max_skip)
+			skip = ~max_skip;
 	}
 
 #ifdef __ANDROID__

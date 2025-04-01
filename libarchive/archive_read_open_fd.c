@@ -178,11 +178,23 @@ static int64_t
 file_seek(struct archive *a, void *client_data, int64_t request, int whence)
 {
 	struct read_fd_data *mine = (struct read_fd_data *)client_data;
+	off_t skip = (off_t)request;
 	int64_t r;
+	int skip_bits = sizeof(skip) * 8 - 1;  /* off_t is a signed type. */
 
 	/* We use off_t here because lseek() is declared that way. */
-	/* See above for notes about when off_t is less than 64 bits. */
-	r = lseek(mine->fd, request, whence);
+
+	/* Reduce a request that would overflow the 'skip' variable. */
+	if (sizeof(request) > sizeof(skip)) {
+		int64_t max_skip =
+		    (((int64_t)1 << (skip_bits - 1)) - 1) * 2 + 1;
+		if (request > max_skip)
+			skip = (off_t)max_skip;
+		else if (request < ~max_skip)
+			skip = (off_t)~max_skip;
+	}
+
+	r = lseek(mine->fd, skip, whence);
 	if (r >= 0)
 		return r;
 

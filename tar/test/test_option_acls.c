@@ -26,7 +26,9 @@ static const acl_perm_t acl_perms[] = {
     ACL_READ_SECURITY,
     ACL_WRITE_SECURITY,
     ACL_CHANGE_OWNER,
-    ACL_SYNCHRONIZE
+#if HAVE_DECL_ACL_SYNCHRONIZE
+	ACL_SYNCHRONIZE
+#endif
 #else /* !ARCHIVE_ACL_DARWIN */
     ACL_EXECUTE,
     ACL_WRITE,

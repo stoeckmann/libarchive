@@ -721,3 +721,28 @@ DEFINE_TEST(test_sparse_iterator)
 
 	archive_entry_free(entry);
 }
+
+DEFINE_TEST(test_sparse_clear)
+{
+	struct archive_entry *entry;
+	la_int64_t offset, length;
+
+	entry = archive_entry_new();
+	archive_entry_set_size(entry, 1024);
+
+	/* Add two sparse blocks */
+	archive_entry_sparse_add_entry(entry, 0, 16);
+	archive_entry_sparse_add_entry(entry, 123, 16);
+
+	/* Set iterator to head */
+	archive_entry_sparse_reset(entry);
+
+	/* Clear the two blocks */
+	archive_entry_sparse_clear(entry);
+
+	assertEqualInt(0, archive_entry_sparse_count(entry));
+	assertEqualInt(ARCHIVE_WARN,
+		archive_entry_sparse_next(entry, &offset, &length));
+
+	archive_entry_free(entry);
+}

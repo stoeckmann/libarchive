@@ -82,6 +82,7 @@ archive_entry_xattr_clear(struct archive_entry *entry)
 	}
 
 	entry->xattr_head = NULL;
+	entry->xattr_p = NULL;
 }
 
 void

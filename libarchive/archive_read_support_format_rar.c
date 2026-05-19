@@ -2407,6 +2407,13 @@ parse_codes(struct archive_read *a)
   {
     rar_br_consume(br, 1);
 
+    /*
+     * Low-distance repeat state belongs to the current LZ table and
+     * must not be reused after starting a new table.
+     */
+    rar->lastlowoffset = 0;
+    rar->numlowoffsetrepeats = 0;
+
     /* Keep existing table flag */
     if (!rar_br_read_ahead(a, br, 1))
       goto truncated_data;

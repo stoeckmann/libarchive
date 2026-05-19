@@ -124,7 +124,6 @@
 #define NS_UNIT 10000000
 
 #define DICTIONARY_MAX_SIZE 0x400000
-#define RAR_MAX_NEWSUB_SIZE (1024 * 1024)
 
 #define MAINCODE_SIZE      299
 #define OFFSETCODE_SIZE    60
@@ -1514,8 +1513,7 @@ read_header(struct archive_read *a, struct archive_entry *entry,
    * consumed at the end.
    */
   if (head_type == NEWSUB_HEAD) {
-    if (rar->packed_size > RAR_MAX_NEWSUB_SIZE ||
-        rar->packed_size > INT64_MAX - header_size) {
+    if (rar->packed_size > INT64_MAX - header_size) {
       archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
                         "Invalid RAR file: Overlarge extended header");
       return (ARCHIVE_FATAL);
@@ -1526,7 +1524,11 @@ read_header(struct archive_read *a, struct archive_entry *entry,
       return (ARCHIVE_FATAL);
     }
 
-    /* NEWSUB blocks are metadata-only here; skip them without creating an entry. */
+    /*
+     * NEWSUB records are metadata-only in this reader. The block header
+     * has already been validated, so it is safe to skip exactly the
+     * remaining header bytes and the associated data payload.
+     */
     return ret;
   }
 

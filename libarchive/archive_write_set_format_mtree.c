@@ -801,6 +801,8 @@ mtree_entry_new(struct archive_write *a, struct archive_entry *entry,
 		archive_strcpy(&me->symlink, s);
 	me->nlink = archive_entry_nlink(entry);
 	me->filetype = archive_entry_filetype(entry);
+	if (me->filetype == AE_IFLNK && me->symlink.s == NULL)
+		archive_strcpy(&me->symlink, "");
 	me->mode = archive_entry_mode(entry) & 07777;
 	me->uid = archive_entry_uid(entry);
 	me->gid = archive_entry_gid(entry);

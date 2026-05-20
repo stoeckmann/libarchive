@@ -1122,11 +1122,6 @@ record_hardlink(struct archive_read *a,
 		return (ARCHIVE_FATAL);
 	}
 
-	if (cpio->links_head != NULL)
-		cpio->links_head->previous = le;
-	le->next = cpio->links_head;
-	le->previous = NULL;
-	cpio->links_head = le;
 	le->dev = dev;
 	le->ino = ino;
 	le->links = archive_entry_nlink(entry) - 1;
@@ -1137,6 +1132,12 @@ record_hardlink(struct archive_read *a,
 		free(le);
 		return (ARCHIVE_FATAL);
 	}
+
+	if (cpio->links_head != NULL)
+		cpio->links_head->previous = le;
+	le->next = cpio->links_head;
+	le->previous = NULL;
+	cpio->links_head = le;
 
 	return (ARCHIVE_OK);
 }

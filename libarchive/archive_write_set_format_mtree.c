@@ -2088,6 +2088,11 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 	file = *filep;
 	if (file->parentdir.length == 0 && file->basename.length == 1 &&
 	    file->basename.s[0] == '.') {
+		if (file->filetype != AE_IFDIR) {
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+				"Root entry '.' must be a directory");
+			return (ARCHIVE_FAILED);
+		}
 		file->parent = file;
 		if (mtree->root != NULL) {
 			np = mtree->root;

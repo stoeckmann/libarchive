@@ -1685,7 +1685,7 @@ file_new(struct archive_write *a, struct archive_entry *entry,
 		const char* linkpath;
 		linkpath = archive_entry_symlink_utf8(entry);
 		if (linkpath == NULL) {
-			free(file);
+			file_free(file);
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "symlink path could not be converted to UTF-8");
 			return (ARCHIVE_FAILED);

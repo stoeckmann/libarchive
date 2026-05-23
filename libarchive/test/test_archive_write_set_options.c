@@ -115,7 +115,7 @@ test(int pristine)
 		    archive_error_string(a));
 	}
 
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 }
 
 DEFINE_TEST(test_archive_write_set_options)

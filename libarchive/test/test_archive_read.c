@@ -59,5 +59,5 @@ DEFINE_TEST(test_archive_read_ahead_eof)
 	assert(NULL != __archive_read_ahead(ar, sizeof(buf), &avail));
 	assertEqualInt(sizeof(buf), avail);
 
-	assert(0 == archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }

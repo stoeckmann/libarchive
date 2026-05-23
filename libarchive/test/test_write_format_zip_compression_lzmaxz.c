@@ -297,7 +297,7 @@ static void verify_xz_lzma(const char *buff, size_t used, uint16_t id,
 	assertEqualMem(q, "PK\001\002", 4); /* Signature */
 
 	/* Close archive, in case. */
-	archive_read_free(zip_archive);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(zip_archive));
 }
 
 static void verify_xz_contents(const char *buff, size_t used)

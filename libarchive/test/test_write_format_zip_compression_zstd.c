@@ -296,7 +296,7 @@ static void verify_zstd_contents(const char *buff, size_t used)
 	assertEqualMem(q, "PK\001\002", 4); /* Signature */
 
 	/* Close archive, in case. */
-	archive_read_free(zip_archive);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(zip_archive));
 }
 
 #endif /* HAVE_ZSTD_H */

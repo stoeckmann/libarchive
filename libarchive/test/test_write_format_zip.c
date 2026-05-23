@@ -700,7 +700,7 @@ DEFINE_TEST(test_write_format_zip_traditional_pkware_encryption)
 	if (ARCHIVE_OK != archive_write_set_options(a,
 		    "zip:encryption=zipcrypt")) {
 		skipping("This system does not have cryptographic library");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(buff);
 		return;
 	}
@@ -780,7 +780,7 @@ DEFINE_TEST(test_write_format_zip_winzip_aes128_encryption)
 	if (ARCHIVE_OK != archive_write_set_options(a, "zip:encryption=aes128"))
 	{
 		skipping("This system does not have cryptographic library");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(buff);
 		return;
 	}
@@ -860,7 +860,7 @@ DEFINE_TEST(test_write_format_zip_winzip_aes256_encryption)
 	if (ARCHIVE_OK != archive_write_set_options(a, "zip:encryption=aes256"))
 	{
 		skipping("This system does not have cryptographic library");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(buff);
 		return;
 	}

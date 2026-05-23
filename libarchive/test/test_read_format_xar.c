@@ -629,7 +629,7 @@ has the corresponding timestamps unset.
   archive_write_header(a, ae);
   archive_entry_free(ae);
   archive_write_data(a, "12345678", 9);
-  archive_write_free(a);
+  assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
   std::cout << std::string(buff, used);
   free(buff);

@@ -46,7 +46,7 @@ test(int pristine)
 	/* NULL passphrases cannot be accepted. */
 	assertEqualInt(ARCHIVE_FAILED, archive_read_add_passphrase(a, NULL));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_add_passphrase)
@@ -66,7 +66,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_incorrect_sequance)
 	 * get NULL even if a user has passed a passphrases. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_add_passphrase_single)
@@ -83,7 +83,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_single)
 	 * are passed already. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_add_passphrase_multiple)
@@ -103,7 +103,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_multiple)
 	 * are passed already. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 static const char *
@@ -128,7 +128,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_set_callback1)
 	/* Second call, we still get "passCallBack" as a passphrase. */
 	assertEqualString("passCallBack", __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
 	/* Without __archive_read_reset_passphrase call, the callback
 	 * should work fine. */
@@ -141,7 +141,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_set_callback1)
 	/* Second call, we still get "passCallBack" as a passphrase. */
 	assertEqualString("passCallBack", __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 static const char *
@@ -174,7 +174,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_set_callback2)
 	 * are passed already. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_add_passphrase_set_callback3)
@@ -196,7 +196,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_set_callback3)
 	 * are passed already. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_add_passphrase_multiple_with_callback)
@@ -221,7 +221,7 @@ DEFINE_TEST(test_archive_read_add_passphrase_multiple_with_callback)
 	 * are passed already. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_add_passphrase_multiple_with_callback2)
@@ -254,6 +254,6 @@ DEFINE_TEST(test_archive_read_add_passphrase_multiple_with_callback2)
 	 * are passed already. */
 	assertEqualString(NULL, __archive_read_next_passphrase(ar));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 

@@ -1140,10 +1140,10 @@ DEFINE_TEST(test_archive_string_update_utf8_koi8)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	r = archive_mstring_update_utf8(NULL, &mstr, utf8_string);
 

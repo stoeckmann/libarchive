@@ -44,14 +44,14 @@ test_xar(const char *option)
 	assert((a = archive_write_new()) != NULL);
 	if (archive_write_set_format_xar(a) != ARCHIVE_OK) {
 		skipping("xar is not supported on this platform");
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertA(0 == archive_write_add_filter_none(a));
 	if (option != NULL &&
 	    archive_write_set_options(a, option) != ARCHIVE_OK) {
 		skipping("option `%s` is not supported on this platform", option);
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 
@@ -170,7 +170,7 @@ test_xar(const char *option)
 
 	/* Close out the archive. */
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/*
 	 *
@@ -298,7 +298,7 @@ test_xar(const char *option)
 	 */
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
 	free(buff);
 }

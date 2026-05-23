@@ -49,7 +49,7 @@ DEFINE_TEST(test_compat_plexus_archiver_tar)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualString("commons-logging-1.2/NOTICE.txt",

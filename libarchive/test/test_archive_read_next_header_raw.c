@@ -54,7 +54,7 @@ test(int skip_explicitely)
 	assertEqualInt(0, archive_errno(a));
 	assertEqualString(NULL, archive_error_string(a));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_next_header_raw)

@@ -42,10 +42,10 @@ DEFINE_TEST(test_read_format_zip_traditional_encryption_data)
 	if (ARCHIVE_OK != archive_write_set_options(a,
 				"zip:encryption=traditional")) {
 		skipping("This system does not have cryptographic library");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 
 	extract_reference_file(refname);

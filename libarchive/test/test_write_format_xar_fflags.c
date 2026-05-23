@@ -35,7 +35,7 @@ DEFINE_TEST(test_write_format_xar_fflags)
 	assert((a = archive_write_new()) != NULL);
 	if (archive_write_set_format_xar(a) != ARCHIVE_OK) {
 		skipping("xar is not supported on this platform");
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_none(a));
@@ -74,5 +74,5 @@ DEFINE_TEST(test_write_format_xar_fflags)
 	/* Verify the end of the archive. */
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }

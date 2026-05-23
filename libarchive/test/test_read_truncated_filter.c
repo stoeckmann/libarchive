@@ -85,7 +85,7 @@ test_truncation(const char *compression,
 		failure("%s", path);
 		if (!assertEqualIntA(a, ARCHIVE_OK,
 		    archive_write_header(a, ae))) {
-			archive_write_free(a);
+			assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 			free(data);
 			free(buff);
 			return;
@@ -94,7 +94,7 @@ test_truncation(const char *compression,
 		failure("%s", path);
 		if (!assertEqualIntA(a, datasize,
 		    archive_write_data(a, data, datasize))) {
-			archive_write_free(a);
+			assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 			free(data);
 			free(buff);
 			return;

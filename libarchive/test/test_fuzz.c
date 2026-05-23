@@ -85,7 +85,7 @@ test_fuzz(const struct files *filesets)
 			    archive_read_support_format_raw(a));
 			r = archive_read_open_filenames(a, filesets[n].names, 16384);
 			if (r != ARCHIVE_OK) {
-				archive_read_free(a);
+				assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 				if (filesets[n].names[0] == NULL || filesets[n].names[1] == NULL) {
 					skipping("Cannot uncompress fileset");
 				} else {
@@ -199,7 +199,7 @@ test_fuzz(const struct files *filesets)
 				}
 				archive_read_close(a);
 			}
-			archive_read_free(a);
+			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
 			// Just list headers, skip bodies.
 			assert((a = archive_read_new()) != NULL);
@@ -213,7 +213,7 @@ test_fuzz(const struct files *filesets)
 				}
 				archive_read_close(a);
 			}
-			archive_read_free(a);
+			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		}
 		free(image);
 		free(rawimage);

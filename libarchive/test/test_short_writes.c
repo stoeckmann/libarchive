@@ -171,8 +171,8 @@ checker_free(struct checker *checker)
 {
         free(checker->shortbuf);
         free(checker->fullbuf);
-	archive_read_free(checker->short_archive);
-	archive_read_free(checker->full_archive);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(checker->short_archive));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(checker->full_archive));
         free(checker);
 }
 

@@ -73,6 +73,6 @@ DEFINE_TEST(test_write_disk_secure745)
 	assertFileMode("../target", 0700);
 
 	assert(0 == archive_write_close(a));
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 #endif
 }

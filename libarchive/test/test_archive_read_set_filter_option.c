@@ -44,7 +44,7 @@ test(int pristine)
 	should(a, ARCHIVE_FAILED, "fubar", "snafu", NULL);
 	should(a, ARCHIVE_FAILED, "fubar", "snafu", "betcha");
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_set_filter_option)

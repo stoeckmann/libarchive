@@ -48,7 +48,7 @@ test_compat_solaris_pax_sparse_1(void)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualString("hole", archive_entry_pathname(ae));
@@ -128,7 +128,7 @@ test_compat_solaris_pax_sparse_2(void)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualString("hole", archive_entry_pathname(ae));

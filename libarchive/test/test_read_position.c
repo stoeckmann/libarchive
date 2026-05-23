@@ -99,13 +99,13 @@ DEFINE_TEST(test_read_position)
 	assertA(0 == archive_read_support_format_tar(a));
 	assertA(0 == read_open_memory(a, buff, sizeof(buff), 512));
 	verify_read_positions(a);
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
 	/* Read the archive back without a skip function. */
 	assert(NULL != (a = archive_read_new()));
 	assertA(0 == archive_read_support_format_tar(a));
 	assertA(0 == read_open_memory_minimal(a, buff, sizeof(buff), 512));
 	verify_read_positions(a);
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
 }

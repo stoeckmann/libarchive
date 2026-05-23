@@ -1505,7 +1505,7 @@ DEFINE_TEST(test_read_format_7zip_lzma2_riscv)
 	} else {
 		test_riscv_filter("test_read_format_7zip_lzma2_riscv.7z");
 	}
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This version of liblzma does not support LZMA_FILTER_RISCV");
 #endif

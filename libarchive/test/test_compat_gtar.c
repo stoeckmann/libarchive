@@ -53,7 +53,7 @@ test_compat_gtar_1(void)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualString(
@@ -72,7 +72,7 @@ test_compat_gtar_1(void)
 	/* Read second entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualString(
@@ -126,7 +126,7 @@ test_compat_gtar_2(void)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 

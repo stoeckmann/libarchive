@@ -234,7 +234,8 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 					failure("%s: Unexpected trailing data",
 					    name);
 					assert(actual.o <= expect.o);
-					archive_read_free(a);
+					assertEqualInt(ARCHIVE_OK,
+					    archive_read_free(a));
 					return;
 				}
 				actual.d++;

@@ -42,7 +42,7 @@ DEFINE_TEST(test_read_format_tbz)
 	r = archive_read_support_filter_bzip2(a);
 	if (r != ARCHIVE_OK) {
 		skipping("Bzip2 support");
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));

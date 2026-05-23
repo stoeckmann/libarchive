@@ -95,6 +95,6 @@ DEFINE_TEST(test_7zip_filename_encoding_UTF16_win)
 	/* NOTE: Trailing slash added automatically for us */
 	assertEqualWString(L"\u8868/", archive_entry_pathname_w(entry));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #endif
 }

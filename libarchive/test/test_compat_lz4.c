@@ -64,7 +64,7 @@ verify(const char *name, const char *n[])
 		assertEqualIntA(a, ARCHIVE_OK,
 		    archive_read_next_header(a, &ae));
 		if (r != ARCHIVE_OK) {
-			archive_read_free(a);
+			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 			return;
 		}
 		assertEqualString(n[i], archive_entry_pathname(ae));

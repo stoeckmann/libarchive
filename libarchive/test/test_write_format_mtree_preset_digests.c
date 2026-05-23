@@ -99,7 +99,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -130,7 +130,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_no_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_empty_data)
@@ -189,7 +189,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -220,7 +220,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_non_empty_data)
@@ -280,7 +280,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_non_empty_data)
 	archive_write_data(a, data, 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -311,7 +311,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_non_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_no_data)
@@ -370,7 +370,7 @@ DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -399,7 +399,7 @@ DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_no_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support MD5");
 	return;
@@ -463,7 +463,7 @@ DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -498,7 +498,7 @@ DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support MD5");
 	return;
@@ -562,7 +562,7 @@ DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_non_empty_data)
 	archive_write_data(a, "abcd", 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -597,7 +597,7 @@ DEFINE_TEST(test_write_format_mtree_digests_md5_digest_set_non_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support MD5");
 	return;
@@ -658,7 +658,7 @@ DEFINE_TEST(test_write_format_mtree_digests_rmd160_digest_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -687,7 +687,7 @@ DEFINE_TEST(test_write_format_mtree_digests_rmd160_digest_set_no_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support RMD160");
 	return;
@@ -751,7 +751,7 @@ DEFINE_TEST(test_write_format_mtree_digests_rmd160_digest_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -786,7 +786,7 @@ DEFINE_TEST(test_write_format_mtree_digests_rmd160_digest_set_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support RMD160");
 	return;
@@ -850,7 +850,7 @@ DEFINE_TEST(test_write_format_mtree_digests_rmd160_digest_set_non_empty_data)
 	archive_write_data(a, "abcd", 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -885,7 +885,7 @@ DEFINE_TEST(test_write_format_mtree_digests_rmd160_digest_set_non_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support RMD160");
 	return;
@@ -948,7 +948,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha1_digest_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -977,7 +977,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha1_digest_set_no_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA1");
 	return;
@@ -1041,7 +1041,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha1_digest_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1076,7 +1076,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha1_digest_set_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA1");
 	return;
@@ -1140,7 +1140,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha1_digest_set_non_empty_data)
 	archive_write_data(a, "abcd", 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1175,7 +1175,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha1_digest_set_non_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA1");
 	return;
@@ -1240,7 +1240,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha256_digest_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1269,7 +1269,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha256_digest_set_no_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA256");
 	return;
@@ -1335,7 +1335,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha256_digest_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1370,7 +1370,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha256_digest_set_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA256");
 	return;
@@ -1436,7 +1436,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha256_digest_set_non_empty_data)
 	archive_write_data(a, "abcd", 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1471,7 +1471,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha256_digest_set_non_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA256");
 	return;
@@ -1537,7 +1537,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha384_digest_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1566,7 +1566,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha384_digest_set_no_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA384");
 	return;
@@ -1633,7 +1633,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha384_digest_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1668,7 +1668,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha384_digest_set_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA384");
 	return;
@@ -1735,7 +1735,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha384_digest_set_non_empty_data)
 	archive_write_data(a, "abcd", 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1770,7 +1770,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha384_digest_set_non_empty_data)
 #ifdef ARCHIVE_HAS_SHA512
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 #endif
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA384");
 	return;
@@ -1838,7 +1838,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha512_digest_set_no_data)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, entry));
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1868,7 +1868,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha512_digest_set_no_data)
 
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA512");
 	return;
@@ -1937,7 +1937,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha512_digest_set_empty_data)
 	archive_write_data(a, "", 0);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -1973,7 +1973,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha512_digest_set_empty_data)
 
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA512");
 	return;
@@ -2042,7 +2042,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha512_digest_set_non_empty_data)
 	archive_write_data(a, "abcd", 4);
 	archive_entry_free(entry);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -2078,7 +2078,7 @@ DEFINE_TEST(test_write_format_mtree_digests_sha512_digest_set_non_empty_data)
 
 	assert(memcmp(archive_entry_digest(entry, ARCHIVE_ENTRY_DIGEST_SHA512), ed.sha512, sizeof(ed.sha512)) == 0);
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #else
 	skipping("This platform does not support SHA512");
 	return;

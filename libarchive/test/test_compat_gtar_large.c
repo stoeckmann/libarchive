@@ -194,7 +194,7 @@ DEFINE_TEST(test_compat_gtar_large)
 	/* Read first entry. */
 	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
 	if (r != ARCHIVE_OK) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 	assertEqualString("test.bin", archive_entry_pathname(ae));

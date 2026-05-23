@@ -76,19 +76,19 @@ replay_xar_writer(const char *refname)
 
 	out_buf = (char *)malloc(512 * 1024);
 	if (!assert(out_buf != NULL)) {
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	if (archive_write_open_memory(a, out_buf, 512 * 1024, &used)
 	    != ARCHIVE_OK) {
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(out_buf);
 		return;
 	}
 
 	entry = archive_entry_new();
 	if (!assert(entry != NULL)) {
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(out_buf);
 		return;
 	}
@@ -155,7 +155,7 @@ replay_xar_writer(const char *refname)
 
 	archive_entry_free(entry);
 	archive_write_close(a);
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 	free(out_buf);
 }
 

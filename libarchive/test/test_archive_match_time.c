@@ -307,7 +307,7 @@ test_newer_mtime_than_file_mbs(void)
 	assertEqualInt(0, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 }
@@ -368,7 +368,7 @@ test_newer_ctime_than_file_mbs(void)
 	assertEqualInt(0, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 #endif
@@ -426,7 +426,7 @@ test_newer_mtime_than_file_wcs(void)
 	assertEqualInt(0, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 }
@@ -488,7 +488,7 @@ test_newer_ctime_than_file_wcs(void)
 	assertEqualInt(0, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 #endif
@@ -778,7 +778,7 @@ test_older_mtime_than_file_mbs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 }
@@ -840,7 +840,7 @@ test_older_ctime_than_file_mbs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 #endif
@@ -898,7 +898,7 @@ test_older_mtime_than_file_wcs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 }
@@ -960,7 +960,7 @@ test_older_ctime_than_file_wcs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 #endif
@@ -1020,7 +1020,7 @@ test_mtime_between_files_mbs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 }
@@ -1079,7 +1079,7 @@ test_mtime_between_files_wcs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 }
@@ -1142,7 +1142,7 @@ test_ctime_between_files_mbs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 #endif
@@ -1206,7 +1206,7 @@ test_ctime_between_files_wcs(void)
 	assertEqualInt(1, archive_match_excluded(m, ae));
 
 	/* Clean up. */
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 	archive_entry_free(ae);
 	archive_match_free(m);
 #endif

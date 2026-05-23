@@ -36,5 +36,5 @@ DEFINE_TEST(test_ar_mode)
 	assertEqualIntA(ar, archive_read_next_header(ar, &entry), ARCHIVE_OK);
 	assertEqualIntA(ar, archive_entry_mode(entry), S_IFREG | 0644);
 
-	archive_read_free(ar);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(ar));
 }

@@ -46,7 +46,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_UTF8_CP866)
 	if (archive_write_set_options(a, "hdrcharset=CP866") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from UTF-8 to CP866.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -87,7 +87,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_KOI8R_UTF8)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -128,7 +128,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_KOI8R_CP866)
 	if (archive_write_set_options(a, "hdrcharset=CP866") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to CP866.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -170,7 +170,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_CP1251_UTF8)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -288,7 +288,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_EUCJP_UTF8)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -328,7 +328,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_EUCJP_CP932)
 	if (archive_write_set_options(a, "hdrcharset=CP932") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP to CP932.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -369,7 +369,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_CP932_UTF8)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from CP932/SJIS to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -412,7 +412,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_UTF16_win)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from UTF-16 to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
@@ -511,7 +511,7 @@ DEFINE_TEST(test_gnutar_filename_encoding_fail_UTF16_win)
 	if (archive_write_set_options(a, "hdrcharset=CP437") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from UTF-16 to CP437.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,

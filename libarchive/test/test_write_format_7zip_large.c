@@ -44,7 +44,7 @@ test_large(const char *compression_type)
 	/* Create a new archive in memory. */
 	assert((a = archive_write_new()) != NULL);
 	if (a == NULL || buff == NULL || filedata == NULL || filedata2 == NULL) {
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		free(buff);
 		free(filedata);
 		free(filedata2);

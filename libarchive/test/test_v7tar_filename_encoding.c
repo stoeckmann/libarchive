@@ -45,7 +45,7 @@ DEFINE_TEST(test_v7tar_filename_encoding_fail_UTF16_win)
 	if (archive_write_set_options(a, "hdrcharset=CP437") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from UTF-16 to CP437.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,

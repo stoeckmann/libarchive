@@ -51,7 +51,7 @@ test(int pristine)
 	assertEqualInt(ARCHIVE_OK, archive_write_set_passphrase(a, "pass2"));
 	assertEqualString("pass2", __archive_write_get_passphrase(aw));
 
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 }
 
 DEFINE_TEST(test_archive_write_set_passphrase)
@@ -90,5 +90,5 @@ DEFINE_TEST(test_archive_write_set_passphrase_callback)
 	assertEqualString("passCallBack", __archive_write_get_passphrase(aw));
 	assertEqualInt(1, cnt);
 
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 }

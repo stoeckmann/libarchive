@@ -70,7 +70,7 @@ DEFINE_TEST(test_write_disk_secure746a)
 	assertTextFileContents("unmodified", "../target/foo");
 
 	assertEqualIntA(a, ARCHIVE_FATAL, archive_write_close(a));
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_FATAL, archive_write_free(a));
 }
 
 /*
@@ -122,6 +122,6 @@ DEFINE_TEST(test_write_disk_secure746b)
 	assertTextFileContents("unmodified", "../target/foo");
 
 	assertEqualIntA(a, ARCHIVE_FATAL, archive_write_close(a));
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_FATAL, archive_write_free(a));
 #endif
 }

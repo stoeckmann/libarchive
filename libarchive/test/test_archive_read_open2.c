@@ -67,7 +67,7 @@ test(int formatted, archive_open_callback *o, archive_read_callback *r,
 	assertEqualInt(rv,
 	    archive_read_open2(a, NULL, o, r, s, c));
 	assertEqualString(msg, archive_error_string(a));
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_open2)

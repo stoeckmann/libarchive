@@ -58,7 +58,7 @@ DEFINE_TEST(test_write_filter_program)
 	if (r == ARCHIVE_FATAL) {
 		skipping("Write compression via external "
 		    "program unsupported on this platform");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
 	assertA(0 == archive_write_set_bytes_per_block(a, blocksize));
@@ -103,7 +103,7 @@ DEFINE_TEST(test_write_filter_program)
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_memory(a, buff, used));
 
 	if (!assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae))) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 

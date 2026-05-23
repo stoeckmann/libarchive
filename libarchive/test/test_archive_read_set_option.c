@@ -58,7 +58,7 @@ test(int pristine)
 	should(a, known_option_rv, NULL, "joliet", NULL);
 	should(a, known_option_rv, NULL, "joliet", NULL);
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 DEFINE_TEST(test_archive_read_set_option)

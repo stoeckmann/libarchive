@@ -123,5 +123,5 @@ DEFINE_TEST(test_read_format_cpio_afio_broken)
 	assertEqualIntA(a, ARCHIVE_FATAL, archive_read_next_header(a, &ae));
 	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_CPIO_AFIO_LARGE);
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }

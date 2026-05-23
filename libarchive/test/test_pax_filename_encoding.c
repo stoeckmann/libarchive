@@ -76,7 +76,7 @@ test_pax_filename_encoding_1(void)
 	    " characters in it without generating a warning");
 	assertEqualInt(ARCHIVE_OK, archive_read_next_header(a, &entry));
 	assertEqualString(filename, archive_entry_pathname(entry));
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 /*
@@ -352,10 +352,10 @@ DEFINE_TEST(test_pax_filename_encoding_KOI8R)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/* Re-create a write archive object since filenames should be written
 	 * in UTF-8 by default. */
@@ -399,10 +399,10 @@ DEFINE_TEST(test_pax_filename_encoding_CP1251)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/* Re-create a write archive object since filenames should be written
 	 * in UTF-8 by default. */
@@ -445,10 +445,10 @@ DEFINE_TEST(test_pax_filename_encoding_EUCJP)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/* Re-create a write archive object since filenames should be written
 	 * in UTF-8 by default. */
@@ -493,10 +493,10 @@ DEFINE_TEST(test_pax_filename_encoding_CP932)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from CP932/SJIS to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/* Re-create a write archive object since filenames should be written
 	 * in UTF-8 by default. */
@@ -606,10 +606,10 @@ DEFINE_TEST(test_pax_filename_encoding_UTF16_win)
 	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from UTF-16 to UTF-8.");
-		archive_write_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 		return;
 	}
-	archive_write_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/*
 	 * Create a new archive handle with default charset handling

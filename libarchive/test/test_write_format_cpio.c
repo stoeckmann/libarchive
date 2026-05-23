@@ -183,7 +183,7 @@ test_format(int	(*set_format)(struct archive *))
 	assertA(0 == archive_read_open_memory(a, buff, used));
 
 	if (!assertEqualIntA(a, 0, archive_read_next_header(a, &ae))) {
-		archive_read_free(a);
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		return;
 	}
 

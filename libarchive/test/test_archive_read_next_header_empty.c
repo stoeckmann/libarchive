@@ -39,7 +39,7 @@ test_empty_file1(void)
 	assertEqualInt(ARCHIVE_FATAL, archive_read_open_filename(a, "emptyfile", 0));
 	assert(NULL != archive_error_string(a));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 static void
@@ -57,7 +57,7 @@ test_empty_file2_check(struct archive* a)
 	assertEqualInt(0, archive_errno(a));
 	assertEqualString(NULL, archive_error_string(a));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 static void
@@ -98,7 +98,7 @@ test_empty_tarfile(void)
 	assertEqualInt(0, archive_errno(a));
 	assertEqualString(NULL, archive_error_string(a));
 
-	archive_read_free(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 /* 512 zero bytes. */

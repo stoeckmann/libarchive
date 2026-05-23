@@ -48,7 +48,7 @@ DEFINE_TEST(test_read_format_pax_bz2)
 	assert((a = archive_read_new()) != NULL);
 	r = archive_read_support_filter_bzip2(a);
 	if (r != ARCHIVE_OK) {
-		archive_read_close(a);
+		assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 		skipping("Bzip2 unavailable");
 		return;
 	}

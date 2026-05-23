@@ -167,7 +167,7 @@ DEFINE_TEST(test_write_format_mtree_null_deref)
 
 	archive_entry_free(entry);
 	/* Close triggers tree traversal; must not crash. */
-	archive_write_close(a);
+	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 	free(out_buf);
 }

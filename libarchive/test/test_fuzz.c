@@ -197,7 +197,8 @@ test_fuzz(const struct files *filesets)
 						&blk, &blk_size, &blk_offset))
 						continue;
 				}
-				archive_read_close(a);
+				assertEqualIntA(a, ARCHIVE_OK,
+				    archive_read_close(a));
 			}
 			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 
@@ -211,7 +212,8 @@ test_fuzz(const struct files *filesets)
 			if (0 == archive_read_open_memory(a, image, size)) {
 				while(0 == archive_read_next_header(a, &ae)) {
 				}
-				archive_read_close(a);
+				assertEqualIntA(a, ARCHIVE_OK,
+				    archive_read_close(a));
 			}
 			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 		}

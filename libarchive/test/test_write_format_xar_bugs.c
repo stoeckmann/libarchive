@@ -154,7 +154,7 @@ replay_xar_writer(const char *refname)
 	}
 
 	archive_entry_free(entry);
-	archive_write_close(a);
+	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 	free(out_buf);
 }

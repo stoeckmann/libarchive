@@ -315,6 +315,7 @@ IF(ENABLE_TEST)
     test_write_format_raw_b64.c
     test_write_format_shar_empty.c
     test_write_format_tar.c
+    test_write_format_tar_empty_dirname.c
     test_write_format_tar_empty.c
     test_write_format_tar_sparse.c
     test_write_format_tar_ustar.c

@@ -683,6 +683,7 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_write_format_raw_b64.c \
 	libarchive/test/test_write_format_shar_empty.c \
 	libarchive/test/test_write_format_tar.c \
+	libarchive/test/test_write_format_tar_empty_dirname.c \
 	libarchive/test/test_write_format_tar_empty.c \
 	libarchive/test/test_write_format_tar_sparse.c \
 	libarchive/test/test_write_format_tar_ustar.c \

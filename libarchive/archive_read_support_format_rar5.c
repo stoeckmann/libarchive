@@ -2568,6 +2568,9 @@ static int init_unpack(struct rar5* rar) {
 	free(rar->cstate.window_buf);
 	free(rar->cstate.filtered_buf);
 
+	rar->cstate.window_buf = NULL;
+	rar->cstate.filtered_buf = NULL;
+
 	if(rar->cstate.window_size > 0) {
 		rar->cstate.window_buf = calloc(1, rar->cstate.window_size);
 		if(rar->cstate.window_buf == NULL)
@@ -2575,9 +2578,6 @@ static int init_unpack(struct rar5* rar) {
 		rar->cstate.filtered_buf = calloc(1, rar->cstate.window_size);
 		if(rar->cstate.filtered_buf == NULL)
 			return ARCHIVE_FATAL;
-	} else {
-		rar->cstate.window_buf = NULL;
-		rar->cstate.filtered_buf = NULL;
 	}
 
 	clear_data_ready_stack(rar);

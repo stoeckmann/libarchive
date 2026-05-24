@@ -1808,6 +1808,7 @@ file_free(struct xar_file *file)
 	archive_string_free(&(file->uname));
 	archive_string_free(&(file->gname));
 	archive_string_free(&(file->hardlink));
+	archive_string_free(&(file->fflags_text));
 	xattr = file->xattr_list;
 	while (xattr != NULL) {
 		struct xattr *next;

@@ -145,7 +145,7 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 	const unsigned char *buffer;
 	ssize_t avail;
 	int bits_checked = 0;
-	const ssize_t min_lz4_archive_size = 11;
+	const size_t min_lz4_archive_size = 11;
 
 	/*
 	 * LZ4 skippable frames contain a 4 byte magic number followed by
@@ -153,10 +153,10 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 	 * Regular frames contain a 4 byte magic number followed by a 2-14
 	 * byte frame header, some data, and a 3 byte end marker.
 	 */
-	const ssize_t min_lz4_frame_size = 8;
+	const size_t min_lz4_frame_size = 8;
 
-	ssize_t offset_in_buffer = 0;
-	const ssize_t max_lookahead = 64 * 1024;
+	size_t offset_in_buffer = 0;
+	const size_t max_lookahead = 64 * 1024;
 	uint32_t magic_number;
 
 	(void)self; /* UNUSED */
@@ -182,7 +182,7 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 		offset_in_buffer += 4;
 
 		/* Ensure that we can read another 4 bytes. */
-		if (offset_in_buffer + 4 > avail) {
+		if (offset_in_buffer + 4 > (size_t)avail) {
 			buffer = __archive_read_filter_ahead(filter,
 			    offset_in_buffer + 4, &avail);
 			if (buffer == NULL)
@@ -202,7 +202,7 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 		 * if this is LZ4 data.
 		 */
 		/* TODO: should this be >= ? */
-		if (offset_in_buffer + min_lz4_frame_size > avail) {
+		if (offset_in_buffer + min_lz4_frame_size > (size_t)avail) {
 			if (offset_in_buffer + min_lz4_frame_size >
 			    max_lookahead)
 				return (0); 

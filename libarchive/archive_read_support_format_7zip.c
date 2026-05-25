@@ -537,8 +537,11 @@ get_data_offset(struct archive_read *a, int64_t *data_offset)
 	int64_t offset, sfx_offset;
 	int r, window;
 
-	if ((p = __archive_read_ahead(a, 6, NULL)) == NULL)
-		goto fail;
+	if ((p = __archive_read_ahead(a, 6, NULL)) == NULL) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		    "Truncated 7-Zip file body");
+		return (ARCHIVE_FATAL);
+	}
 
 	/* If first six bytes are the 7-Zip signature,
 	 * return the offset right now. */
@@ -3272,8 +3275,11 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 		return (ARCHIVE_FATAL);
 	}
-	if ((p = __archive_read_ahead(a, 32, &bytes_avail)) == NULL)
+	if ((p = __archive_read_ahead(a, 32, &bytes_avail)) == NULL) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		    "Truncated 7-Zip file header");
 		return (ARCHIVE_FATAL);
+	}
 
 	zip->seek_base = (uint64_t)data_offset + 32;
 

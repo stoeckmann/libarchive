@@ -729,6 +729,7 @@ get_pe_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 static int
 get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 {
+	int64_t r;
 	const char *h;
 	char big_endian, format_64;
 	ssize_t bytes;
@@ -795,6 +796,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		 * Reading the section table to find strtab section
 		 */
 		if (__archive_read_seek(a, e_shoff, SEEK_SET) < 0) {
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
 		if (format_64) {
@@ -828,6 +830,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		 * Read the STRTAB section to find the .data offset
 		 */
 		if (__archive_read_seek(a, strtab_offset, SEEK_SET) < 0) {
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
 		h = __archive_read_ahead(a, strtab_size, NULL);
@@ -849,6 +852,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		 * Find the section with the .data name
 		 */
 		if (__archive_read_seek(a, e_shoff, SEEK_SET) < 0) {
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
 		h = __archive_read_ahead(a, (size_t)e_shnum * e_shentsize, NULL);
@@ -880,7 +884,10 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		break;
 	}
 
-	return __archive_read_seek(a, 0, SEEK_SET);
+	r = __archive_read_seek(a, 0, SEEK_SET);
+	if (r < 0)
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
+	return (int)r;
 }
 
 static int
@@ -3261,8 +3268,10 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 
 	if (get_data_offset(a, &data_offset) < 0)
 		return (ARCHIVE_FATAL);
-	if (__archive_read_consume(a, data_offset) < 0)
+	if (__archive_read_consume(a, data_offset) < 0) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 		return (ARCHIVE_FATAL);
+	}
 	if ((p = __archive_read_ahead(a, 32, &bytes_avail)) == NULL)
 		return (ARCHIVE_FATAL);
 
@@ -3299,8 +3308,10 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 		if (bytes_avail >= (ssize_t)next_header_offset)
 			__archive_read_consume(a, next_header_offset);
 		else if (__archive_read_seek(a,
-		    next_header_offset + zip->seek_base, SEEK_SET) < 0)
+		    next_header_offset + zip->seek_base, SEEK_SET) < 0) {
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
+		}
 	}
 	zip->stream_offset = next_header_offset;
 	zip->header_offset = next_header_offset;
@@ -3637,8 +3648,10 @@ seek_pack(struct archive_read *a)
 	pack_offset = zip->si.pi.positions[zip->pack_stream_index];
 	if (zip->stream_offset != pack_offset) {
 		if (0 > __archive_read_seek(a, pack_offset + zip->seek_base,
-		    SEEK_SET))
+		    SEEK_SET)) {
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
+		}
 		zip->stream_offset = pack_offset;
 	}
 	zip->pack_stream_index++;

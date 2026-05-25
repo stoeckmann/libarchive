@@ -159,16 +159,20 @@ zstd_bidder_bid(struct archive_read_filter_bidder *self,
 
 		frame_data_size = archive_le32dec(buffer + offset_in_buffer);
 
-		/*
-		 * Skip over the 4 frame data size bytes,
-		 * plus the value stored there.
-		 */
-		offset_in_buffer += 4 + frame_data_size;
+		/* Skip over the 4 frame data size bytes */
+		offset_in_buffer += 4;
+
+		/* Skip over the value stored there. */
+		if (frame_data_size > SIZE_MAX - offset_in_buffer)
+			return (0);
+		offset_in_buffer += frame_data_size;
 
 		/*
 		 * There should be at least one more frame
 		 * if this is zstd data.
 		 */
+		if (min_zstd_frame_size > SIZE_MAX - offset_in_buffer)
+			return (0);
 		if (offset_in_buffer + min_zstd_frame_size > (size_t)avail) {
 			if (offset_in_buffer + min_zstd_frame_size >
 			    max_lookahead)

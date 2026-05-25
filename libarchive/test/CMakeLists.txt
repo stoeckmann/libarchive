@@ -110,6 +110,7 @@ IF(ENABLE_TEST)
     test_read_filter_program_signature.c
     test_read_filter_uudecode.c
     test_read_filter_uudecode_raw.c
+    test_read_filter_zstd_raw.c
     test_read_format_7zip.c
     test_read_format_7zip_encryption_data.c
     test_read_format_7zip_encryption_header.c

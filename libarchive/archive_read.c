@@ -1623,7 +1623,8 @@ advance_file_pointer(struct archive_read_filter *filter, int64_t request)
 }
 
 /**
- * Returns ARCHIVE_FAILED if seeking isn't supported.
+ * Returns ARCHIVE_FAILED if seeking isn't supported
+ * and stream could not be forwarded as fallback.
  */
 int64_t
 __archive_read_seek(struct archive_read *a, int64_t offset, int whence)
@@ -1641,8 +1642,26 @@ __archive_read_filter_seek(struct archive_read_filter *filter, int64_t offset,
 
 	if (filter->closed || filter->fatal)
 		return (ARCHIVE_FATAL);
-	if (filter->can_seek == 0)
-		return (ARCHIVE_FAILED);
+
+	/* If seek is not supported, try to move stream forward. */
+	if (filter->can_seek == 0) {
+		switch (whence) {
+		case SEEK_CUR:
+			r = __archive_read_filter_consume(filter, offset);
+			break;
+		case SEEK_SET:
+			if (filter->position <= offset) {
+				r = __archive_read_filter_consume(filter,
+				    offset - filter->position);
+				break;
+			}
+			__LA_FALLTHROUGH;
+		default:
+			r = ARCHIVE_FAILED;
+			break;
+		}
+		return (r);
+	}
 
 	client = &(filter->archive->client);
 	switch (whence) {

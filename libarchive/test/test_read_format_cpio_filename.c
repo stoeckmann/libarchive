@@ -76,7 +76,7 @@ DEFINE_TEST(test_read_format_cpio_filename_eucJP_UTF8)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -182,7 +182,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_eucJP)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -235,7 +235,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_UTF8_jp)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #endif
 }
@@ -288,7 +288,7 @@ DEFINE_TEST(test_read_format_cpio_filename_CP866_KOI8R)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -340,7 +340,7 @@ DEFINE_TEST(test_read_format_cpio_filename_CP866_UTF8)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -393,7 +393,7 @@ DEFINE_TEST(test_read_format_cpio_filename_KOI8R_CP866)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -445,7 +445,7 @@ DEFINE_TEST(test_read_format_cpio_filename_KOI8R_UTF8)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -498,7 +498,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_KOI8R)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -551,7 +551,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_CP866)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -603,7 +603,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_UTF8_ru)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #endif
 }
@@ -654,7 +654,7 @@ DEFINE_TEST(test_read_format_cpio_filename_eucJP_CP932)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -706,7 +706,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_CP932)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -759,7 +759,7 @@ DEFINE_TEST(test_read_format_cpio_filename_CP866_CP1251)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -812,7 +812,7 @@ DEFINE_TEST(test_read_format_cpio_filename_CP866_CP1251_win)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
@@ -864,7 +864,7 @@ DEFINE_TEST(test_read_format_cpio_filename_KOI8R_CP1251)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -917,7 +917,7 @@ DEFINE_TEST(test_read_format_cpio_filename_UTF8_CP1251)
 	assertEqualIntA(a, ARCHIVE_FORMAT_CPIO_POSIX, archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 cleanup:
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }

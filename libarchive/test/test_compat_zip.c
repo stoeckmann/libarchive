@@ -58,7 +58,7 @@ DEFINE_TEST(test_compat_zip_1)
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_ZIP);
 
 finish:
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
@@ -89,7 +89,7 @@ DEFINE_TEST(test_compat_zip_2)
 	assertEqualString("file2", archive_entry_pathname(ae));
 
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 

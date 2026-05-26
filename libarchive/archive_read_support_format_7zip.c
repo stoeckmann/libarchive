@@ -1363,8 +1363,9 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 			    coder2->codec != _7Z_SPARC) {
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
-				    "Unsupported filter %lx for %lx",
-				    coder2->codec, coder1->codec);
+				    "Unsupported filter %jx for %jx",
+				    (uintmax_t)coder2->codec,
+				    (uintmax_t)coder1->codec);
 				return (ARCHIVE_FAILED);
 			}
 			zip->codec2 = coder2->codec;

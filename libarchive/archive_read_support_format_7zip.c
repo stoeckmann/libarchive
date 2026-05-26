@@ -3260,7 +3260,7 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 
 	if (get_data_offset(a, &data_offset) < 0)
 		return (ARCHIVE_FATAL);
-	if (__archive_read_seek(a, data_offset, SEEK_SET) < 0)
+	if (__archive_read_consume(a, data_offset) < 0)
 		return (ARCHIVE_FATAL);
 	if ((p = __archive_read_ahead(a, 32, &bytes_avail)) == NULL)
 		return (ARCHIVE_FATAL);

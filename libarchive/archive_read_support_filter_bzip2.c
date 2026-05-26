@@ -28,6 +28,9 @@
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -232,6 +235,8 @@ bzip2_filter_read(struct archive_read_filter *self, const void **p)
 
 	/* Try to fill the output buffer. */
 	for (;;) {
+		ssize_t max_in;
+
 		if (!state->valid) {
 			if (bzip2_reader_bid(self->bidder, self->upstream) == 0) {
 				state->eof = 1;
@@ -286,6 +291,12 @@ bzip2_filter_read(struct archive_read_filter *self, const void **p)
 			return (ARCHIVE_FATAL);
 		}
 		state->stream.next_in = (char *)(uintptr_t)read_buf;
+		if (UINT_MAX >= SSIZE_MAX)
+			max_in = SSIZE_MAX;
+		else
+			max_in = UINT_MAX;
+		if (ret > max_in)
+			ret = max_in;
 		state->stream.avail_in = (uint32_t)ret;
 		/* There is no more data, return whatever we have. */
 		if (ret == 0) {

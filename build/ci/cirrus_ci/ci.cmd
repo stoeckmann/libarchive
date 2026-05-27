@@ -36,10 +36,10 @@ IF "%1%"=="prepare" (
   )
   CD build_ci\libs
   IF NOT EXIST zlib-%ZLIB_VERSION%.tar.gz (
-    curl -o zlib-%ZLIB_VERSION%.tar.gz https://www.zlib.net/zlib-%ZLIB_VERSION%.tar.gz
+    curl -o zlib-%ZLIB_VERSION%.tar.gz https://www.zlib.net/zlib-%ZLIB_VERSION%.tar.gz || EXIT /b 1
   )
   IF NOT EXIST zlib-%ZLIB_VERSION% (
-    tar -x -z -f zlib-%ZLIB_VERSION%.tar.gz
+    tar -x -z -f zlib-%ZLIB_VERSION%.tar.gz || EXIT /b 1
   )
   SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
   CD zlib-%ZLIB_VERSION%
@@ -73,7 +73,7 @@ IF "%1%"=="prepare" (
 ) ELSE IF "%1%"=="build" (
   IF "%BE%"=="cygwin-gcc" (
     SET BS=cmake
-    C:\tools\cygwin\bin\bash.exe --login -c "cd '%cd%'; ./build/ci/build.sh -a build"
+    C:\tools\cygwin\bin\bash.exe --login -c "cd '%cd%'; ./build/ci/build.sh -a build" || EXIT /b 1
   ) ELSE IF "%BE%"=="mingw-gcc" (
     SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
     CD build_ci\cmake
@@ -81,7 +81,7 @@ IF "%1%"=="prepare" (
   ) ELSE IF "%BE%"=="msvc" (
     SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
     CD build_ci\cmake
-    cmake --build . --target ALL_BUILD --config Release
+    cmake --build . --target ALL_BUILD --config Release || EXIT /b 1
   )
 ) ELSE IF "%1%"=="test" (
   IF "%BE%"=="cygwin-gcc" (
@@ -92,10 +92,10 @@ IF "%1%"=="prepare" (
     REM C:\tools\cygwin\bin\bash.exe --login -c "cd '%cd%'; ./build/ci/build.sh -a test"
   ) ELSE IF "%BE%"=="mingw-gcc" (
     SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
-    COPY "C:\Program Files (x86)\zlib\bin\libzlib.dll" build_ci\cmake\bin\
+    COPY "C:\Program Files (x86)\zlib\bin\libzlib.dll" build_ci\cmake\bin\ || EXIT /b 1
     CD build_ci\cmake
     SET SKIP_TEST_SPARSE=1
-    mingw32-make test
+    mingw32-make test || EXIT /b 1
   ) ELSE IF "%BE%"=="msvc" (
     SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
     ECHO "Skipping tests on this platform"
@@ -106,14 +106,14 @@ IF "%1%"=="prepare" (
 ) ELSE IF "%1%"=="install" (
   IF "%BE%"=="cygwin-gcc" (
     SET BS=cmake
-    C:\tools\cygwin\bin\bash.exe --login -c "cd '%cd%'; ./build/ci/build.sh -a install"
+    C:\tools\cygwin\bin\bash.exe --login -c "cd '%cd%'; ./build/ci/build.sh -a install" || EXIT /b 1
   ) ELSE IF "%BE%"=="mingw-gcc" (
     SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
     CD build_ci\cmake
-    mingw32-make install DESTDIR=%cd%\destdir
+    mingw32-make install DESTDIR=%cd%\destdir || EXIT /b 1
   ) ELSE IF "%BE%"=="msvc" (
     SET PATH=%PATH%;C:\Program Files\cmake\bin;C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin
-    cmake --build . --target INSTALL --config Release
+    cmake --build . --target INSTALL --config Release || EXIT /b 1
   )
 ) ELSE (
   ECHO "Usage: %0% prepare|deplibs|configure|build|test|install"

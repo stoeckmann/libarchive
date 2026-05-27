@@ -341,7 +341,7 @@ static int
 consume_header(struct archive_read_filter *self)
 {
 	struct private_data *state;
-	ssize_t avail;
+	ssize_t avail, max_in;
 	size_t len;
 	int ret;
 
@@ -359,6 +359,18 @@ consume_header(struct archive_read_filter *self)
 	/* Initialize compression library. */
 	state->stream.next_in = (unsigned char *)(uintptr_t)
 	    __archive_read_filter_ahead(self->upstream, 1, &avail);
+	if (avail < 0) {
+		archive_set_error(&self->archive->archive,
+		    ARCHIVE_ERRNO_MISC,
+		    "Failed to read gzip input");
+		return (ARCHIVE_FATAL);
+	}
+	if (UINT_MAX >= SSIZE_MAX)
+		max_in = SSIZE_MAX;
+	else
+		max_in = UINT_MAX;
+	if (avail > max_in)
+		avail = max_in;
 	state->stream.avail_in = (uInt)avail;
 	ret = inflateInit2(&(state->stream),
 	    -15 /* Don't check for zlib header */);

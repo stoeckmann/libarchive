@@ -71,7 +71,6 @@
 struct read_lzop {
 	unsigned char	*out_block;
 	size_t		 out_block_size;
-	int64_t		 total_out;
 	int		 flags;
 	uint32_t	 compressed_cksum;
 	uint32_t	 uncompressed_cksum;
@@ -434,7 +433,6 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 	 */
 	if (state->uncompressed_size == state->compressed_size) {
 		*p = b;
-		state->total_out += state->compressed_size;
 		state->unconsumed_bytes = state->compressed_size;
 		return ((ssize_t)state->uncompressed_size);
 	}
@@ -478,7 +476,6 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 
 	__archive_read_filter_consume(self->upstream, state->compressed_size);
 	*p = state->out_block;
-	state->total_out += out_size;
 	return ((ssize_t)out_size);
 }
 

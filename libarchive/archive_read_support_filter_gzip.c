@@ -56,7 +56,6 @@ struct private_data {
 	char		 in_stream;
 	unsigned char	*out_block;
 	size_t		 out_block_size;
-	int64_t		 total_out;
 	unsigned long	 crc;
 	uint32_t	 mtime;
 	char		*name;
@@ -502,7 +501,6 @@ gzip_filter_read(struct archive_read_filter *self, const void **p)
 
 	/* We've read as much as we can. */
 	decompressed = state->stream.next_out - state->out_block;
-	state->total_out += decompressed;
 	if (decompressed == 0)
 		*p = NULL;
 	else

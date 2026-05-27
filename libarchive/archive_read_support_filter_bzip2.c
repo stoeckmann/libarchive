@@ -298,14 +298,6 @@ bzip2_filter_read(struct archive_read_filter *self, const void **p)
 		if (ret > max_in)
 			ret = max_in;
 		state->stream.avail_in = (uint32_t)ret;
-		/* There is no more data, return whatever we have. */
-		if (ret == 0) {
-			state->eof = 1;
-			*p = state->out_block;
-			decompressed = state->stream.next_out
-			    - state->out_block;
-			return (decompressed);
-		}
 
 		/* Decompress as much as we can in one pass. */
 		ret = BZ2_bzDecompress(&(state->stream));

@@ -100,6 +100,8 @@ DEFINE_TEST(test_write_filter_lz4)
 		skipping("Can't verify lz4 writing by reading back;"
 		    " lz4 reading not fully supported on this platform");
 		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		free(data);
+		free(buff);
 		return;
 	}
 

@@ -619,7 +619,7 @@ DEFINE_TEST(test_read_format_zip_bzip2_one_file)
 	assert((a = archive_read_new()) != NULL);
 	if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
 		skipping("bzip2 is not fully supported on this platform");
-		archive_read_close(a);
+		archive_read_free(a);
 		return;
 	}
 	extract_reference_file(refname);
@@ -644,7 +644,7 @@ DEFINE_TEST(test_read_format_zip_bzip2_one_file_blockread)
 	assert((a = archive_read_new()) != NULL);
 	if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
 		skipping("bzip2 is not fully supported on this platform");
-		archive_read_close(a);
+		archive_read_free(a);
 		return;
 	}
 	extract_reference_file(refname);
@@ -669,7 +669,7 @@ DEFINE_TEST(test_read_format_zip_bzip2_multi)
 	assert((a = archive_read_new()) != NULL);
 	if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
 		skipping("bzip2 is not fully supported on this platform");
-		archive_read_close(a);
+		archive_read_free(a);
 		return;
 	}
 	extract_reference_file(refname);
@@ -706,7 +706,7 @@ DEFINE_TEST(test_read_format_zip_bzip2_multi_blockread)
 	assert((a = archive_read_new()) != NULL);
 	if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
 		skipping("bzip2 is not fully supported on this platform");
-		archive_read_close(a);
+		archive_read_free(a);
 		return;
 	}
 	extract_reference_file(refname);
@@ -968,7 +968,7 @@ DEFINE_TEST(test_read_format_zip_bz2_hang_on_invalid)
 	assert((a = archive_read_new()) != NULL);
 	if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
 		skipping("bzip2 is not fully supported on this platform");
-		archive_read_close(a);
+		archive_read_free(a);
 		return;
 	}
 	extract_reference_file(refname);

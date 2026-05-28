@@ -54,7 +54,6 @@ struct private_data {
 	lzma_stream	 stream;
 	unsigned char	*out_block;
 	size_t		 out_block_size;
-	int64_t		 total_out;
 	char		 eof; /* True = found end of compressed data. */
 	char		 in_stream;
 
@@ -706,7 +705,6 @@ xz_filter_read(struct archive_read_filter *self, const void **p)
 	}
 
 	decompressed = state->stream.next_out - state->out_block;
-	state->total_out += decompressed;
 	state->member_out += decompressed;
 	if (decompressed == 0) {
 		if (member_in != state->member_in &&

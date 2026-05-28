@@ -57,7 +57,6 @@ struct private_data {
 	ZSTD_DStream	*dstream;
 	unsigned char	*out_block;
 	size_t		 out_block_size;
-	int64_t		 total_out;
 	char		 in_frame; /* True = in the middle of a zstd frame. */
 	char		 eof; /* True = found end of compressed data. */
 };
@@ -310,7 +309,6 @@ zstd_filter_read(struct archive_read_filter *self, const void **p)
 	}
 
 	decompressed = out.pos;
-	state->total_out += decompressed;
 	if (decompressed == 0)
 		*p = NULL;
 	else

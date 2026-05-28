@@ -1378,7 +1378,7 @@ __archive_read_filter_ahead(struct archive_read_filter *filter,
 
 		/* Move data forward in copy buffer if necessary. */
 		if (filter->next > filter->buffer &&
-		    filter->next + min > filter->buffer + filter->buffer_size) {
+		    min > filter->buffer_size - (filter->next - filter->buffer)) {
 			if (filter->avail > 0)
 				memmove(filter->buffer, filter->next,
 				    filter->avail);

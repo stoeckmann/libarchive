@@ -409,8 +409,14 @@ lz4_filter_read(struct archive_read_filter *self, const void **p)
 				return (ARCHIVE_FATAL);
 			}
 			int64_t skip_bytes = archive_le32dec(read_buf);
-			__archive_read_filter_consume(self->upstream,
-				4 + skip_bytes);
+			if (__archive_read_filter_consume(self->upstream,
+			    4 + skip_bytes) < 0) {
+				archive_set_error(
+				    &self->archive->archive,
+				    ARCHIVE_ERRNO_MISC,
+				    "Malformed lz4 data");
+				return (ARCHIVE_FATAL);
+			}
 		} else {
 			/* Ignore following unrecognized data. */
 			state->eof = 1;

@@ -408,7 +408,7 @@ lz4_filter_read(struct archive_read_filter *self, const void **p)
 				    "Malformed lz4 data");
 				return (ARCHIVE_FATAL);
 			}
-			uint32_t skip_bytes = archive_le32dec(read_buf);
+			int64_t skip_bytes = archive_le32dec(read_buf);
 			__archive_read_filter_consume(self->upstream,
 				4 + skip_bytes);
 		} else {

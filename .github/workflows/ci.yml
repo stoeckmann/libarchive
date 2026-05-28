@@ -125,9 +125,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        be: [mingw-gcc, msvc]
+        be: [mingw-gcc, cygwin-gcc, msvc]
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - name: Install Cygwin
+      uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6
+      if:  ${{ matrix.be=='cygwin-gcc' }}
+      with:
+        install-dir: "D:\\cygwin"
+        packages: |-
+          make autoconf automake cmake
+          gcc-core binutils libtool pkg-config
+          bison zlib-devel libbz2-devel liblzma-devel
+          liblz4-devel libiconv-devel libxml2-devel
+          libzstd-devel libssl-devel
     - name: Install mingw
       if:  ${{ matrix.be=='mingw-gcc' }}
       run: choco install mingw
@@ -166,4 +177,4 @@ jobs:
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: libarchive-windows-${{ matrix.be }}-${{ github.sha }}
-        path: libarchive.zip
+        path: ${{ matrix.be=='cygwin-gcc' && 'libarchive.tar.xz' || 'libarchive.zip' }}

@@ -2347,7 +2347,7 @@ static int process_base_block(struct archive_read* a,
 	}
 
 	/* If the checksum is OK, we proceed with parsing. */
-	if(ARCHIVE_OK != consume(a, hdr_size_len)) {
+	if(ARCHIVE_OK != consume(a, hdr_size)) {
 		return ARCHIVE_EOF;
 	}
 

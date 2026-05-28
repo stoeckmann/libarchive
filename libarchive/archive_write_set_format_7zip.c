@@ -314,7 +314,7 @@ static int	_7z_compression_init_encoder(struct archive_write *, unsigned,
 		    int);
 static int	compression_init_encoder_zstd(struct archive *,
 		    struct la_zstream *, int, int);
-#if defined(HAVE_ZSTD_H)
+#if HAVE_ZSTD_H && HAVE_ZSTD_compressStream
 static int	compression_code_zstd(struct archive *,
 		    struct la_zstream *, enum la_zaction);
 static int	compression_end_zstd(struct archive *, struct la_zstream *);

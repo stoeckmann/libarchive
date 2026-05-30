@@ -718,9 +718,19 @@ find_odc_header(struct archive_read *a)
 	ssize_t bytes;
 
 	for (;;) {
-		h = __archive_read_ahead(a, odc_header_size, &bytes);
-		if (h == NULL)
-			return (ARCHIVE_FATAL);
+		size_t header_size;
+
+		header_size = afiol_header_size;
+		h = __archive_read_ahead(a, afiol_header_size, &bytes);
+		if (h == NULL) {
+			if (bytes >= odc_header_size) {
+				header_size = odc_header_size;
+				h = __archive_read_ahead(a, odc_header_size,
+				    &bytes);
+			}
+			if (h == NULL)
+				return (ARCHIVE_FATAL);
+		}
 		p = h;
 		q = p + bytes;
 
@@ -736,7 +746,7 @@ find_odc_header(struct archive_read *a)
 		 * Scan ahead until we find something that looks
 		 * like an odc header.
 		 */
-		while (p + odc_header_size <= q) {
+		while (p + header_size <= q) {
 			switch (p[5]) {
 			case '7':
 				if ((memcmp("070707", p, 6) == 0

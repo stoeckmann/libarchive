@@ -1439,7 +1439,7 @@ make_file_entry(struct archive_write *a, struct xml_writer *writer,
 	}
 
 	/*
-	 * Make a mtime entry, "<mtime>".
+	 * Make an mtime entry, "<mtime>".
 	 */
 	if (archive_entry_mtime_is_set(file->entry)) {
 		r = xmlwrite_time(a, writer, "mtime",

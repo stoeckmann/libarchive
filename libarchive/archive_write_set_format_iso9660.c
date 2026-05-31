@@ -766,7 +766,7 @@ struct iso9660 {
 #ifdef HAVE_ZLIB_H
 		/*
 		 * Copy a compressed file to iso9660.zisofs.temp_fd
-		 * and also copy a uncompressed file(original file) to
+		 * and also copy an uncompressed file(original file) to
 		 * iso9660.temp_fd . If the number of logical block
 		 * of the compressed file is less than the number of
 		 * logical block of the uncompressed file, use it and

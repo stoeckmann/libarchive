@@ -428,7 +428,7 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 	}
 
 	/*
-	 * If the both uncompressed size and compressed size are the same,
+	 * If both uncompressed size and compressed size are the same,
 	 * we do not decompress this block.
 	 */
 	if (state->uncompressed_size == state->compressed_size) {

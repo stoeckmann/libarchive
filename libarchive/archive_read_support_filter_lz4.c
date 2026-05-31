@@ -361,7 +361,7 @@ lz4_filter_read(struct archive_read_filter *self, const void **p)
 		break;
 	case READ_DEFAULT_STREAM:
 	case READ_LEGACY_STREAM:
-		/* Reading a lz4 stream already failed. */
+		/* Reading an lz4 stream already failed. */
 		archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Invalid sequence");
 		return (ARCHIVE_FATAL);

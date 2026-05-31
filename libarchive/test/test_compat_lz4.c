@@ -31,7 +31,7 @@
  * In particular:
  *  * lz4 -d will read multiple lz4 streams, concatenating the output
  *  * lz4 -d will stop at the end of a stream if the following data
- *    doesn't start with a lz4 signature.
+ *    doesn't start with an lz4 signature.
  */
 
 /*

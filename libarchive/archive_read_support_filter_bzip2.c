@@ -116,13 +116,12 @@ static int
 bzip2_reader_bid(struct archive_read_filter_bidder *self, struct archive_read_filter *filter)
 {
 	const unsigned char *buffer;
-	ssize_t avail;
 	int bits_checked;
 
 	(void)self; /* UNUSED */
 
 	/* Minimal bzip2 archive is 14 bytes. */
-	buffer = __archive_read_filter_ahead(filter, 14, &avail);
+	buffer = __archive_read_filter_ahead(filter, 14, NULL);
 	if (buffer == NULL)
 		return (0);
 

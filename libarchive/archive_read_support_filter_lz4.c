@@ -530,7 +530,6 @@ lz4_filter_read_data_block(struct archive_read_filter *self, const void **p)
 	struct private_data *state = (struct private_data *)self->data;
 	ssize_t compressed_size;
 	const char *read_buf;
-	ssize_t bytes_remaining;
 	int checksum_size;
 	ssize_t uncompressed_size;
 	size_t prefix64k;
@@ -538,8 +537,7 @@ lz4_filter_read_data_block(struct archive_read_filter *self, const void **p)
 	*p = NULL;
 
 	/* Make sure we have 4 bytes for a block size. */
-	read_buf = __archive_read_filter_ahead(self->upstream, 4,
-	    &bytes_remaining);
+	read_buf = __archive_read_filter_ahead(self->upstream, 4, NULL);
 	if (read_buf == NULL)
 		goto truncated_error;
 	compressed_size = archive_le32dec(read_buf);
@@ -565,7 +563,7 @@ lz4_filter_read_data_block(struct archive_read_filter *self, const void **p)
 	  a huge buffer used for decoded data.
 	*/
 	read_buf = __archive_read_filter_ahead(self->upstream,
-	    4 + compressed_size + checksum_size, &bytes_remaining);
+	    4 + compressed_size + checksum_size, NULL);
 	if (read_buf == NULL)
 		goto truncated_error;
 
@@ -673,7 +671,6 @@ lz4_filter_read_default_stream(struct archive_read_filter *self, const void **p)
 {
 	struct private_data *state = (struct private_data *)self->data;
 	const char *read_buf;
-	ssize_t bytes_remaining;
 	ssize_t ret;
 
 	if (state->stage == SELECT_STREAM) {
@@ -697,7 +694,7 @@ lz4_filter_read_default_stream(struct archive_read_filter *self, const void **p)
 			unsigned int checksum;
 			unsigned int checksum_stream;
 			read_buf = __archive_read_filter_ahead(self->upstream,
-			    4, &bytes_remaining);
+			    4, NULL);
 			if (read_buf == NULL) {
 				archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC, "truncated lz4 input");

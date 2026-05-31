@@ -417,9 +417,11 @@ lz4_write_stream_descriptor(struct archive_write_filter *f)
 	sd[5] = (data->block_maximum_size << 4);
 	sd[6] = (__archive_xxhash.XXH32(&sd[4], 2, 0) >> 8) & 0xff;
 	data->out += 7;
-	if (data->stream_checksum)
+	if (data->stream_checksum) {
 		data->xxh32_state = __archive_xxhash.XXH32_init(0);
-	else
+		if (data->xxh32_state == NULL)
+			return (ARCHIVE_FATAL);
+	} else
 		data->xxh32_state = NULL;
 	return (ARCHIVE_OK);
 }

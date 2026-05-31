@@ -512,8 +512,11 @@ lz4_filter_read_descriptor(struct archive_read_filter *self)
 	/* Make sure we have a large enough buffer for uncompressed data. */
 	if (lz4_allocate_out_block(self) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
-	if (state->flags.stream_checksum)
+	if (state->flags.stream_checksum) {
 		state->xxh32_state = __archive_xxhash.XXH32_init(0);
+		if (state->xxh32_state == NULL)
+			return (ARCHIVE_FATAL);
+	}
 
 	state->decoded_size = 0;
 	/* Success */

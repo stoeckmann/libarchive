@@ -450,9 +450,9 @@ static ssize_t	read_stream(struct archive_read *, const void **, size_t,
 		    size_t);
 static int	seek_pack(struct archive_read *);
 static int64_t	skip_stream(struct archive_read *, size_t);
-static int	get_data_offset(struct archive_read *, int64_t *);
+static int	get_data_offset(struct archive_read *, int64_t *, int);
 static int	get_pe_sfx_offset(struct archive_read *, int64_t *);
-static int	get_elf_sfx_offset(struct archive_read *, int64_t *);
+static int	get_elf_sfx_offset(struct archive_read *, int64_t *, int);
 static int	slurp_central_directory(struct archive_read *, struct _7zip *,
 		    struct _7z_header_info *);
 static int	setup_decode_folder(struct archive_read *, struct _7z_folder *,
@@ -465,6 +465,7 @@ static size_t	arm64_Convert(struct _7zip *, uint8_t *, size_t);
 static ssize_t		Bcj2_Decode(struct _7zip *, uint8_t *, size_t);
 static size_t	sparc_Convert(struct _7zip *, uint8_t *, size_t);
 static size_t	powerpc_Convert(struct _7zip *, uint8_t *, size_t);
+static int64_t	seek_compat(struct archive_read *, int64_t, int, int);
 
 
 int
@@ -531,7 +532,7 @@ archive_read_format_7zip_has_encrypted_entries(struct archive_read *_a)
 }
 
 static int
-get_data_offset(struct archive_read *a, int64_t *data_offset)
+get_data_offset(struct archive_read *a, int64_t *data_offset, int compat)
 {
 	const unsigned char *p;
 	int64_t offset, sfx_offset;
@@ -561,7 +562,7 @@ get_data_offset(struct archive_read *a, int64_t *data_offset)
 	if ((p[0] == 'M' && p[1] == 'Z'))
 		r = get_pe_sfx_offset(a, &sfx_offset);
 	else if (memcmp(p, "\x7F\x45LF", 4) == 0)
-		r = get_elf_sfx_offset(a, &sfx_offset);
+		r = get_elf_sfx_offset(a, &sfx_offset, compat);
 	else
 		r = ARCHIVE_FATAL;
 	if (r < ARCHIVE_WARN || sfx_offset > SFX_MAX_SEEK)
@@ -607,7 +608,7 @@ archive_read_format_7zip_bid(struct archive_read *a, int best_bid)
 	if (best_bid > 32)
 		return (-1);
 
-	if (get_data_offset(a, &data_offset) < 0)
+	if (get_data_offset(a, &data_offset, 0) < 0)
 		return (0);
 
 	return (48);
@@ -730,7 +731,7 @@ get_pe_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 }
 
 static int
-get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
+get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset, int compat)
 {
 	int64_t r;
 	const char *h;
@@ -798,7 +799,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		/*
 		 * Reading the section table to find strtab section
 		 */
-		if (__archive_read_seek(a, e_shoff, SEEK_SET) < 0) {
+		if (seek_compat(a, e_shoff, SEEK_SET, compat) < 0) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
@@ -832,7 +833,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		/*
 		 * Read the STRTAB section to find the .data offset
 		 */
-		if (__archive_read_seek(a, strtab_offset, SEEK_SET) < 0) {
+		if (seek_compat(a, strtab_offset, SEEK_SET, compat) < 0) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
@@ -854,7 +855,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		/*
 		 * Find the section with the .data name
 		 */
-		if (__archive_read_seek(a, e_shoff, SEEK_SET) < 0) {
+		if (seek_compat(a, e_shoff, SEEK_SET, compat) < 0) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
@@ -887,7 +888,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		break;
 	}
 
-	r = __archive_read_seek(a, 0, SEEK_SET);
+	r = seek_compat(a, 0, SEEK_SET, compat);
 	if (r < 0)
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 	return (int)r;
@@ -3269,7 +3270,7 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 	int64_t data_offset;
 	int check_header_crc, r;
 
-	if (get_data_offset(a, &data_offset) < 0)
+	if (get_data_offset(a, &data_offset, 1) < 0)
 		return (ARCHIVE_FATAL);
 	if (__archive_read_consume(a, data_offset) < 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
@@ -3313,8 +3314,8 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 	if (next_header_offset != 0) {
 		if (bytes_avail >= (ssize_t)next_header_offset)
 			__archive_read_consume(a, next_header_offset);
-		else if (__archive_read_seek(a,
-		    next_header_offset + zip->seek_base, SEEK_SET) < 0) {
+		else if (seek_compat(a,
+		    next_header_offset + zip->seek_base, SEEK_SET, 1) < 0) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
@@ -3653,8 +3654,8 @@ seek_pack(struct archive_read *a)
 	    zip->si.pi.sizes[zip->pack_stream_index];
 	pack_offset = zip->si.pi.positions[zip->pack_stream_index];
 	if (zip->stream_offset != pack_offset) {
-		if (0 > __archive_read_seek(a, pack_offset + zip->seek_base,
-		    SEEK_SET)) {
+		if (0 > seek_compat(a, pack_offset + zip->seek_base,
+		    SEEK_SET, 1)) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
@@ -4594,4 +4595,35 @@ Bcj2_Decode(struct _7zip *zip, uint8_t *outBuf, size_t outSize)
 	zip->bcj2_outPos += outPos;
 
 	return ((ssize_t)outPos);
+}
+
+/*
+ * Perform a seek to given position. If seeking is not supported,
+ * target position is in front of current position, and compat is requested,
+ * try to consume bytes until position is reached.
+ */
+int64_t
+seek_compat(struct archive_read *a, int64_t offset, int whence, int compat)
+{
+	int64_t ret = ARCHIVE_FAILED;
+
+	if (a->filter->can_seek)
+		ret = __archive_read_seek(a, offset, whence);
+	else if (compat) {
+		switch (whence) {
+		case SEEK_CUR:
+			ret = __archive_read_consume(a, offset);
+			break;
+		case SEEK_SET:
+			if (a->filter->position > offset)
+				break;
+			ret = __archive_read_consume(a,
+			    offset - a->filter->position);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return (ret);
 }

@@ -70,12 +70,7 @@ static int	gzip_filter_close(struct archive_read_filter *);
 /*
  * Note that we can detect gzip archives even if we can't decompress
  * them.  (In fact, we like detecting them because we can give better
- * error messages.)  So the bid framework here gets compiled even
- * if zlib is unavailable.
- *
- * TODO: If zlib is unavailable, gzip_bidder_init() should
- * use the compress_program framework to try to fire up an external
- * gzip program.
+ * error messages.)
  */
 static int	gzip_bidder_bid(struct archive_read_filter_bidder *,
 		    struct archive_read_filter *);

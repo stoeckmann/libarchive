@@ -66,8 +66,7 @@ static int	bzip2_filter_close(struct archive_read_filter *);
 /*
  * Note that we can detect bzip2 archives even if we can't decompress
  * them.  (In fact, we like detecting them because we can give better
- * error messages.)  So the bid framework here gets compiled even
- * if bzlib is unavailable.
+ * error messages.)
  */
 static int	bzip2_reader_bid(struct archive_read_filter_bidder *, struct archive_read_filter *);
 static int	bzip2_reader_init(struct archive_read_filter *);
@@ -153,9 +152,9 @@ bzip2_reader_bid(struct archive_read_filter_bidder *self, struct archive_read_fi
 #if !defined(HAVE_BZLIB_H) || !defined(BZ_CONFIG_ERROR)
 
 /*
- * If we don't have the library on this system, we can't actually do the
- * decompression.  We can, however, still detect compressed archives
- * and emit a useful message.
+ * If we don't have the library on this system, we can't do the
+ * decompression directly.  We can, however, try to run "bzip2 -d"
+ * in case that's available.
  */
 static int
 bzip2_reader_init(struct archive_read_filter *self)

@@ -95,8 +95,7 @@ static int	lz4_filter_close(struct archive_read_filter *);
 /*
  * Note that we can detect lz4 archives even if we can't decompress
  * them.  (In fact, we like detecting them because we can give better
- * error messages.)  So the bid framework here gets compiled even
- * if liblz4 is unavailable.
+ * error messages.)
  */
 static int	lz4_reader_bid(struct archive_read_filter_bidder *, struct archive_read_filter *);
 static int	lz4_reader_init(struct archive_read_filter *);
@@ -241,9 +240,9 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 #if !defined(HAVE_LIBLZ4)
 
 /*
- * If we don't have the library on this system, we can't actually do the
- * decompression.  We can, however, still detect compressed archives
- * and emit a useful message.
+ * If we don't have the library on this system, we can't do the
+ * decompression directly.  We can, however, try to run "lz4 -d -q"
+ * in case that's available.
  */
 static int
 lz4_reader_init(struct archive_read_filter *self)

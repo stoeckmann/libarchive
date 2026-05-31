@@ -69,8 +69,7 @@ static int	zstd_filter_close(struct archive_read_filter *);
 /*
  * Note that we can detect zstd compressed files even if we can't decompress
  * them.  (In fact, we like detecting them because we can give better error
- * messages.)  So the bid framework here gets compiled even if no zstd library
- * is available.
+ * messages.)
  */
 static int	zstd_bidder_bid(struct archive_read_filter_bidder *,
 		    struct archive_read_filter *);
@@ -178,7 +177,7 @@ zstd_bidder_bid(struct archive_read_filter_bidder *self,
 
 /*
  * If we don't have the library on this system, we can't do the
- * decompression directly.  We can, however, try to run "zstd -d"
+ * decompression directly.  We can, however, try to run "zstd -d -qq"
  * in case that's available.
  */
 static int

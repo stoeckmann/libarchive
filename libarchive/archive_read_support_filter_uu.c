@@ -224,7 +224,7 @@ bid_get_line(struct archive_read_filter *filter,
 		len = get_line(*b, *avail, nl);
 
 	/*
-	 * Read bytes more while it does not reach the end of line.
+	 * Read more bytes while it does not reach the end of line.
 	 */
 	while (*nl == 0 && len == *avail && !quit &&
 	    *nbytes_read < UUENCODE_BID_MAX_READ) {
@@ -543,7 +543,7 @@ read_more:
 			uudecode->in_cnt = len;
 			if (total == 0) {
 				/* Do not return 0; it means end-of-file.
-				 * We should try to read bytes more. */
+				 * We should try to read more bytes. */
 				__archive_read_filter_consume(
 				    self->upstream, ravail);
 				goto read_more;

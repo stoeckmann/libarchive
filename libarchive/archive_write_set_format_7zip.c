@@ -379,7 +379,7 @@ archive_write_set_format_7zip(struct archive *_a)
 	zip->opt_compression = _7Z_BZIP2;
 #elif defined(HAVE_ZLIB_H)
 	zip->opt_compression = _7Z_DEFLATE;
-#elif HAVE_ZSTD_H
+#elif HAVE_ZSTD_H && HAVE_ZSTD_compressStream
 	zip->opt_compression = _7Z_ZSTD;
 #else
 	zip->opt_compression = _7Z_COPY;

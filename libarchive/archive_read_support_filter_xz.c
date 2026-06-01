@@ -82,8 +82,7 @@ static int	xz_lzma_bidder_init(struct archive_read_filter *);
 /*
  * Note that we can detect xz and lzma compressed files even if we
  * can't decompress them.  (In fact, we like detecting them because we
- * can give better error messages.)  So the bid framework here gets
- * compiled even if no lzma library is available.
+ * can give better error messages.)
  */
 static int	xz_bidder_bid(struct archive_read_filter_bidder *,
 		    struct archive_read_filter *);

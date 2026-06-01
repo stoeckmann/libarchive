@@ -117,7 +117,6 @@ archive_read_support_filter_lzop(struct archive *_a)
 #if defined(HAVE_LZO_LZOCONF_H) && defined(HAVE_LZO_LZO1X_H)
 	return (ARCHIVE_OK);
 #else
-	/* Return ARCHIVE_WARN since this always uses an external program. */
 	archive_set_error(_a, ARCHIVE_ERRNO_MISC,
 	    "Using external lzop program for lzop decompression");
 	return (ARCHIVE_WARN);

@@ -585,11 +585,11 @@ read_more:
 					if (uudecode->name != NULL)
 						free(uudecode->name);
 					uudecode->name = malloc(namelen + 1);
-			                if (uudecode->name == NULL) {
-					archive_set_error(
-					    &self->archive->archive,
-					    ENOMEM,
-					    "Can't allocate data for uudecode");
+					if (uudecode->name == NULL) {
+						archive_set_error(
+						    &self->archive->archive,
+						    ENOMEM,
+						    "Can't allocate data for uudecode");
 						return (ARCHIVE_FATAL);
 					}
 					strncpy(uudecode->name,

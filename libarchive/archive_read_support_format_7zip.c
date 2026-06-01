@@ -335,7 +335,7 @@ struct _7zip {
 	int			 stream_valid;
 #endif
 	/* Decoding Zstandard data. */
-#if HAVE_ZSTD_H
+#if HAVE_ZSTD_H && HAVE_LIBZSTD
 	ZSTD_DStream		 *zstd_dstream;
 	int		         zstdstream_valid;
 #endif
@@ -1581,7 +1581,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 #endif
 	case _7Z_ZSTD:
 	{
-#if defined(HAVE_ZSTD_H)
+#if HAVE_ZSTD_H && HAVE_LIBZSTD
 		if (zip->zstdstream_valid) {
 			ZSTD_freeDStream(zip->zstd_dstream);
 			zip->zstdstream_valid = 0;
@@ -1863,7 +1863,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		t_avail_out = zip->stream.avail_out;
 		break;
 #endif
-#ifdef HAVE_ZSTD_H
+#if HAVE_ZSTD_H && HAVE_LIBZSTD
 	case _7Z_ZSTD:
 	{
 		ZSTD_inBuffer input = { t_next_in, t_avail_in, 0 }; // src, size, pos
@@ -2050,7 +2050,7 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 		zip->stream_valid = 0;
 	}
 #endif
-#ifdef HAVE_ZSTD_H
+#if HAVE_ZSTD_H && HAVE_LIBZSTD
 	if (zip->zstdstream_valid)
 		ZSTD_freeDStream(zip->zstd_dstream);
 #endif

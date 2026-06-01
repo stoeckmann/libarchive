@@ -6,6 +6,27 @@ permissions:
   contents: read
 
 jobs:
+  FreeBSD:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bs: [autotools, cmake]
+    steps:
+    - name: Build and test on a FreeBSD 15 firecracker VM
+      uses: acj/freebsd-firecracker-action@v0.9.1
+      with:
+        run-in-vm: |
+          chflags -R noschg / && \
+          fetch -o - https://download.freebsd.org/releases/amd64/15.0-RELEASE/base.txz | bsdtar -x -C / -f - && \
+          pkg bootstrap -y && \
+          cd firecracker-freebsd && \
+          env BS=${{ matrix.bs }} ./build/ci/github_actions/freebsd.sh prepare && \
+          env BS=${{ matrix.bs }} CFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./build/ci/build.sh -a autogen && \
+          env BS=${{ matrix.bs }} MAKE=gmake CFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./build/ci/build.sh -a configure && \
+          env BS=${{ matrix.bs }} MAKE=gmake MAKE_ARGS="-j 2" ./build/ci/build.sh -a build && \
+          env BS=${{ matrix.bs }} MAKE=gmake SKIP_TEST_RESTORE_ATIME=1 MAKE_ARGS="-j 2" ./build/ci/build.sh -a test && \
+          env BS=${{ matrix.bs }} ./build/ci/github_actions/freebsd.sh test && \
+          env BS=${{ matrix.bs }} MAKE=gmake MAKE_ARGS="-j 2" ./build/ci/build.sh -a install
   MacOS:
     runs-on: macos-15
     strategy:

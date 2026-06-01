@@ -472,6 +472,7 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_read_filter_grzip.c \
 	libarchive/test/test_read_filter_gzip_recursive.c \
 	libarchive/test/test_read_filter_lrzip.c \
+	libarchive/test/test_read_filter_lz4_raw.c \
 	libarchive/test/test_read_filter_lzop.c \
 	libarchive/test/test_read_filter_lzop_multiple_parts.c \
 	libarchive/test/test_read_filter_program.c \
@@ -826,6 +827,7 @@ libarchive_test_EXTRA_DIST=\
 	libarchive/test/test_read_filter_grzip.tar.grz.uu \
 	libarchive/test/test_read_filter_gzip_recursive.gz.uu \
 	libarchive/test/test_read_filter_lrzip.tar.lrz.uu \
+	libarchive/test/test_read_filter_lz4_raw_skip.uu \
 	libarchive/test/test_read_filter_lzop.tar.lzo.uu \
 	libarchive/test/test_read_filter_lzop_multiple_parts.tar.lzo.uu \
 	libarchive/test/test_read_filter_uudecode_raw.uu \

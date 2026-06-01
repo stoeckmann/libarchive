@@ -88,7 +88,7 @@ static int archive_filter_lz4_write(struct archive_write_filter *,
 		    const void *, size_t);
 
 /*
- * Add a lz4 compression filter to this write handle.
+ * Add an lz4 compression filter to this write handle.
  */
 int
 archive_write_add_filter_lz4(struct archive *_a)
@@ -243,7 +243,7 @@ archive_filter_lz4_open(struct archive_write_filter *f)
 		free(data->out_buffer);
 		if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
 			/* Buffer size should be a multiple number of
-			 * the of bytes per block for performance. */
+			 * the bytes per block for performance. */
 			bpb = archive_write_get_bytes_per_block(f->archive);
 			if (bpb > bs)
 				bs = bpb;

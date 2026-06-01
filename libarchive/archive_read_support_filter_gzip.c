@@ -283,7 +283,7 @@ gzip_read_header(struct archive_read_filter *self, struct archive_entry *entry)
 
 	state = (struct private_data *)self->data;
 
-	/* A mtime of 0 is considered invalid/missing. */
+	/* An mtime of 0 is considered invalid/missing. */
 	if (state->mtime != 0)
 		archive_entry_set_mtime(entry, state->mtime, 0);
 

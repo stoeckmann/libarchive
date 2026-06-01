@@ -819,9 +819,7 @@ xar_finish_entry(struct archive_write *a)
 		if (s > a->null_length)
 			s = a->null_length;
 		w = xar_write_data(a, a->nulls, s);
-		if (w > 0)
-			xar->bytes_remaining -= w;
-		else
+		if (w <= 0)
 			return ((int)w);
 	}
 	file = xar->cur_file;

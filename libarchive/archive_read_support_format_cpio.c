@@ -713,13 +713,24 @@ find_odc_header(struct archive_read *a)
 {
 	const void *h;
 	const char *p, *q;
-	size_t skip, skipped = 0;
+	int64_t skip;
+	uintmax_t skipped = 0;
 	ssize_t bytes;
 
 	for (;;) {
-		h = __archive_read_ahead(a, odc_header_size, &bytes);
-		if (h == NULL)
-			return (ARCHIVE_FATAL);
+		size_t header_size;
+
+		header_size = afiol_header_size;
+		h = __archive_read_ahead(a, afiol_header_size, &bytes);
+		if (h == NULL) {
+			if (bytes >= odc_header_size) {
+				header_size = odc_header_size;
+				h = __archive_read_ahead(a, odc_header_size,
+				    &bytes);
+			}
+			if (h == NULL)
+				return (ARCHIVE_FATAL);
+		}
 		p = h;
 		q = p + bytes;
 
@@ -735,7 +746,7 @@ find_odc_header(struct archive_read *a)
 		 * Scan ahead until we find something that looks
 		 * like an odc header.
 		 */
-		while (p + odc_header_size <= q) {
+		while (p + header_size <= q) {
 			switch (p[5]) {
 			case '7':
 				if ((memcmp("070707", p, 6) == 0
@@ -751,9 +762,9 @@ find_odc_header(struct archive_read *a)
 					if (skipped > 0) {
 						archive_set_error(&a->archive,
 						    0,
-						    "Skipped %d bytes before "
+						    "Skipped %ju bytes before "
 						    "finding valid header",
-						    (int)skipped);
+						    skipped);
 						return (ARCHIVE_WARN);
 					}
 					return (ARCHIVE_OK);

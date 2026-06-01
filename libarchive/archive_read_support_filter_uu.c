@@ -423,7 +423,6 @@ ensure_in_buff_size(struct archive_read_filter *self,
 		/* Allocate the new buffer. */
 		ptr = malloc(newsize);
 		if (ptr == NULL) {
-			free(ptr);
 			archive_set_error(&self->archive->archive,
 			    ENOMEM,
     			    "Can't allocate data for uudecode");

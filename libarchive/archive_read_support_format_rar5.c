@@ -2274,6 +2274,33 @@ static int scan_for_signature(struct archive_read* a);
  * <FILE> block.
  */
 
+/*
+ * A header that carries no file data (HEAD_MAIN, or an unknown block
+ * flagged HFL_SKIP_IF_UNKNOWN) may leave bytes in its body that the
+ * sub-parser did not read. Skip them before returning ARCHIVE_RETRY,
+ * otherwise rar5_read_header() re-parses the same block region O(N)
+ * times instead of O(1), letting a crafted RAR5 file stall the reader
+ * (GHSA-9h2c-464f-j3hj).
+ *
+ * Safe because read_ahead(a, hdr_size, &p) pre-loaded the whole block
+ * into one contiguous buffer with no compaction until we return, so
+ * body_start stays valid and (cur - body_start) is the exact number of
+ * body bytes consumed so far.
+ */
+static void
+rar5_skip_remaining_block(struct archive_read* a,
+    const uint8_t* body_start, size_t raw_hdr_size)
+{
+	const uint8_t* cur;
+
+	if(read_ahead(a, 1, &cur)) {
+		size_t body_used = (size_t)(cur - body_start);
+
+		if(body_used < raw_hdr_size)
+			(void)consume(a, raw_hdr_size - body_used);
+	}
+}
+
 static int process_base_block(struct archive_read* a,
     struct archive_entry* entry)
 {
@@ -2285,6 +2312,7 @@ static int process_base_block(struct archive_read* a,
 	size_t header_id = 0;
 	size_t header_flags = 0;
 	const uint8_t* p;
+	const uint8_t* body_start;
 	int ret;
 
 	enum HEADER_TYPE {
@@ -2346,6 +2374,10 @@ static int process_base_block(struct archive_read* a,
 #endif
 	}
 
+	/* Remember the first byte of the block body so we can later skip
+	 * any bytes the sub-parser leaves unconsumed. */
+	body_start = p + hdr_size_len;
+
 	/* If the checksum is OK, we proceed with parsing. */
 	if(ARCHIVE_OK != consume(a, hdr_size_len)) {
 		return ARCHIVE_EOF;
@@ -2371,8 +2403,11 @@ static int process_base_block(struct archive_read* a,
 			/* Main header doesn't have any files in it, so it's
 			 * pointless to return to the caller. Retry to next
 			 * header, which should be HEAD_FILE/HEAD_SERVICE. */
-			if(ret == ARCHIVE_OK)
+			if(ret == ARCHIVE_OK) {
+				rar5_skip_remaining_block(a, body_start,
+				    raw_hdr_size);
 				return ARCHIVE_RETRY;
+			}
 
 			return ret;
 		case HEAD_SERVICE:
@@ -2432,6 +2467,8 @@ static int process_base_block(struct archive_read* a,
 				/* If the block is marked as 'skip if unknown',
 				 * do as the flag says: skip the block
 				 * instead on failing on it. */
+				rar5_skip_remaining_block(a, body_start,
+				    raw_hdr_size);
 				return ARCHIVE_RETRY;
 			}
 	}

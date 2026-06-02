@@ -601,24 +601,8 @@ la_GetFunctionKernel32(const char *name)
 static int
 la_CreateHardLinkW(wchar_t *linkname, wchar_t *target)
 {
-	static BOOL (WINAPI *f)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	BOOL ret;
-
-#if _WIN32_WINNT < _WIN32_WINNT_XP
-	static int set;
-/* CreateHardLinkW is available since XP and always loaded */
-	if (!set) {
-		set = 1;
-		f = la_GetFunctionKernel32("CreateHardLinkW");
-	}
-#else
-	f = CreateHardLinkW;
-#endif
-	if (!f) {
-		errno = ENOTSUP;
-		return (0);
-	}
-	ret = (*f)(linkname, target, NULL);
+	ret = CreateHardLinkW(linkname, target, NULL);
 	if (!ret) {
 		/* Under windows 2000, it is necessary to remove
 		 * the "\\?\" prefix. */
@@ -637,7 +621,7 @@ la_CreateHardLinkW(wchar_t *linkname, wchar_t *target)
 				target += 4;
 		}
 #undef IS_UNC
-		ret = (*f)(linkname, target, NULL);
+		ret = CreateHardLinkW(linkname, target, NULL);
 	}
 	return (ret);
 }

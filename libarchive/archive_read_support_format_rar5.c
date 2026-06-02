@@ -81,7 +81,9 @@
  *
  * The array itself is decrypted in `rar5_init` function. */
 
-static unsigned char rar5_signature_xor[] = { 243, 192, 211, 128, 187, 166, 160, 161 };
+static const unsigned char rar5_signature_xor[] = {
+	243, 192, 211, 128, 187, 166, 160, 161
+};
 static const size_t g_unpack_window_size = 0x20000;
 
 /* These could have been static const's, but they aren't, because of

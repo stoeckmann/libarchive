@@ -667,7 +667,7 @@ la_CreateSymbolicLinkW(const wchar_t *linkname, const wchar_t *target,
 		f = la_GetFunctionKernel32("CreateSymbolicLinkW");
 	}
 #else
-# if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+# if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP | WINAPI_PARTITION_SYSTEM)
 	f = CreateSymbolicLinkW;
 # else
 	f = NULL;

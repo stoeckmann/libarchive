@@ -307,6 +307,10 @@ size_t wcrtomb(char *, wchar_t, mbstate_t *);
 #define WINAPI_PARTITION_DESKTOP 1
 #endif
 
+#ifndef WINAPI_PARTITION_SYSTEM
+#define WINAPI_PARTITION_SYSTEM 1
+#endif
+
 #ifndef NTDDI_VERSION
 #define NTDDI_VERSION  0x05020000
 #endif

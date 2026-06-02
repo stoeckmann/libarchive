@@ -224,7 +224,7 @@ bid_get_line(struct archive_read_filter *filter,
 		len = get_line(*b, *avail, nl);
 
 	/*
-	 * Read bytes more while it does not reach the end of line.
+	 * Read more bytes while it does not reach the end of line.
 	 */
 	while (*nl == 0 && len == *avail && !quit &&
 	    *nbytes_read < UUENCODE_BID_MAX_READ) {
@@ -423,7 +423,6 @@ ensure_in_buff_size(struct archive_read_filter *self,
 		/* Allocate the new buffer. */
 		ptr = malloc(newsize);
 		if (ptr == NULL) {
-			free(ptr);
 			archive_set_error(&self->archive->archive,
 			    ENOMEM,
     			    "Can't allocate data for uudecode");
@@ -544,7 +543,7 @@ read_more:
 			uudecode->in_cnt = len;
 			if (total == 0) {
 				/* Do not return 0; it means end-of-file.
-				 * We should try to read bytes more. */
+				 * We should try to read more bytes. */
 				__archive_read_filter_consume(
 				    self->upstream, ravail);
 				goto read_more;
@@ -586,11 +585,11 @@ read_more:
 					if (uudecode->name != NULL)
 						free(uudecode->name);
 					uudecode->name = malloc(namelen + 1);
-			                if (uudecode->name == NULL) {
-					archive_set_error(
-					    &self->archive->archive,
-					    ENOMEM,
-					    "Can't allocate data for uudecode");
+					if (uudecode->name == NULL) {
+						archive_set_error(
+						    &self->archive->archive,
+						    ENOMEM,
+						    "Can't allocate data for uudecode");
 						return (ARCHIVE_FATAL);
 					}
 					strncpy(uudecode->name,

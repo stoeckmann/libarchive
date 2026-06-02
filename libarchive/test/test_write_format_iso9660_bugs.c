@@ -243,6 +243,6 @@ DEFINE_TEST(test_write_format_iso9660_duplicate_identifier_truncation)
 	failure("ISO9660 writer should resolve duplicate Joliet identifiers "
 	    "after truncation");
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 	free(buff);
 }

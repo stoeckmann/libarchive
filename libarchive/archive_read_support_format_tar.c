@@ -3709,23 +3709,19 @@ readline(struct archive_read *a, struct tar *tar, const char **start,
 static char *
 base64_decode(const char *s, size_t len, size_t *out_len)
 {
-	static const unsigned char digits[64] = {
-		'A','B','C','D','E','F','G','H','I','J','K','L','M','N',
-		'O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b',
-		'c','d','e','f','g','h','i','j','k','l','m','n','o','p',
-		'q','r','s','t','u','v','w','x','y','z','0','1','2','3',
-		'4','5','6','7','8','9','+','/' };
-	static unsigned char decode_table[128];
+	static const unsigned char decode_table[128] = {
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 62, 255, 255, 255, 63,
+		52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 255, 255, 255, 255,
+		255, 255, 255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+		14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 255, 255,
+		255, 255, 255, 255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+		51, 255, 255, 255, 255, 255 };
 	char *out, *d;
 	const unsigned char *src = (const unsigned char *)s;
-
-	/* If the decode table is not yet initialized, prepare it. */
-	if (decode_table[digits[1]] != 1) {
-		unsigned i;
-		memset(decode_table, 0xff, sizeof(decode_table));
-		for (i = 0; i < sizeof(digits); i++)
-			decode_table[digits[i]] = i;
-	}
 
 	/* Allocate enough space to hold the entire output. */
 	/* Note that we may not use all of this... */

@@ -3958,3 +3958,24 @@ DEFINE_TEST(test_read_format_rar_symlink_huge)
   assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 #endif
 }
+
+DEFINE_TEST(test_read_format_rar_unbound_staticdata)
+{
+  const char* reffile = "test_read_format_rar_unbound_staticdata.rar";
+
+  struct archive_entry *ae;
+  struct archive *a;
+  char buf[64];
+
+  extract_reference_file(reffile);
+  assert((a = archive_read_new()) != NULL);
+  assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+  assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+  assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 1024));
+
+  assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+  assertEqualIntA(a, ARCHIVE_FAILED, archive_read_data(a, buf, 64));
+
+  assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+  assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}

@@ -153,6 +153,8 @@ struct tar {
 	int			 compat_2x;
 	int			 process_mac_extensions;
 	int			 read_concatenated_archives;
+	int			 default_inode;
+	int			 default_dev;
 };
 
 /* Track which size fields were present in the headers */
@@ -552,10 +554,6 @@ archive_read_format_tar_read_header(struct archive_read *a,
 	 * probably not worthwhile just to support the relatively
 	 * obscure tar->cpio conversion case.
 	 */
-	/* TODO: Move this into `struct tar` to avoid conflicts
-	 * when reading multiple archives */
-	static int default_inode;
-	static int default_dev;
 	struct tar *tar;
 	const char *p;
 	const wchar_t *wp;
@@ -563,16 +561,17 @@ archive_read_format_tar_read_header(struct archive_read *a,
 	size_t l;
 	int64_t unconsumed = 0;
 
+	tar = (struct tar *)(a->format->data);
+
 	/* Assign default device/inode values. */
-	archive_entry_set_dev(entry, 1 + default_dev); /* Don't use zero. */
-	archive_entry_set_ino(entry, ++default_inode); /* Don't use zero. */
+	archive_entry_set_dev(entry, 1 + tar->default_dev); /* Don't use zero. */
+	archive_entry_set_ino(entry, ++tar->default_inode); /* Don't use zero. */
 	/* Limit generated st_ino number to 16 bits. */
-	if (default_inode >= 0xffff) {
-		++default_dev;
-		default_inode = 0;
+	if (tar->default_inode >= 0xffff) {
+		++tar->default_dev;
+		tar->default_inode = 0;
 	}
 
-	tar = (struct tar *)(a->format->data);
 	tar->entry_offset = 0;
 	gnu_clear_sparse_list(tar);
 	tar->size_fields = 0; /* We don't have any size info yet */

@@ -144,52 +144,74 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 	const unsigned char *buffer;
 	ssize_t avail;
 	int bits_checked = 0;
-	ssize_t min_lz4_archive_size = 11;
+	const size_t min_lz4_archive_size = 11;
 
-	// LZ4 skippable frames contain a 4 byte magic number followed by
-	// a 4 byte frame data size, then that number of bytes of data. Regular
-	// frames contain a 4 byte magic number followed by a 2-14 byte frame
-	// header, some data, and a 3 byte end marker.
-	ssize_t min_lz4_frame_size = 8;
+	/*
+	 * LZ4 skippable frames contain a 4 byte magic number followed by
+	 * a 4 byte frame data size, then that number of bytes of data.
+	 * Regular frames contain a 4 byte magic number followed by a 2-14
+	 * byte frame header, some data, and a 3 byte end marker.
+	 */
+	const size_t min_lz4_frame_size = 8;
 
-	ssize_t offset_in_buffer = 0;
-	ssize_t max_lookahead = 64 * 1024;
+	size_t offset_in_buffer = 0;
+	const size_t max_lookahead = 64 * 1024;
+	uint32_t magic_number;
 
-	(void)self; // UNUSED
+	(void)self; /* UNUSED */
 
-	// Zstd and LZ4 skippable frame magic numbers are identical. To
-	// differentiate these two, we need to look for a non-skippable
-	// frame.
+	/*
+	 * Zstd and LZ4 skippable frame magic numbers are identical. To
+	 * differentiate these two, we need to look for a non-skippable
+	 * frame.
+	 */
 
-	// Minimal lz4 archive is 11 bytes.
-	buffer = __archive_read_filter_ahead(filter, min_lz4_archive_size, &avail);
+	/* Minimal lz4 archive is 11 bytes. */
+	buffer = __archive_read_filter_ahead(filter, min_lz4_archive_size,
+	    &avail);
 	if (buffer == NULL)
 		return (0);
 
-	uint32_t magic_number = archive_le32dec(buffer);
+	magic_number = archive_le32dec(buffer);
 
 	while ((magic_number & LZ4_SKIPPABLE_MASK) == LZ4_SKIPPABLE_START) {
+		uint32_t frame_data_size;
 
-		offset_in_buffer += 4; // Skip over the magic number
+		/* Skip over the magic number */
+		offset_in_buffer += 4;
 
-		// Ensure that we can read another 4 bytes.
-		if (offset_in_buffer + 4 > avail) {
-			buffer = __archive_read_filter_ahead(filter, offset_in_buffer + 4, &avail);
+		/* Ensure that we can read another 4 bytes. */
+		if (offset_in_buffer + 4 > (size_t)avail) {
+			buffer = __archive_read_filter_ahead(filter,
+			    offset_in_buffer + 4, &avail);
 			if (buffer == NULL)
 				return (0);
 		}
 
-		uint32_t frame_data_size = archive_le32dec(buffer + offset_in_buffer);
+		frame_data_size = archive_le32dec(buffer + offset_in_buffer);
 
-		// Skip over the 4 frame data size bytes, plus the value stored there.
-		offset_in_buffer += 4 + frame_data_size;
+		/* Skip over the 4 frame data size bytes */
+		offset_in_buffer += 4;
 
-		// There should be at least one more frame if this is LZ4 data.
-		if (offset_in_buffer + min_lz4_frame_size > avail) { // TODO: should this be >= ?
-			if (offset_in_buffer + min_lz4_frame_size > max_lookahead)
+		/* Skip over the value stored there. */
+		if (frame_data_size > SIZE_MAX - offset_in_buffer)
+			return (0);
+		offset_in_buffer += frame_data_size;
+
+		/*
+		 * There should be at least one more frame
+		 * if this is LZ4 data.
+		 */
+		if (min_lz4_frame_size > SIZE_MAX - offset_in_buffer)
+			return (0);
+		/* TODO: should this be >= ? */
+		if (offset_in_buffer + min_lz4_frame_size > (size_t)avail) {
+			if (offset_in_buffer + min_lz4_frame_size >
+			    max_lookahead)
 				return (0); 
 
-			buffer = __archive_read_filter_ahead(filter, offset_in_buffer + min_lz4_frame_size, &avail);
+			buffer = __archive_read_filter_ahead(filter,
+			    offset_in_buffer + min_lz4_frame_size, &avail);
 			if (buffer == NULL)
 				return (0); 
 		}
@@ -197,8 +219,10 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 		magic_number = archive_le32dec(buffer + offset_in_buffer);
 	}
 
-	// We have skipped over any skippable frames. Either a regular LZ4 frame
-	// follows, or this isn't LZ4 data.
+	/*
+	 * We have skipped over any skippable frames. Either a regular LZ4 frame
+	 * follows, or this isn't LZ4 data.
+	 */
 
 	bits_checked = offset_in_buffer;
 	buffer = buffer + offset_in_buffer;

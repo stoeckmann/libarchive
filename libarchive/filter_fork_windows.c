@@ -31,7 +31,7 @@
 
 #include "filter_fork.h"
 
-#if !defined(WINAPI_FAMILY_PARTITION) || WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 /* There are some editions of Windows ("nano server," for example) that
  * do not host user32.dll. If we want to keep running on those editions,
  * we need to delay-load WaitForInputIdle. */

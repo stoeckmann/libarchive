@@ -1948,29 +1948,20 @@ static int process_head_file(struct archive_read* a, struct rar5* rar,
 		archive_entry_set_mode(entry, mode);
 
 		if (file_attr & (ATTR_READONLY | ATTR_HIDDEN | ATTR_SYSTEM)) {
-			char *fflags_text, *ptr;
-			/* allocate for ",rdonly,hidden,system" */
-			fflags_text = malloc(22 * sizeof(*fflags_text));
-			if (fflags_text != NULL) {
-				ptr = fflags_text;
-				if (file_attr & ATTR_READONLY) {
-					strcpy(ptr, ",rdonly");
-					ptr = ptr + 7;
-				}
-				if (file_attr & ATTR_HIDDEN) {
-					strcpy(ptr, ",hidden");
-					ptr = ptr + 7;
-				}
-				if (file_attr & ATTR_SYSTEM) {
-					strcpy(ptr, ",system");
-					ptr = ptr + 7;
-				}
-				if (ptr > fflags_text) {
-					archive_entry_copy_fflags_text(entry,
-					    fflags_text + 1);
-				}
-				free(fflags_text);
-			}
+			char buf[sizeof(",rdonly,hidden,system")];
+			char *fflags[3] = { "", "", "" };
+			char **flag = fflags;
+
+			if (file_attr & ATTR_READONLY)
+				*flag++ = ",rdonly";
+			if (file_attr & ATTR_HIDDEN)
+				*flag++ = ",hidden";
+			if (file_attr & ATTR_SYSTEM)
+				*flag++ = ",system";
+
+			snprintf(buf, sizeof(buf), "%s%s%s",
+			    fflags[0], fflags[1], fflags[2]);
+			archive_entry_copy_fflags_text(entry, buf + 1);
 		}
 	} else if(host_os == HOST_UNIX) {
 		/* Host OS is Unix */

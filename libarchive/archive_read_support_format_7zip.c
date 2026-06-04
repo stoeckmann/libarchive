@@ -4159,9 +4159,7 @@ x86_Convert(struct _7zip *zip, uint8_t *data, size_t size)
 		prevPosT = bufferPos;
 
 		if (Test86MSByte(p[4])) {
-			uint32_t src = ((uint32_t)p[4] << 24) |
-				((uint32_t)p[3] << 16) | ((uint32_t)p[2] << 8) |
-				((uint32_t)p[1]);
+			uint32_t src = archive_le32dec(p + 1);
 			uint32_t dest;
 			for (;;) {
 				uint8_t b;
@@ -4221,16 +4219,13 @@ arm_Convert(struct _7zip *zip, uint8_t *buf, size_t size)
 	for (i = 0; i + 4 <= size; i += 4) {
 		if (buf[i + 3] == 0xEB) {
 			// Calculate the transformed addr.
-			addr = (uint32_t)buf[i] | ((uint32_t)buf[i + 1] << 8)
-				| ((uint32_t)buf[i + 2] << 16);
+			addr = archive_le24dec(buf + i);
 			addr <<= 2;
 			addr -= zip->bcj_ip + (uint32_t)i;
 			addr >>= 2;
 
 			// Store the transformed addr in buf.
-			buf[i] = (uint8_t)addr;
-			buf[i + 1] = (uint8_t)(addr >> 8);
-			buf[i + 2] = (uint8_t)(addr >> 16);
+			archive_le24enc(buf + i, addr);
 		}
 	}
 
@@ -4261,20 +4256,14 @@ arm64_Convert(struct _7zip *zip, uint8_t *buf, size_t size)
 	uint32_t addr;
 
 	for (i = 0; i + 4 <= size; i += 4) {
-		instr = (uint32_t)buf[i]
-			| ((uint32_t)buf[i+1] << 8)
-			| ((uint32_t)buf[i+2] << 16)
-			| ((uint32_t)buf[i+3] << 24);
+		instr = archive_le32dec(buf + i);
 
 		if ((instr >> 26) == 0x25) {
 			/* BL instruction */
 			addr = instr - ((zip->bcj_ip + (uint32_t)i) >> 2);
 			instr = 0x94000000 | (addr & 0x03FFFFFF);
 
-			buf[i]   = (uint8_t)instr;
-			buf[i+1] = (uint8_t)(instr >> 8);
-			buf[i+2] = (uint8_t)(instr >> 16);
-			buf[i+3] = (uint8_t)(instr >> 24);
+			archive_le32enc(buf + i, instr);
 		} else if ((instr & 0x9F000000) == 0x90000000) {
 			/* ADRP instruction */
 			addr = ((instr >> 29) & 3) | ((instr >> 3) & 0x1FFFFC);
@@ -4290,10 +4279,7 @@ arm64_Convert(struct _7zip *zip, uint8_t *buf, size_t size)
 			instr |= (addr & 0x03FFFC) << 3;
 			instr |= (0U - (addr & 0x020000)) & 0xE00000;
 
-			buf[i]   = (uint8_t)instr;
-			buf[i+1] = (uint8_t)(instr >> 8);
-			buf[i+2] = (uint8_t)(instr >> 16);
-			buf[i+3] = (uint8_t)(instr >> 24);
+			archive_le32enc(buf + i, instr);
 		}
 	}
 
@@ -4336,10 +4322,7 @@ sparc_Convert(struct _7zip *zip, uint8_t *buf, size_t size)
 	size &= ~(size_t)3;
 
 	for (i = 0; i < size; i += 4) {
-		instr = ((uint32_t)buf[i] << 24)
-			| ((uint32_t)buf[i+1] << 16)
-			| ((uint32_t)buf[i+2] << 8)
-			| (uint32_t)buf[i+3];
+		instr = archive_be32dec(buf + i);
 
 		if ((instr >> 22) == 0x100 || (instr >> 22) == 0x1FF) {
 			instr <<= 2;
@@ -4348,10 +4331,7 @@ sparc_Convert(struct _7zip *zip, uint8_t *buf, size_t size)
 			instr = ((uint32_t)0x40000000 - (instr & 0x400000))
 			        | 0x40000000 | (instr & 0x3FFFFF);
 
-			buf[i] = (uint8_t)(instr >> 24);
-			buf[i+1] = (uint8_t)(instr >> 16);
-			buf[i+2] = (uint8_t)(instr >> 8);
-			buf[i+3] = (uint8_t)instr;
+			archive_be32enc(buf + i, instr);
 		}
 	}
 
@@ -4562,15 +4542,10 @@ Bcj2_Decode(struct _7zip *zip, uint8_t *outBuf, size_t outSize)
 				buf2 += 4;
 				size2 -= 4;
 			}
-			dest = (((uint32_t)v[0] << 24) |
-			    ((uint32_t)v[1] << 16) |
-			    ((uint32_t)v[2] << 8) |
-			    ((uint32_t)v[3])) -
+			dest = archive_be32dec(v) -
 			    ((uint32_t)zip->bcj2_outPos + (uint32_t)outPos + 4);
-			out[0] = (uint8_t)dest;
-			out[1] = (uint8_t)(dest >> 8);
-			out[2] = (uint8_t)(dest >> 16);
-			out[3] = zip->bcj2_prevByte = (uint8_t)(dest >> 24);
+			archive_le32enc(out, dest);
+			zip->bcj2_prevByte = out[3];
 
 			for (i = 0; i < 4 && outPos < outSize; i++)
 				outBuf[outPos++] = out[i];

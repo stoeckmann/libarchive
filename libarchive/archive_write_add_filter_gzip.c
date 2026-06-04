@@ -40,6 +40,7 @@
 #endif
 
 #include "archive.h"
+#include "archive_endian.h"
 #include "archive_private.h"
 #include "archive_string.h"
 #include "archive_write_private.h"
@@ -230,11 +231,8 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 	data->compressed[2] = 0x08; /* "Deflate" compression */
 	data->compressed[3] = 0x00; /* Flags */
 	if (data->timestamp >= 0) {
-		time_t t = time(NULL);
-		data->compressed[4] = (uint8_t)(t)&0xff;  /* Timestamp */
-		data->compressed[5] = (uint8_t)(t>>8)&0xff;
-		data->compressed[6] = (uint8_t)(t>>16)&0xff;
-		data->compressed[7] = (uint8_t)(t>>24)&0xff;
+		uint32_t t = (uint32_t)time(NULL);
+		archive_le32enc(data->compressed + 4, t); /* Timestamp */
 	} else {
 		memset(&data->compressed[4], 0, 4);
 	}
@@ -358,14 +356,8 @@ archive_compressor_gzip_close(struct archive_write_filter *f)
 	}
 	if (ret == ARCHIVE_OK) {
 		/* Build and write out 8-byte trailer. */
-		trailer[0] = (uint8_t)(data->crc)&0xff;
-		trailer[1] = (uint8_t)(data->crc >> 8)&0xff;
-		trailer[2] = (uint8_t)(data->crc >> 16)&0xff;
-		trailer[3] = (uint8_t)(data->crc >> 24)&0xff;
-		trailer[4] = (uint8_t)(data->total_in)&0xff;
-		trailer[5] = (uint8_t)(data->total_in >> 8)&0xff;
-		trailer[6] = (uint8_t)(data->total_in >> 16)&0xff;
-		trailer[7] = (uint8_t)(data->total_in >> 24)&0xff;
+		archive_le32enc(trailer, data->crc);
+		archive_le32enc(trailer + 4, data->total_in);
 		ret = __archive_write_filter(f->next_filter, trailer, 8);
 	}
 

@@ -61,7 +61,7 @@ struct private_data {
 	char	*original_filename;
 #ifdef HAVE_ZLIB_H
 	z_stream	 stream;
-	int64_t		 total_in;
+	uint64_t	 total_in;
 	unsigned char	*compressed;
 	size_t		 compressed_buffer_size;
 	unsigned long	 crc;

@@ -178,7 +178,7 @@ archive_compressor_gzip_options(struct archive_write_filter *f, const char *key,
 		if (value) {
 			data->original_filename = strdup(value);
 			if (data->original_filename == NULL)
-				return (ARCHIVE_WARN);
+				return (ARCHIVE_FAILED);
 		}
 		return (ARCHIVE_OK);
 	}

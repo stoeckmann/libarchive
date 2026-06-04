@@ -38,6 +38,7 @@
 #endif
 
 #include "archive.h"
+#include "archive_endian.h"
 #include "archive_entry.h"
 #include "archive_entry_locale.h"
 #include "archive_private.h"
@@ -202,7 +203,7 @@ static int	archive_read_format_cpio_read_data(struct archive_read *,
 static int	archive_read_format_cpio_read_header(struct archive_read *,
 		    struct archive_entry *);
 static int	archive_read_format_cpio_skip(struct archive_read *);
-static int64_t	be4(const unsigned char *);
+static int64_t	be32dec(const unsigned char *);
 static int	find_odc_header(struct archive_read *);
 static int	find_newc_header(struct archive_read *);
 static int	header_bin_be(struct archive_read *, struct cpio *,
@@ -217,7 +218,7 @@ static int	header_afiol(struct archive_read *, struct cpio *,
 		    struct archive_entry *, size_t *, size_t *);
 static int	is_octal(const char *, size_t);
 static int	is_hex(const char *, size_t);
-static int64_t	le4(const unsigned char *);
+static int64_t	le32dec(const unsigned char *);
 static int	record_hardlink(struct archive_read *a,
 		    struct cpio *cpio, struct archive_entry *entry);
 
@@ -305,12 +306,12 @@ archive_read_format_cpio_bid(struct archive_read *a, int best_bid)
 		 * XXX TODO:  More verification; Could check that only hex
 		 * digits appear in appropriate header locations. XXX
 		 */
-	} else if (p[0] * 256 + p[1] == 070707) {
+	} else if (archive_be16dec(p) == 070707) {
 		/* big-endian binary cpio archives */
 		cpio->read_header = header_bin_be;
 		bid += 16;
 		/* Is more verification possible here? */
-	} else if (p[0] + p[1] * 256 == 070707) {
+	} else if (archive_le16dec(p) == 070707) {
 		/* little-endian binary cpio archives */
 		cpio->read_header = header_bin_le;
 		bid += 16;
@@ -926,24 +927,24 @@ header_bin_le(struct archive_read *a, struct cpio *cpio,
 	/* Parse out binary fields. */
 	header = (const unsigned char *)h;
 
-	archive_entry_set_dev(entry, header[bin_dev_offset] + header[bin_dev_offset + 1] * 256);
-	archive_entry_set_ino(entry, header[bin_ino_offset] + header[bin_ino_offset + 1] * 256);
-	archive_entry_set_mode(entry, header[bin_mode_offset] + header[bin_mode_offset + 1] * 256);
+	archive_entry_set_dev(entry, archive_le16dec(header + bin_dev_offset));
+	archive_entry_set_ino(entry, archive_le16dec(header + bin_ino_offset));
+	archive_entry_set_mode(entry, archive_le16dec(header + bin_mode_offset));
 	if (cpio->option_pwb) {
 		/* turn off random bits left over from V6 inode */
 		archive_entry_set_mode(entry, archive_entry_mode(entry) & 067777);
 		if ((archive_entry_mode(entry) & AE_IFMT) == 0)
 			archive_entry_set_mode(entry, archive_entry_mode(entry) | AE_IFREG);
 	}
-	archive_entry_set_uid(entry, header[bin_uid_offset] + header[bin_uid_offset + 1] * 256);
-	archive_entry_set_gid(entry, header[bin_gid_offset] + header[bin_gid_offset + 1] * 256);
-	archive_entry_set_nlink(entry, header[bin_nlink_offset] + header[bin_nlink_offset + 1] * 256);
-	archive_entry_set_rdev(entry, header[bin_rdev_offset] + header[bin_rdev_offset + 1] * 256);
-	archive_entry_set_mtime(entry, le4(header + bin_mtime_offset), 0);
-	*namelength = header[bin_namesize_offset] + header[bin_namesize_offset + 1] * 256;
+	archive_entry_set_uid(entry, archive_le16dec(header + bin_uid_offset));
+	archive_entry_set_gid(entry, archive_le16dec(header + bin_gid_offset));
+	archive_entry_set_nlink(entry, archive_le16dec(header + bin_nlink_offset));
+	archive_entry_set_rdev(entry, archive_le16dec(header + bin_rdev_offset));
+	archive_entry_set_mtime(entry, le32dec(header + bin_mtime_offset), 0);
+	*namelength = archive_le16dec(header + bin_namesize_offset);
 	*name_pad = *namelength & 1; /* Pad to even. */
 
-	cpio->entry_bytes_remaining = le4(header + bin_filesize_offset);
+	cpio->entry_bytes_remaining = le32dec(header + bin_filesize_offset);
 	archive_entry_set_size(entry, cpio->entry_bytes_remaining);
 	cpio->entry_padding = cpio->entry_bytes_remaining & 1; /* Pad to even. */
 	__archive_read_consume(a, bin_header_size);
@@ -971,24 +972,24 @@ header_bin_be(struct archive_read *a, struct cpio *cpio,
 	/* Parse out binary fields. */
 	header = (const unsigned char *)h;
 
-	archive_entry_set_dev(entry, header[bin_dev_offset] * 256 + header[bin_dev_offset + 1]);
-	archive_entry_set_ino(entry, header[bin_ino_offset] * 256 + header[bin_ino_offset + 1]);
-	archive_entry_set_mode(entry, header[bin_mode_offset] * 256 + header[bin_mode_offset + 1]);
+	archive_entry_set_dev(entry, archive_be16dec(header + bin_dev_offset));
+	archive_entry_set_ino(entry, archive_be16dec(header + bin_ino_offset));
+	archive_entry_set_mode(entry, archive_be16dec(header + bin_mode_offset));
 	if (cpio->option_pwb) {
 		/* turn off random bits left over from V6 inode */
 		archive_entry_set_mode(entry, archive_entry_mode(entry) & 067777);
 		if ((archive_entry_mode(entry) & AE_IFMT) == 0)
 			archive_entry_set_mode(entry, archive_entry_mode(entry) | AE_IFREG);
 	}
-	archive_entry_set_uid(entry, header[bin_uid_offset] * 256 + header[bin_uid_offset + 1]);
-	archive_entry_set_gid(entry, header[bin_gid_offset] * 256 + header[bin_gid_offset + 1]);
-	archive_entry_set_nlink(entry, header[bin_nlink_offset] * 256 + header[bin_nlink_offset + 1]);
-	archive_entry_set_rdev(entry, header[bin_rdev_offset] * 256 + header[bin_rdev_offset + 1]);
-	archive_entry_set_mtime(entry, be4(header + bin_mtime_offset), 0);
-	*namelength = header[bin_namesize_offset] * 256 + header[bin_namesize_offset + 1];
+	archive_entry_set_uid(entry, archive_be16dec(header + bin_uid_offset));
+	archive_entry_set_gid(entry, archive_be16dec(header + bin_gid_offset));
+	archive_entry_set_nlink(entry, archive_be16dec(header + bin_nlink_offset));
+	archive_entry_set_rdev(entry, archive_be16dec(header + bin_rdev_offset));
+	archive_entry_set_mtime(entry, be32dec(header + bin_mtime_offset), 0);
+	*namelength = archive_be16dec(header + bin_namesize_offset);
 	*name_pad = *namelength & 1; /* Pad to even. */
 
-	cpio->entry_bytes_remaining = be4(header + bin_filesize_offset);
+	cpio->entry_bytes_remaining = be32dec(header + bin_filesize_offset);
 	archive_entry_set_size(entry, cpio->entry_bytes_remaining);
 	cpio->entry_padding = cpio->entry_bytes_remaining & 1; /* Pad to even. */
 	    __archive_read_consume(a, bin_header_size);
@@ -1015,16 +1016,15 @@ archive_read_format_cpio_cleanup(struct archive_read *a)
 }
 
 static int64_t
-le4(const unsigned char *p)
+le32dec(const unsigned char *p)
 {
-	return ((p[0] << 16) | (((int64_t)p[1]) << 24) | (p[2] << 0) | (p[3] << 8));
+	return ((int64_t)archive_le16dec(p) << 16) | archive_le16dec(p + 2);
 }
 
-
 static int64_t
-be4(const unsigned char *p)
+be32dec(const unsigned char *p)
 {
-	return ((((int64_t)p[0]) << 24) | (p[1] << 16) | (p[2] << 8) | (p[3]));
+	return ((int64_t)archive_be16dec(p) << 16) | archive_be16dec(p + 2);
 }
 
 /*

@@ -38,6 +38,7 @@
 #endif
 
 #include "archive.h"
+#include "archive_endian.h"
 #include "archive_entry.h"
 #include "archive_private.h"
 #include "archive_write_private.h"
@@ -408,9 +409,9 @@ static void
 uuencode_group(const char _in[3], char out[4])
 {
 	const unsigned char *in = (const unsigned char *)_in;
-	int t;
+	uint32_t t;
 
-	t = (in[0] << 16) | (in[1] << 8) | in[2];
+	t = archive_be24dec(in);
 	out[0] = UUENC( 0x3f & (t >> 18) );
 	out[1] = UUENC( 0x3f & (t >> 12) );
 	out[2] = UUENC( 0x3f & (t >> 6) );

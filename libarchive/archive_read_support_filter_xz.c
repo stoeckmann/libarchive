@@ -524,6 +524,7 @@ xz_lzma_bidder_init(struct archive_read_filter *self)
 	free(state->out_block);
 	free(state);
 	self->data = NULL;
+	self->vtable = NULL;
 	return (ARCHIVE_FATAL);
 }
 

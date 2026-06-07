@@ -1792,6 +1792,13 @@ static int process_head_file(struct archive_read* a, struct rar5* rar,
 		if(!read_var_sized(a, &data_size, NULL))
 			return ARCHIVE_EOF;
 
+		if(data_size > SSIZE_MAX) {
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "File data size is too large");
+			return ARCHIVE_FATAL;
+		}
+
 		rar->file.bytes_remaining = data_size;
 	} else {
 		rar->file.bytes_remaining = 0;
@@ -3575,12 +3582,13 @@ static int merge_block(struct archive_read* a, ssize_t block_size,
 		cur_block_size = rar5_min(rar->file.bytes_remaining,
 		    block_size - partial_offset);
 
-		if(cur_block_size == 0) {
-			/* bytes_remaining is 0 at the wrong point in the merge
-			 * loop, indicating corrupt volume accounting. */
+		if(cur_block_size < 1) {
+			/* bytes_remaining is less than 1 at the wrong point in
+			 * the merge loop, indicating corrupt volume
+			 * accounting. */
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "Encountered block size == 0 during block merge");
+			    "Encountered invalid block size during block merge");
 			rar->cstate.switch_multivolume = 0;
 			return ARCHIVE_FATAL;
 		}
@@ -3688,6 +3696,15 @@ static int process_block(struct archive_read* a) {
 		 * if present. */
 		to_skip = sizeof(struct compressed_block_header) +
 			bf_byte_count(&rar->last_block_hdr) + 1;
+
+		/* If the block header's to_skip value exceeds the declared
+		 * remaining data, the archive is malformed. */
+		if(to_skip > rar->file.bytes_remaining) {
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "Block header size exceeds remaining file data");
+			return ARCHIVE_FATAL;
+		}
 
 		if(ARCHIVE_OK != consume(a, to_skip))
 			return ARCHIVE_EOF;

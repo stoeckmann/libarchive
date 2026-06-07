@@ -56,7 +56,9 @@ pad_to(struct archive *a, int fd, int can_lseek,
 		actual_offset = lseek(fd,
 		    target_offset - actual_offset, SEEK_CUR);
 		if (actual_offset != target_offset) {
-			archive_set_error(a, errno, "Seek error");
+			archive_set_error(a,
+			    actual_offset == -1 ? errno : ARCHIVE_ERRNO_MISC,
+			    "Seek error");
 			return (ARCHIVE_FATAL);
 		}
 		return (ARCHIVE_OK);

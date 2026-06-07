@@ -86,6 +86,7 @@ archive_read_data_into_fd(struct archive *a, int fd)
 	const void *buff;
 	size_t size, bytes_to_write;
 	ssize_t bytes_written;
+	int64_t fd_offset;
 	int64_t target_offset;
 	int64_t actual_offset = 0;
 	int can_lseek;
@@ -96,6 +97,11 @@ archive_read_data_into_fd(struct archive *a, int fd)
 	    "archive_read_data_into_fd");
 
 	can_lseek = (fstat(fd, &st) == 0) && S_ISREG(st.st_mode);
+	if (can_lseek) {
+		fd_offset = lseek(fd, 0, SEEK_CUR);
+		if (fd_offset == -1)
+			can_lseek = 0;
+	}
 	if (!can_lseek) {
 		nulls = calloc(1, nulls_size);
 		if (!nulls) {
@@ -141,5 +147,15 @@ cleanup:
 	free(nulls);
 	if (r != ARCHIVE_EOF)
 		return (r);
-	return (ARCHIVE_OK);
+	r = ARCHIVE_OK;
+	if (can_lseek) {
+		int64_t offset = lseek(fd, 0, SEEK_CUR);
+		if (offset - fd_offset != actual_offset) {
+			archive_set_error(a,
+			    offset == -1 ? errno : ARCHIVE_ERRNO_MISC,
+			    "Seek error");
+			r = ARCHIVE_FATAL;
+		}
+	}
+	return (r);
 }

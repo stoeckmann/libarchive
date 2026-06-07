@@ -859,8 +859,11 @@ _archive_write_disk_header(struct archive *_a, struct archive_entry *entry)
 	a->current_fixup = NULL;
 	a->deferred = 0;
 	archive_entry_free(a->entry);
-	a->entry = NULL;
 	a->entry = archive_entry_clone(entry);
+	if (a->entry == NULL) {
+		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+		return (ARCHIVE_FATAL);
+	}
 	a->fh = INVALID_HANDLE_VALUE;
 	a->fd_offset = 0;
 	a->offset = 0;

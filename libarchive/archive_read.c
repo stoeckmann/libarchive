@@ -36,6 +36,9 @@
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -401,6 +404,7 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 	struct archive_read *a = (struct archive_read *)_a;
 	void *p;
 	unsigned int i;
+	unsigned int nodes;
 
 	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
 	    "archive_read_add_callback_data");
@@ -409,14 +413,26 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 			"Invalid index specified");
 		return ARCHIVE_FATAL;
 	}
-	p = realloc(a->client.dataset, sizeof(*a->client.dataset)
-		* (++(a->client.nodes)));
+
+	if (a->client.nodes == UINT_MAX ||
+    	(size_t)a->client.nodes + 1 >
+        SIZE_MAX / sizeof(*a->client.dataset)) {
+		archive_set_error(&a->archive, ENOMEM,
+			"No memory");
+		return ARCHIVE_FATAL;
+	}
+
+	nodes = a->client.nodes + 1;
+	p = realloc(a->client.dataset, sizeof(*a->client.dataset) * nodes);
 	if (p == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 			"No memory");
 		return ARCHIVE_FATAL;
 	}
+
 	a->client.dataset = (struct archive_read_data_node *)p;
+	a->client.nodes = nodes;
+
 	for (i = a->client.nodes - 1; i > iindex; i--) {
 		a->client.dataset[i].data = a->client.dataset[i-1].data;
 		a->client.dataset[i].begin_position = -1;

@@ -1698,15 +1698,22 @@ add_owner_id(struct archive_match *a, struct id_array *ids, int64_t id)
 
 	if (ids->count + 1 >= ids->size) {
 		void *p;
+		size_t new_size;
 
 		if (ids->size == 0)
-			ids->size = 8;
-		else
-			ids->size *= 2;
-		p = realloc(ids->ids, sizeof(*ids->ids) * ids->size);
+			new_size = 8;
+		else {
+			if (ids->size > SIZE_MAX / 2)
+				return (error_nomem(a));
+			new_size = ids->size * 2;
+		}
+		if (new_size > SIZE_MAX / sizeof(*ids->ids))
+			return (error_nomem(a));
+		p = realloc(ids->ids, sizeof(*ids->ids) * new_size);
 		if (p == NULL)
 			return (error_nomem(a));
 		ids->ids = (int64_t *)p;
+		ids->size = new_size;
 	}
 
 	/* Find an insert point. */

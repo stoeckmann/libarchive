@@ -78,7 +78,7 @@ struct links_entry {
 struct archive_entry_linkresolver {
 	struct links_entry	**buckets;
 	struct links_entry	 *spare;
-	unsigned long		  number_entries;
+	size_t			  number_entries;
 	size_t			  number_buckets;
 	int			  strategy;
 };

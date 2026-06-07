@@ -3039,8 +3039,8 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 		const char *sl;
 		char sl_last;
 
-		if (extra_space(&ctl) < 7)
-			bp = extra_next_record(&ctl, 7);
+		if (extra_space(&ctl) < 12)
+			bp = extra_next_record(&ctl, 12);
 		sl = file->symlink.s;
 		sl_last = '\0';
 		if (bp != NULL) {

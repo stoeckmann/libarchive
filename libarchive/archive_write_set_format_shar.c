@@ -173,6 +173,10 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 	/* Save the entry for the closing. */
 	archive_entry_free(shar->entry);
 	shar->entry = archive_entry_clone(entry);
+	if (shar->entry == NULL) {
+		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+		return (ARCHIVE_FATAL);
+	}
 	name = archive_entry_pathname(entry);
 
 	/* Handle some preparatory issues. */

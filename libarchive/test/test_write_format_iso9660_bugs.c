@@ -246,3 +246,60 @@ DEFINE_TEST(test_write_format_iso9660_duplicate_identifier_truncation)
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 	free(buff);
 }
+
+
+DEFINE_TEST(test_write_format_iso9660_symlink)
+{
+	const size_t buffsize = 512 * 1024;
+	unsigned char *buff;
+	size_t used = 0;
+	char name[1024];
+	struct archive *a;
+	struct archive_entry *ae;
+
+	assert((buff = malloc(buffsize)) != NULL);
+	for (size_t i = 0; i + 1 < sizeof(name); i++) {
+		/* Write the archive */
+		assert((a = archive_write_new()) != NULL);
+		assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_iso9660(a));
+		assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_none(a));
+		assertEqualIntA(a, ARCHIVE_OK,
+			archive_write_open_memory(a, buff, buffsize, &used));
+		assert((ae = archive_entry_new()) != NULL);
+		name[i] = 'A';
+		name[i + 1] = '\0';
+		archive_entry_copy_pathname(ae, name);
+		archive_entry_set_filetype(ae, AE_IFLNK);
+		archive_entry_set_symlink(ae, "B");
+		archive_entry_set_size(ae, 0);
+		assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+		archive_entry_free(ae);
+		assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
+		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+
+		/* Read the archive back */
+		assert((a = archive_read_new()) != NULL);
+		assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+		assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+		assertEqualIntA(a, ARCHIVE_OK,
+			archive_read_open_memory(a, buff, used));
+
+		/* First entry: the root directory '.' */
+		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+		assertEqualStringA(a, ".", archive_entry_pathname(ae));
+		assertEqualIntA(a, AE_IFDIR, archive_entry_filetype(ae));
+
+		/* Second entry: the symbolic link */
+		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+		assertEqualStringA(a, name, archive_entry_pathname(ae));
+		assertEqualIntA(a, AE_IFLNK, archive_entry_filetype(ae));
+		assertEqualStringA(a, "B", archive_entry_symlink(ae));
+		assertEqualIntA(a, 0, archive_entry_size(ae));
+
+		/* End of archive */
+		assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+		assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	}
+	free(buff);
+}

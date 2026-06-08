@@ -558,15 +558,12 @@ cab_strnlen(const unsigned char *p, size_t maxlen)
 static const void *
 cab_read_ahead_remaining(struct archive_read *a, size_t min, ssize_t *avail)
 {
-	const void *p;
+	const void *p = __archive_read_ahead(a, min, avail);
 
-	while (min > 0) {
-		p = __archive_read_ahead(a, min, avail);
-		if (p != NULL)
-			return (p);
-		min--;
-	}
-	return (NULL);
+	if (p == NULL && *avail > 0)
+		p = __archive_read_ahead(a, *avail, avail);
+
+	return (p);
 }
 
 /* Convert a path separator '\' -> '/' */

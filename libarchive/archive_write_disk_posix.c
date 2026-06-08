@@ -600,11 +600,12 @@ _archive_write_disk_header(struct archive *_a, struct archive_entry *entry)
 	a->pst = NULL;
 	a->current_fixup = NULL;
 	a->deferred = 0;
-	if (a->entry) {
-		archive_entry_free(a->entry);
-		a->entry = NULL;
-	}
+	archive_entry_free(a->entry);
 	a->entry = archive_entry_clone(entry);
+	if (a->entry == NULL) {
+		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+		return (ARCHIVE_FATAL);
+	}
 	a->fd = -1;
 	a->fd_offset = 0;
 	a->offset = 0;

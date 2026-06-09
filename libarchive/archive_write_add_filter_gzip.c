@@ -61,7 +61,7 @@ struct private_data {
 	char	*original_filename;
 #ifdef HAVE_ZLIB_H
 	z_stream	 stream;
-	int64_t		 total_in;
+	uint64_t	 total_in;
 	unsigned char	*compressed;
 	size_t		 compressed_buffer_size;
 	unsigned long	 crc;
@@ -178,7 +178,7 @@ archive_compressor_gzip_options(struct archive_write_filter *f, const char *key,
 		if (value) {
 			data->original_filename = strdup(value);
 			if (data->original_filename == NULL)
-				return (ARCHIVE_WARN);
+				return (ARCHIVE_FAILED);
 		}
 		return (ARCHIVE_OK);
 	}
@@ -253,9 +253,9 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 		/* Limit "original filename" to 32k or the
 		 * remaining space in the buffer, whichever is smaller.
 		 */
-		int ofn_length = strlen(data->original_filename);
-		int ofn_max_length = 32768;
-		int ofn_space_available = data->compressed
+		size_t ofn_length = strlen(data->original_filename);
+		size_t ofn_max_length = 32768;
+		size_t ofn_space_available = data->compressed
 			+ data->compressed_buffer_size
 			- data->stream.next_out
 			- 1;

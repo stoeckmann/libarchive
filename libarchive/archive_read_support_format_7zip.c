@@ -711,9 +711,9 @@ get_pe_sfx_offset(struct archive_read *a, int64_t *sfx_offset)
 		}
 		max_offset = offset;
 		while (sec_cnt > 0) {
-			uint32_t sec_end;
+			int64_t sec_end;
 
-			sec_end = archive_le32dec(
+			sec_end = (int64_t)archive_le32dec(
 				      h + offset + PE_SEC_HDR_RAW_SZ_OFFSET) +
 			    archive_le32dec(
 				h + offset + PE_SEC_HDR_RAW_ADDR_OFFSET);

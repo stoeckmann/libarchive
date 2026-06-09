@@ -643,11 +643,12 @@ add_pattern_from_file(struct archive_match *a, struct match_list *mlist,
 	}
 	r = archive_read_next_header(ar, &ae);
 	if (r != ARCHIVE_OK) {
-		archive_read_free(ar);
 		if (r == ARCHIVE_EOF) {
+			archive_read_free(ar);
 			return (ARCHIVE_OK);
 		} else {
 			archive_copy_error(&(a->archive), ar);
+			archive_read_free(ar);
 			return (r);
 		}
 	}

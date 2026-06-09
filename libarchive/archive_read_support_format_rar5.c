@@ -1048,10 +1048,7 @@ static int read_bits_32(struct archive_read* a, struct rar5* rar,
 		return ARCHIVE_FATAL;
 	}
 
-	uint32_t bits = ((uint32_t) p[rar->bits.in_addr]) << 24;
-	bits |= p[rar->bits.in_addr + 1] << 16;
-	bits |= p[rar->bits.in_addr + 2] << 8;
-	bits |= p[rar->bits.in_addr + 3];
+	uint32_t bits = archive_be32dec(p + rar->bits.in_addr);
 	bits <<= rar->bits.bit_addr;
 	bits |= p[rar->bits.in_addr + 4] >> (8 - rar->bits.bit_addr);
 	*value = bits;
@@ -1068,9 +1065,7 @@ static int read_bits_16(struct archive_read* a, struct rar5* rar,
 		return ARCHIVE_FATAL;
 	}
 
-	int bits = (int) ((uint32_t) p[rar->bits.in_addr]) << 16;
-	bits |= (int) p[rar->bits.in_addr + 1] << 8;
-	bits |= (int) p[rar->bits.in_addr + 2];
+	uint32_t bits = archive_be24dec(p + (unsigned)rar->bits.in_addr);
 	bits >>= (8 - rar->bits.bit_addr);
 	*value = bits & 0xffff;
 	return ARCHIVE_OK;

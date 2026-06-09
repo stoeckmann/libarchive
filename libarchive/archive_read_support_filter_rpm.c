@@ -95,12 +95,11 @@ rpm_bidder_bid(struct archive_read_filter_bidder *self,
     struct archive_read_filter *filter)
 {
 	const unsigned char *b;
-	ssize_t avail;
 	int bits_checked;
 
 	(void)self; /* UNUSED */
 
-	b = __archive_read_filter_ahead(filter, 8, &avail);
+	b = __archive_read_filter_ahead(filter, 8, NULL);
 	if (b == NULL)
 		return (0);
 

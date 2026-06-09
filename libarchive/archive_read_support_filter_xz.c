@@ -201,11 +201,10 @@ xz_bidder_bid(struct archive_read_filter_bidder *self,
     struct archive_read_filter *filter)
 {
 	const unsigned char *buffer;
-	ssize_t avail;
 
 	(void)self; /* UNUSED */
 
-	buffer = __archive_read_filter_ahead(filter, 6, &avail);
+	buffer = __archive_read_filter_ahead(filter, 6, NULL);
 	if (buffer == NULL)
 		return (0);
 
@@ -235,14 +234,13 @@ lzma_bidder_bid(struct archive_read_filter_bidder *self,
     struct archive_read_filter *filter)
 {
 	const unsigned char *buffer;
-	ssize_t avail;
 	uint32_t dicsize;
 	uint64_t uncompressed_size;
 	int bits_checked;
 
 	(void)self; /* UNUSED */
 
-	buffer = __archive_read_filter_ahead(filter, 14, &avail);
+	buffer = __archive_read_filter_ahead(filter, 14, NULL);
 	if (buffer == NULL)
 		return (0);
 
@@ -341,11 +339,10 @@ static int
 lzip_has_member(struct archive_read_filter *filter)
 {
 	const unsigned char *buffer;
-	ssize_t avail;
 	int bits_checked;
 	int log2dic;
 
-	buffer = __archive_read_filter_ahead(filter, 6, &avail);
+	buffer = __archive_read_filter_ahead(filter, 6, NULL);
 	if (buffer == NULL)
 		return (0);
 
@@ -535,12 +532,11 @@ lzip_init(struct archive_read_filter *self)
 	const unsigned char *h;
 	lzma_filter filters[2];
 	unsigned char props[5];
-	ssize_t avail_in;
 	uint32_t dicsize;
 	int log2dic, ret;
 
 	state = (struct private_data *)self->data;
-	h = __archive_read_filter_ahead(self->upstream, 6, &avail_in);
+	h = __archive_read_filter_ahead(self->upstream, 6, NULL);
 	if (h == NULL)
 		return (ARCHIVE_FATAL);
 

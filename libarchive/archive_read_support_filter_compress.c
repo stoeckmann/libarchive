@@ -173,13 +173,12 @@ compress_bidder_bid(struct archive_read_filter_bidder *self,
     struct archive_read_filter *filter)
 {
 	const unsigned char *buffer;
-	ssize_t avail;
 	int bits_checked;
 
 	(void)self; /* UNUSED */
 
 	/* Shortest valid compress file is 3 bytes. */
-	buffer = __archive_read_filter_ahead(filter, 3, &avail);
+	buffer = __archive_read_filter_ahead(filter, 3, NULL);
 
 	if (buffer == NULL)
 		return (0);
@@ -441,7 +440,7 @@ getbits(struct archive_read_filter *self, int n)
 				1, &ret);
 			if (ret == 0)
 				return (-1);
-			if (ret < 0 || state->next_in == NULL)
+			if (state->next_in == NULL)
 				return (ARCHIVE_FATAL);
 			state->consume_unnotified = state->avail_in = ret;
 		}

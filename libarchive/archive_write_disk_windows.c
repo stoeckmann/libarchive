@@ -580,45 +580,11 @@ la_mktemp(struct archive_write_disk *a)
 	return (fd);
 }
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-static void *
-la_GetFunctionKernel32(const char *name)
-{
-	static HINSTANCE lib;
-	static int set;
-	if (!set) {
-		set = 1;
-		lib = LoadLibrary(TEXT("kernel32.dll"));
-	}
-	if (lib == NULL) {
-		fprintf(stderr, "Can't load kernel32.dll?!\n");
-		exit(1);
-	}
-	return (void *)GetProcAddress(lib, name);
-}
-#endif
-
 static int
 la_CreateHardLinkW(wchar_t *linkname, wchar_t *target)
 {
-	static BOOL (WINAPI *f)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	BOOL ret;
-
-#if _WIN32_WINNT < _WIN32_WINNT_XP
-	static int set;
-/* CreateHardLinkW is available since XP and always loaded */
-	if (!set) {
-		set = 1;
-		f = la_GetFunctionKernel32("CreateHardLinkW");
-	}
-#else
-	f = CreateHardLinkW;
-#endif
-	if (!f) {
-		errno = ENOTSUP;
-		return (0);
-	}
-	ret = (*f)(linkname, target, NULL);
+	ret = CreateHardLinkW(linkname, target, NULL);
 	if (!ret) {
 		/* Under windows 2000, it is necessary to remove
 		 * the "\\?\" prefix. */
@@ -637,7 +603,7 @@ la_CreateHardLinkW(wchar_t *linkname, wchar_t *target)
 				target += 4;
 		}
 #undef IS_UNC
-		ret = (*f)(linkname, target, NULL);
+		ret = CreateHardLinkW(linkname, target, NULL);
 	}
 	return (ret);
 }
@@ -651,30 +617,18 @@ la_CreateHardLinkW(wchar_t *linkname, wchar_t *target)
 static int
 la_CreateSymbolicLinkW(const wchar_t *linkname, const wchar_t *target,
     int linktype) {
-	static BOOLEAN (WINAPI *f)(LPCWSTR, LPCWSTR, DWORD);
+	BOOL ret = 0;
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA ||\
+    !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP | WINAPI_PARTITION_SYSTEM)
+	(void)linkname; /* UNUSED */
+	(void)target; /* UNUSED */
+	(void)linktype; /* UNUSED */
+#else
 	wchar_t *ttarget, *p;
 	size_t len;
 	DWORD attrs = 0;
 	DWORD flags = 0;
 	DWORD newflags = 0;
-	BOOL ret = 0;
-
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-/* CreateSymbolicLinkW is available since Vista and always loaded */
-	static int set;
-	if (!set) {
-		set = 1;
-		f = la_GetFunctionKernel32("CreateSymbolicLinkW");
-	}
-#else
-# if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP | WINAPI_PARTITION_SYSTEM)
-	f = CreateSymbolicLinkW;
-# else
-	f = NULL;
-# endif
-#endif
-	if (!f)
-		return (0);
 
 	len = wcslen(target);
 	if (len == 0) {
@@ -736,15 +690,16 @@ la_CreateSymbolicLinkW(const wchar_t *linkname, const wchar_t *target,
 			disk_unlink(linkname);
 	}
 
-	ret = (*f)(linkname, ttarget, newflags);
+	ret = CreateSymbolicLinkW(linkname, ttarget, newflags);
 	/*
 	 * Prior to Windows 10 calling CreateSymbolicLinkW() will fail
 	 * if SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE is set
 	 */
 	if (!ret) {
-		ret = (*f)(linkname, ttarget, flags);
+		ret = CreateSymbolicLinkW(linkname, ttarget, flags);
 	}
 	free(ttarget);
+#endif
 	return (ret);
 }
 

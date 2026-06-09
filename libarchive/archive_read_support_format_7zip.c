@@ -1016,29 +1016,19 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 	const int supported_attrs = FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
 
 	if (zip_entry->attr & supported_attrs) {
-		char *fflags_text, *ptr;
-		/* allocate for ",rdonly,hidden,system" */
-		fflags_text = malloc(22 * sizeof(*fflags_text));
-		if (fflags_text != NULL) {
-			ptr = fflags_text;
-			if (zip_entry->attr & FILE_ATTRIBUTE_READONLY) {
-				strcpy(ptr, ",rdonly");
-				ptr = ptr + 7;
-			}
-			if (zip_entry->attr & FILE_ATTRIBUTE_HIDDEN) {
-				strcpy(ptr, ",hidden");
-				ptr = ptr + 7;
-			}
-			if (zip_entry->attr & FILE_ATTRIBUTE_SYSTEM) {
-				strcpy(ptr, ",system");
-				ptr = ptr + 7;
-			}
-			if (ptr > fflags_text) {
-				archive_entry_copy_fflags_text(entry,
-				    fflags_text + 1);
-			}
-			free(fflags_text);
-		}
+		char buf[sizeof(",rdonly,hidden,system")];
+		char *fflags[3] = { "", "", "" };
+		char **flag = fflags;
+
+		if (zip_entry->attr & FILE_ATTRIBUTE_READONLY)
+			*flag++ = ",rdonly";
+		if (zip_entry->attr & FILE_ATTRIBUTE_HIDDEN)
+			*flag++ = ",hidden";
+		if (zip_entry->attr & FILE_ATTRIBUTE_SYSTEM)
+			*flag++ = ",system";
+
+		snprintf(buf, sizeof(buf), "%s%s%s", fflags[0], fflags[1], fflags[2]);
+		archive_entry_copy_fflags_text(entry, buf + 1);
 	}
 
 	/* If there's no body, force read_data() to return EOF immediately. */

@@ -183,3 +183,10 @@ DEFINE_TEST(test_read_format_zip_winzip_aes256_large_xz)
 {
 	test_winzip_aes_large("test_read_format_zip_winzip_aes256_large_xz.zip", "zip:compression=xz");
 }
+
+DEFINE_TEST(test_read_format_zip_winzip_aes256_large_zstd)
+{
+	int file_order[FILE_COUNT] = { 3, 0, 1, 2 };
+	test_winzip_aes_large_with_file_order("test_read_format_zip_winzip_aes256_large_zstd.zip",
+										  "zip:compression=zstd", ((__LA_MODE_T)0664), file_order);
+}

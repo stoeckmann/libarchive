@@ -36,6 +36,7 @@
 #include <time.h>
 
 #include "archive.h"
+#include "archive_integer.h"
 
 /* Basic time units. */
 #define	EPOCH		1970
@@ -823,9 +824,6 @@ RelativeMonth(time_t Start, time_t Timezone, time_t RelMonth)
  */
 static uint64_t
 consume_unsigned_number(const char **in) {
-	static const uint64_t limit = (UINT64_MAX / 10);
-	static const uint64_t final_digit = (UINT64_MAX % 10);
-
 	uint64_t value = 0;
 	unsigned char c;
 
@@ -840,10 +838,10 @@ consume_unsigned_number(const char **in) {
 		unsigned char digit = c - '0';
 
 		/* Return error if the result would overflow UINT64_MAX */
-		if (value > limit || (value == limit && final_digit > digit)) {
+		if (archive_ckd_mul_u64(&value, value, 10) ||
+		    archive_ckd_add_u64(&value, value, digit)) {
 			return UINT64_MAX;
 		}
-		value = 10 * value + c - '0';
 		(*in)++;
 		c = (unsigned char)(**in);
 	}

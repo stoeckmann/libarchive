@@ -56,6 +56,7 @@
 #include "archive_endian.h"
 #include "archive_entry.h"
 #include "archive_entry_locale.h"
+#include "archive_integer.h"
 #include "archive_private.h"
 #include "archive_read_private.h"
 
@@ -1081,12 +1082,9 @@ atou64(const char *p, size_t char_cnt, int base, uint64_t *val)
 
 		digit = *p - '0';
 		while (digit >= 0 && digit < base && char_cnt-- > 0) {
-			if (l > UINT64_MAX / base)
+			if (archive_ckd_mul_u64(&l, l, base) ||
+			    archive_ckd_add_u64(&l, l, digit))
 				return (ARCHIVE_FATAL);
-			l *= base;
-			if (l > UINT64_MAX - digit)
-				return (ARCHIVE_FATAL);
-			l += digit;
 			digit = *++p - '0';
 		}
 	}

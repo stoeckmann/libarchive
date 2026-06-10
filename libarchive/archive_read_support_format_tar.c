@@ -42,6 +42,7 @@
 #include "archive_acl_private.h" /* For ACL parsing routines. */
 #include "archive_entry.h"
 #include "archive_entry_locale.h"
+#include "archive_integer.h"
 #include "archive_private.h"
 #include "archive_read_private.h"
 
@@ -2955,10 +2956,6 @@ pax_time(const char *p, size_t length, int64_t *ps, long *pn)
 	int64_t	s;
 	unsigned long l;
 	int sign;
-	int64_t limit, last_digit_limit;
-
-	limit = INT64_MAX / 10;
-	last_digit_limit = INT64_MAX % 10;
 
 	if (length <= 0) {
 		*ps = 0;
@@ -2974,13 +2971,12 @@ pax_time(const char *p, size_t length, int64_t *ps, long *pn)
 	}
 	while (length > 0 && *p >= '0' && *p <= '9') {
 		digit = *p - '0';
-		if (s > limit ||
-		    (s == limit && digit > last_digit_limit)) {
+		if (archive_ckd_mul_i64(&s, s, 10) ||
+		    archive_ckd_add_i64(&s, s, digit)) {
 			*ps = INT64_MIN;
 			*pn = 0;
 			return;
 		}
-		s = (s * 10) + digit;
 		++p;
 		--length;
 	}
@@ -3340,14 +3336,12 @@ static int64_t
 gnu_sparse_10_atol(struct archive_read *a, struct tar *tar,
     int64_t *remaining, int64_t *unconsumed)
 {
-	int64_t l, limit, last_digit_limit;
+	int64_t l;
 	const char *p;
 	ssize_t bytes_read;
 	int base, digit;
 
 	base = 10;
-	limit = INT64_MAX / base;
-	last_digit_limit = INT64_MAX % base;
 
 	/*
 	 * Skip any lines starting with '#'; GNU tar specs
@@ -3368,10 +3362,10 @@ gnu_sparse_10_atol(struct archive_read *a, struct tar *tar,
 		if (*p < '0' || *p >= '0' + base)
 			return (ARCHIVE_WARN);
 		digit = *p - '0';
-		if (l > limit || (l == limit && digit > last_digit_limit))
+		if (archive_ckd_mul_i64(&l, l, base) ||
+		    archive_ckd_add_i64(&l, l, digit)) {
 			l = INT64_MAX; /* Truncate on overflow. */
-		else
-			l = (l * base) + digit;
+		}
 		p++;
 		bytes_read--;
 	}
@@ -3517,12 +3511,8 @@ tar_atol(const char *p, size_t char_cnt)
 static int64_t
 tar_atol_base_n(const char *p, size_t char_cnt, int base)
 {
-	int64_t	l, maxval, limit, last_digit_limit;
+	int64_t	l;
 	int digit, sign;
-
-	maxval = INT64_MAX;
-	limit = INT64_MAX / base;
-	last_digit_limit = INT64_MAX % base;
 
 	/* the pointer will not be dereferenced if char_cnt is zero
 	 * due to the way the && operator is evaluated.
@@ -3537,25 +3527,22 @@ tar_atol_base_n(const char *p, size_t char_cnt, int base)
 		sign = -1;
 		p++;
 		char_cnt--;
-
-		maxval = INT64_MIN;
-		limit = -(INT64_MIN / base);
-		last_digit_limit = -(INT64_MIN % base);
 	}
 
 	l = 0;
 	if (char_cnt != 0) {
 		digit = *p - '0';
-		while (digit >= 0 && digit < base  && char_cnt != 0) {
-			if (l>limit || (l == limit && digit >= last_digit_limit)) {
-				return maxval; /* Truncate on overflow. */
+		while (digit >= 0 && digit < base && char_cnt != 0) {
+			if (archive_ckd_mul_i64(&l, l, base) ||
+			    archive_ckd_add_i64(&l, l, sign * digit)) {
+				 /* Truncate on overflow. */
+				return sign < 0 ? INT64_MIN : INT64_MAX;
 			}
-			l = (l * base) + digit;
 			digit = *++p - '0';
 			char_cnt--;
 		}
 	}
-	return (sign < 0) ? -l : l;
+	return l;
 }
 
 static int64_t

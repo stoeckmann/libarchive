@@ -24,11 +24,19 @@
  */
 
 #include "archive_platform.h"
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #include "archive_private.h"
 #include "archive_time_private.h"
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define NTFS_EPOC_TIME ARCHIVE_LITERAL_ULL(11644473600)
 #define NTFS_TICKS ARCHIVE_LITERAL_ULL(10000000)

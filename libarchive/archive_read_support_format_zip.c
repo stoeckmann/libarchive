@@ -1987,10 +1987,30 @@ zipx_lzma_alone_init(struct archive_read *a, struct zip *zip)
 	 */
 
 	/* Read magic1,magic2,lzma_params from the ZIPX stream. */
-	if(zip->entry_bytes_remaining < 9 || (p = __archive_read_ahead(a, 9, NULL)) == NULL) {
+	if(zip->entry_bytes_remaining < 9) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated lzma data");
 		return (ARCHIVE_FATAL);
+	}
+
+	if (zip->tctx_valid || zip->cctx_valid) {
+		const void *decrypted;
+		size_t out_len;
+		size_t consumed;
+		int ret;
+
+		ret = zipx_read_header_and_decrypt(a, &decrypted, 9, &out_len, &consumed);
+		if (ret != ARCHIVE_OK)
+			return ret;
+		p = decrypted;
+	} else {
+		p = __archive_read_ahead(a, 9, NULL);
+		if (p == NULL) {
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "Truncated lzma data");
+			return (ARCHIVE_FATAL);
+		}
 	}
 
 	if(p[2] != 0x05 || p[3] != 0x00) {
@@ -2152,6 +2172,7 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 	int ret;
 	lzma_ret lz_ret;
 	const void* compressed_buf;
+	const void* sp;
 	ssize_t bytes_avail, in_bytes, to_consume;
 
 	(void) offset; /* UNUSED */
@@ -2180,6 +2201,9 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 
 	/* Set decompressor parameters. */
 	in_bytes = (ssize_t)zipmin(zip->entry_bytes_remaining, bytes_avail);
+
+	zip_read_decrypt(zip, compressed_buf, in_bytes,
+	    &compressed_buf, &in_bytes, &sp);
 
 	zip->zipx_lzma_stream.next_in = compressed_buf;
 	zip->zipx_lzma_stream.avail_in = in_bytes;
@@ -2220,6 +2244,12 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 		case LZMA_OK:
 			break;
 
+		case LZMA_BUF_ERROR:
+			if (zip->zipx_lzma_stream.avail_out == 0) {
+				zip->end_of_entry = 1;
+				break;
+			}
+			/* FALL THROUGH */
 		default:
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "lzma unknown error (%d)", (int) lz_ret);
@@ -2234,8 +2264,23 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 	zip->entry_compressed_bytes_read += to_consume;
 	zip->entry_uncompressed_bytes_read += zip->zipx_lzma_stream.total_out;
 
+	zip_read_decrypt_update(zip, to_consume, sp);
+
 	if(zip->entry_bytes_remaining == 0) {
 		zip->end_of_entry = 1;
+	}
+
+	if(zip->end_of_entry && zip->entry_bytes_remaining > 0) {
+		ssize_t remaining = (ssize_t)zip->entry_bytes_remaining;
+		const void *p = __archive_read_ahead(a, remaining, NULL);
+		if (p != NULL) {
+			if (zip->hctx_valid)
+				archive_hmac_sha1_update(&zip->hctx,
+				    p, remaining);
+			__archive_read_consume(a, remaining);
+			zip->entry_compressed_bytes_read += remaining;
+			zip->entry_bytes_remaining = 0;
+		}
 	}
 
 	/* Free lzma decoder handle because we'll no longer need it. */
@@ -2244,6 +2289,12 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 	if(zip->end_of_entry) {
 		lzma_end(&zip->zipx_lzma_stream);
 		zip->zipx_lzma_valid = 0;
+
+		if (zip->hctx_valid) {
+			ret = check_authentication_code(a, NULL);
+			if (ret != ARCHIVE_OK)
+				return ret;
+		}
 	}
 
 	/* Return values. */

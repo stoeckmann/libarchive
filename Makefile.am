@@ -1121,6 +1121,7 @@ libarchive_test_EXTRA_DIST=\
 	libarchive/test/test_read_format_zip_winzip_aes128.zip.uu \
 	libarchive/test/test_read_format_zip_winzip_aes256.zip.uu \
 	libarchive/test/test_read_format_zip_winzip_aes256_large.zip.uu \
+	libarchive/test/test_read_format_zip_winzip_aes256_large_lzma.zip.uu \
 	libarchive/test/test_read_format_zip_winzip_aes256_large_ppmd.zip.uu \
 	libarchive/test/test_read_format_zip_winzip_aes256_large_xz.zip.uu \
 	libarchive/test/test_read_format_zip_winzip_aes256_stored.zip.uu \

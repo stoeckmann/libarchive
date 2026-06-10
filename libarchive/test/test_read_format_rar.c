@@ -592,6 +592,42 @@ DEFINE_TEST(test_read_format_rar_multi_lzss_blocks)
   assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
+DEFINE_TEST(test_read_format_rar3_lowdist_reset)
+{
+  const char reffile[] = "test_read_format_rar3_lowdist_reset.rar";
+  const unsigned char expected[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+    0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x0d, 0x0e,
+    0x0f, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e,
+    0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36
+  };
+  unsigned char buff[sizeof(expected)];
+  struct archive_entry *ae;
+  struct archive *a;
+
+  extract_reference_file(reffile);
+  assert((a = archive_read_new()) != NULL);
+  assertA(0 == archive_read_support_filter_all(a));
+  assertA(0 == archive_read_support_format_rar(a));
+  assertA(0 == archive_read_open_filename(a, reffile, 10240));
+
+  assertA(0 == archive_read_next_header(a, &ae));
+  assertEqualString("lowdist-reset.bin", archive_entry_pathname(ae));
+  assertEqualInt(sizeof(expected), archive_entry_size(ae));
+  assertEqualIntA(a, sizeof(expected),
+      archive_read_data(a, buff, sizeof(buff)));
+  assertEqualMem(buff, expected, sizeof(expected));
+
+  assertA(1 == archive_read_next_header(a, &ae));
+  assertEqualInt(1, archive_file_count(a));
+  assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+  assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
 DEFINE_TEST(test_read_format_rar_compress_best)
 {
   const char reffile[] = "test_read_format_rar_compress_best.rar";

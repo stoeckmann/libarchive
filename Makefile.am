@@ -971,6 +971,7 @@ libarchive_test_EXTRA_DIST=\
 	libarchive/test/test_read_format_rar_filter.rar.uu \
 	libarchive/test/test_read_format_rar_invalid1.rar.uu \
 	libarchive/test/test_read_format_rar_multi_lzss_blocks.rar.uu \
+	libarchive/test/test_read_format_rar3_lowdist_reset.rar.uu \
 	libarchive/test/test_read_format_rar_multivolume.part0001.rar.uu \
 	libarchive/test/test_read_format_rar_multivolume.part0002.rar.uu \
 	libarchive/test/test_read_format_rar_multivolume.part0003.rar.uu \

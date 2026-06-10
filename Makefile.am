@@ -114,6 +114,7 @@ noinst_HEADERS= \
 	libarchive/archive_entry_locale.h \
 	libarchive/archive_entry_private.h \
 	libarchive/archive_hmac_private.h \
+	libarchive/archive_integer.h \
 	libarchive/archive_openssl_evp_private.h \
 	libarchive/archive_openssl_hmac_private.h \
 	libarchive/archive_options_private.h \

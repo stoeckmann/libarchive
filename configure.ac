@@ -365,9 +365,9 @@ AS_VAR_IF([ac_cv_have_decl_FS_IOC_GETFLAGS], [yes],
     [AC_DEFINE_UNQUOTED([HAVE_WORKING_FS_IOC_GETFLAGS], [1],
                     [Define to 1 if you have a working FS_IOC_GETFLAGS])])
 
-AC_CHECK_HEADERS([locale.h membership.h paths.h poll.h pthread.h pwd.h])
-AC_CHECK_HEADERS([readpassphrase.h signal.h spawn.h])
-AC_CHECK_HEADERS([stdarg.h stdint.h stdlib.h string.h])
+AC_CHECK_HEADERS([intsafe.h locale.h membership.h paths.h poll.h pthread.h])
+AC_CHECK_HEADERS([pwd.h readpassphrase.h signal.h spawn.h])
+AC_CHECK_HEADERS([stdarg.h stdckdint.h stdint.h stdlib.h string.h])
 AC_CHECK_HEADERS([sys/acl.h sys/cdefs.h sys/ea.h sys/extattr.h])
 AC_CHECK_HEADERS([sys/ioctl.h sys/mkdev.h sys/mount.h])
 AC_CHECK_HEADERS([sys/param.h sys/poll.h sys/richacl.h])

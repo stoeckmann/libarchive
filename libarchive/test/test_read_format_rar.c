@@ -3906,6 +3906,25 @@ DEFINE_TEST(test_read_format_rar_newsub_huge)
 #endif
 }
 
+DEFINE_TEST(test_read_format_rar_newsub_rr_over_1m)
+{
+	const char* reffile = "test_read_format_rar_newsub_rr_over_1m.rar";
+	struct archive_entry *ae;
+	struct archive *a;
+
+	extract_reference_file(reffile);
+	assert((a = archive_read_new()) != NULL);
+	assertA(0 == archive_read_support_filter_all(a));
+	assertA(0 == archive_read_support_format_rar(a));
+	assertA(0 == archive_read_open_filename(a, reffile, 10240));
+
+	failure("RAR NEWSUB RR records larger than 1 MiB should be skipped");
+	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
 DEFINE_TEST(test_read_format_rar_newsub_huge64)
 {
   static const unsigned char archive[] = {
@@ -3925,10 +3944,10 @@ DEFINE_TEST(test_read_format_rar_newsub_huge64)
   assertA(0 == archive_read_support_format_rar(a));
   assertA(0 == archive_read_open_memory(a, archive, sizeof(archive)));
 
-  failure("Malformed RAR NEWSUB header should be rejected before "
-          "extended data read-ahead");
+  failure("Malformed RAR NEWSUB header should be rejected if its "
+          "extended data is missing");
   assertEqualIntA(a, ARCHIVE_FATAL, archive_read_next_header(a, &ae));
-  assertEqualString("Invalid RAR file: Overlarge extended header",
+  assertEqualString("Invalid RAR file: Cannot read extended header data",
                     archive_error_string(a));
 
   assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));

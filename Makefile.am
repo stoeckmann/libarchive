@@ -976,6 +976,7 @@ libarchive_test_EXTRA_DIST=\
 	libarchive/test/test_read_format_rar_multivolume.part0003.rar.uu \
 	libarchive/test/test_read_format_rar_multivolume.part0004.rar.uu \
 	libarchive/test/test_read_format_rar_newsub_huge.rar.uu \
+	libarchive/test/test_read_format_rar_newsub_rr_over_1m.rar.uu \
 	libarchive/test/test_read_format_rar_noeof.rar.uu \
 	libarchive/test/test_read_format_rar_overflow.rar.uu \
 	libarchive/test/test_read_format_rar_ppmd_lzss_conversion.rar.uu \

@@ -35,6 +35,7 @@
 #include <string.h>
 #endif
 
+#include "archive_integer.h"
 #include "archive_private.h"
 #include "archive_time_private.h"
 
@@ -157,15 +158,11 @@ unix_to_ntfs(int64_t secs, uint32_t nsecs)
 	if (secs < -(int64_t)NTFS_EPOC_TIME)
 		return 0;
 
-	ntfs = secs + NTFS_EPOC_TIME;
-
-	if (ntfs > UINT64_MAX / NTFS_TICKS)
+	/* (secs + NTFS_EPOC_TIME) * NTFS_TICKS + nsecs / 100 */
+	if (archive_ckd_add_u64(&ntfs, secs, NTFS_EPOC_TIME) ||
+	    archive_ckd_mul_u64(&ntfs, ntfs, NTFS_TICKS) ||
+	    archive_ckd_add_u64(&ntfs, ntfs, nsecs / 100))
 		return UINT64_MAX;
 
-	ntfs *= NTFS_TICKS;
-
-	if (ntfs > UINT64_MAX - nsecs/100)
-		return UINT64_MAX;
-
-	return ntfs + nsecs/100;
+	return ntfs;
 }

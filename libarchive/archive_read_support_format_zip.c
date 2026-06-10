@@ -294,6 +294,24 @@ ppmd_read(void* p) {
 		return 0;
 	}
 
+	if (zip->tctx_valid || zip->cctx_valid) {
+		uint8_t val;
+		if (zip->tctx_valid) {
+			trad_enc_decrypt_update(&zip->tctx,
+			    data, 1, &val, 1);
+		} else {
+			size_t dsize = 1;
+			archive_decrypto_aes_ctr_update(&zip->cctx,
+			    data, 1, &val, &dsize);
+		}
+		if (zip->hctx_valid)
+			archive_hmac_sha1_update(&zip->hctx, data, 1);
+
+		__archive_read_consume(a, 1);
+		++zip->zipx_ppmd_read_compressed;
+		return val;
+	}
+
 	__archive_read_consume(a, 1);
 
 	/* Increment the counter. */
@@ -404,6 +422,56 @@ crypt_derive_key_sha1(const void *p, int size, unsigned char *key,
 #undef MD_SIZE
 }
 #endif
+
+/* Read and decrypt bytes for zipx init headers.
+ * Used by format-specific init functions (lzma, ppmd) that need to
+ * read a small header from the compressed stream.  When encryption is
+ * active the bytes are decrypted in-place into the decryption buffer. */
+static int
+zipx_read_header_and_decrypt(struct archive_read *a, const void **buf, size_t in_len,
+    size_t *out_len, size_t *consumed)
+{
+	struct zip *zip = (struct zip *)(a->format->data);
+	const void *raw;
+	ssize_t bytes_avail;
+	size_t to_decrypt;
+
+	raw = __archive_read_ahead(a, in_len, &bytes_avail);
+	if (raw == NULL || bytes_avail < (ssize_t)in_len) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		    "Truncated ZIP file data");
+		return (ARCHIVE_FATAL);
+	}
+
+	if (zip->tctx_valid || zip->cctx_valid) {
+		to_decrypt = in_len;
+		if (to_decrypt > zip->decrypted_buffer_size)
+			to_decrypt = zip->decrypted_buffer_size;
+
+		if (zip->tctx_valid) {
+			trad_enc_decrypt_update(&zip->tctx,
+			    raw, to_decrypt,
+			    zip->decrypted_buffer, to_decrypt);
+		} else {
+			size_t dsize = to_decrypt;
+			archive_decrypto_aes_ctr_update(&zip->cctx,
+			    raw, to_decrypt,
+			    zip->decrypted_buffer, &dsize);
+		}
+		if (zip->hctx_valid)
+			archive_hmac_sha1_update(&zip->hctx,
+			    raw, to_decrypt);
+
+		*buf = zip->decrypted_buffer;
+		*out_len = to_decrypt;
+		*consumed = to_decrypt;
+	} else {
+		*buf = raw;
+		*out_len = in_len;
+		*consumed = in_len;
+	}
+	return (ARCHIVE_OK);
+}
 
 /* Decrypt bulk compressed data for zipx decompression.
  * Manages the decryption buffer, handles partial fills, and returns decrypted
@@ -2202,11 +2270,22 @@ zipx_ppmd8_init(struct archive_read *a, struct zip *zip)
 	zip->zipx_ppmd_read_compressed = 0;
 
 	/* Read Ppmd8 header (2 bytes). */
-	p = __archive_read_ahead(a, 2, NULL);
-	if(!p) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Truncated file data in PPMd8 stream");
-		return (ARCHIVE_FATAL);
+	if (zip->tctx_valid || zip->cctx_valid) {
+		size_t out_len;
+		size_t consumed;
+		int ret;
+
+		ret = zipx_read_header_and_decrypt(a, &p, 2, &out_len, &consumed);
+		if (ret != ARCHIVE_OK)
+			return ret;
+	} else {
+		p = __archive_read_ahead(a, 2, NULL);
+		if(!p) {
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "Truncated file data in PPMd8 stream");
+			return (ARCHIVE_FATAL);
+		}
 	}
 	__archive_read_consume(a, 2);
 
@@ -2332,6 +2411,12 @@ zip_read_data_zipx_ppmd(struct archive_read *a, const void **buff,
 	if(zip->end_of_entry) {
 		__archive_ppmd8_functions.Ppmd8_Free(&zip->ppmd8);
 		zip->ppmd8_valid = 0;
+
+		if (zip->hctx_valid) {
+			int r = check_authentication_code(a, NULL);
+			if (r != ARCHIVE_OK)
+				return (r);
+		}
 	}
 
 	/* Update pointers for libarchive. */

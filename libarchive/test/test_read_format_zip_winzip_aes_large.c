@@ -163,6 +163,12 @@ DEFINE_TEST(test_read_format_zip_winzip_aes256_large)
 	test_winzip_aes_large("test_read_format_zip_winzip_aes256_large.zip", NULL);
 }
 
+
+DEFINE_TEST(test_read_format_zip_winzip_aes256_large_bzip2)
+{
+	test_winzip_aes_large("test_read_format_zip_winzip_aes256_large_bzip2.zip", "zip:compression=bzip2");
+}
+
 DEFINE_TEST(test_read_format_zip_winzip_aes256_large_lzma)
 {
 	test_winzip_aes_large("test_read_format_zip_winzip_aes256_large_lzma.zip", "zip:compression=lzma");

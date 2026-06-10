@@ -2542,6 +2542,7 @@ zip_read_data_zipx_bzip2(struct archive_read *a, const void **buff,
 	struct zip *zip = (struct zip *)(a->format->data);
 	ssize_t bytes_avail = 0, in_bytes, to_consume;
 	const void *compressed_buff;
+	const void *sp;
 	int r;
 	uint64_t total_out;
 
@@ -2573,6 +2574,9 @@ zip_read_data_zipx_bzip2(struct archive_read *a, const void **buff,
 		    "Truncated bzip2 file body");
 		return (ARCHIVE_FATAL);
 	}
+
+	zip_read_decrypt(zip, compressed_buff, in_bytes,
+	    &compressed_buff, &in_bytes, &sp);
 
 	/* Setup buffer boundaries. */
 	zip->bzstream.next_in = (char*)(uintptr_t) compressed_buff;
@@ -2623,6 +2627,14 @@ zip_read_data_zipx_bzip2(struct archive_read *a, const void **buff,
 	zip->entry_bytes_remaining -= to_consume;
 	zip->entry_compressed_bytes_read += to_consume;
 	zip->entry_uncompressed_bytes_read += total_out;
+
+	zip_read_decrypt_update(zip, to_consume, sp);
+
+	if (zip->end_of_entry && zip->hctx_valid) {
+		r = check_authentication_code(a, NULL);
+		if (r != ARCHIVE_OK)
+			return r;
+	}
 
 	/* Give libarchive its due. */
 	*size = (size_t)total_out;

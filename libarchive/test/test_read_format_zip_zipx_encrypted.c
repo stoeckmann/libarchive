@@ -160,3 +160,8 @@ DEFINE_TEST(test_read_format_zip_deflate_encrypted)
 {
 	test_encrypted_zipx("zip:compression=deflate");
 }
+
+DEFINE_TEST(test_read_format_zip_zipx_xz_encrypted)
+{
+	test_encrypted_zipx("zip:compression=xz");
+}

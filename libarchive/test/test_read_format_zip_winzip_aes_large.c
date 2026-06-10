@@ -167,3 +167,8 @@ DEFINE_TEST(test_read_format_zip_winzip_aes256_large_ppmd)
 {
 	test_winzip_aes_large("test_read_format_zip_winzip_aes256_large_ppmd.zip", NULL);
 }
+
+DEFINE_TEST(test_read_format_zip_winzip_aes256_large_xz)
+{
+	test_winzip_aes_large("test_read_format_zip_winzip_aes256_large_xz.zip", "zip:compression=xz");
+}

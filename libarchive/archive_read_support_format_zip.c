@@ -2056,6 +2056,7 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 	int ret;
 	lzma_ret lz_ret;
 	const void* compressed_buf;
+	const void* sp;
 	ssize_t bytes_avail, in_bytes, to_consume = 0;
 
 	(void) offset; /* UNUSED */
@@ -2067,7 +2068,7 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 			return (ret);
 	}
 
-	compressed_buf = __archive_read_ahead(a, 1, &bytes_avail);
+	compressed_buf = sp = __archive_read_ahead(a, 1, &bytes_avail);
 	if (bytes_avail < 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated xz file body");
@@ -2075,6 +2076,10 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 	}
 
 	in_bytes = (ssize_t)zipmin(zip->entry_bytes_remaining, bytes_avail);
+
+	zip_read_decrypt(zip, compressed_buf, in_bytes,
+		&compressed_buf, &in_bytes, &sp);
+
 	zip->zipx_lzma_stream.next_in = compressed_buf;
 	zip->zipx_lzma_stream.avail_in = in_bytes;
 	zip->zipx_lzma_stream.total_in = 0;
@@ -2122,6 +2127,16 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 	zip->entry_bytes_remaining -= to_consume;
 	zip->entry_compressed_bytes_read += to_consume;
 	zip->entry_uncompressed_bytes_read += zip->zipx_lzma_stream.total_out;
+
+	zip_read_decrypt_update(zip, to_consume, sp);
+
+	if (zip->end_of_entry) {
+		if (zip->hctx_valid) {
+			ret = check_authentication_code(a, NULL);
+			if (ret != ARCHIVE_OK)
+				return ret;
+		}
+	}
 
 	*size = (size_t)zip->zipx_lzma_stream.total_out;
 	*buff = zip->uncompressed_buffer;

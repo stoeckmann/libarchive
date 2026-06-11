@@ -264,7 +264,7 @@ struct cfheader {
 };
 
 struct cab {
-	/* entry_bytes_remaining is the number of bytes we expect.	    */
+	/* entry_bytes_remaining is the number of bytes we expect. */
 	int64_t			 entry_offset;
 	int64_t			 entry_bytes_remaining;
 	int64_t			 entry_unconsumed;
@@ -773,7 +773,7 @@ cab_read_header(struct archive_read *a)
 	 */
 	/* Seek read pointer to the offset of CFFILE if needed. */
 	skip = (int64_t)hd->files_offset - cab->cab_offset;
-	if (skip <  0) {
+	if (skip < 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Invalid offset of CFFILE %jd < %jd",
 		    (intmax_t)hd->files_offset, (intmax_t)cab->cab_offset);

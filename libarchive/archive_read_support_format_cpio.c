@@ -1127,8 +1127,8 @@ record_hardlink(struct archive_read *a,
 	const char *pathname = archive_entry_pathname(entry);
 	if (pathname == NULL) {
 		archive_set_error(&a->archive,
-			ARCHIVE_ERRNO_FILE_FORMAT,
-           "Invalid hardlink entry with no pathname");
+		    ARCHIVE_ERRNO_FILE_FORMAT,
+		    "Invalid hardlink entry with no pathname");
 		free(le);
 		return (ARCHIVE_FATAL);
 	}

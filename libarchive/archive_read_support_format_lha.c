@@ -142,7 +142,6 @@ struct lzh_stream {
 	int64_t			 total_in;
 	const unsigned char	*ref_ptr;
 	int			 avail_out;
-	int64_t			 total_out;
 	struct lzh_dec		*ds;
 };
 
@@ -1585,7 +1584,6 @@ lha_read_data_lzh(struct archive_read *a, const void **buff,
 		/* We've initialized decompression for this stream. */
 		lha->decompress_init = 1;
 		lha->strm.avail_out = 0;
-		lha->strm.total_out = 0;
 	}
 
 	/*
@@ -2137,7 +2135,6 @@ lzh_emit_window(struct lzh_stream *strm, size_t s)
 {
 	strm->ref_ptr = strm->ds->w_buff;
 	strm->avail_out = (int)s;
-	strm->total_out += s;
 }
 
 static int

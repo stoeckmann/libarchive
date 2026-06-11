@@ -61,7 +61,6 @@ struct private_data {
 	unsigned	 preset_dictionary:1;
 	unsigned	 block_maximum_size:3;
 #if defined(HAVE_LIBLZ4) && LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 2
-	int64_t		 total_in;
 	char		*out;
 	char		*out_buffer;
 	size_t		 out_buffer_size;
@@ -305,9 +304,6 @@ archive_filter_lz4_write(struct archive_write_filter *f,
 			return (ret);
 		data->header_written = 1;
 	}
-
-	/* Update statistics */
-	data->total_in += length;
 
 	p = (const char *)buff;
 	remaining = length;

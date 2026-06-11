@@ -112,8 +112,8 @@ struct lzx_dec {
 		unsigned char	*bitlen;
 
 		/*
-		 * Use a index table. It's faster than searching a huffman
-		 * coding tree, which is a binary tree. But a use of a large
+		 * Use an index table. It's faster than searching a huffman
+		 * coding tree, which is a binary tree. But usage of a large
 		 * index table causes L1 cache read miss many times.
 		 */
 		int		 max_bits;
@@ -279,7 +279,7 @@ struct cab {
 	struct cfheader		 cfheader;
 	struct archive_wstring	 ws;
 
-	/* Flag to mark progress that an archive was read their first header.*/
+	/* Flag to mark progress that first header of an archive was read.*/
 	char			 found_header;
 	char			 end_of_archive;
 	char			 end_of_entry;
@@ -433,7 +433,7 @@ archive_read_format_cab_bid(struct archive_read *a, int best_bid)
 	/*
 	 * Attempt to handle self-extracting archives
 	 * by noting a PE header and searching forward
-	 * up to 128k for a 'MSCF' marker.
+	 * up to 128k for an 'MSCF' marker.
 	 */
 	if (p[0] == 'M' && p[1] == 'Z') {
 		offset = 0;
@@ -501,7 +501,7 @@ cab_skip_sfx(struct archive_read *a)
 	for (;;) {
 		const char *h = __archive_read_ahead(a, window, &bytes);
 		if (h == NULL) {
-			/* Remaining size are less than window. */
+			/* Remaining size is less than window. */
 			window >>= 1;
 			if (window < 128) {
 				archive_set_error(&a->archive,

@@ -1235,7 +1235,7 @@ __LA_DECL int	archive_match_exclude_entry(struct archive *,
 		    int _flag, struct archive_entry *);
 
 /*
- * Test if a file is excluded by its uid ,gid, uname or gname.
+ * Test if a file is excluded by its uid, gid, uname or gname.
  * The conditions are set by following functions.
  */
 __LA_DECL int	archive_match_owner_excluded(struct archive *,

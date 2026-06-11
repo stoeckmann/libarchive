@@ -172,7 +172,7 @@ And assertions that verify particular file properties, such as:
 - `assertFileSize(path, expected_size)`
 - `assertTextFileContents(expected_text, path)`
 
-The full set of asertions is listed in `test_utils/test_common.h`.
+The full set of assertions is listed in `test_utils/test_common.h`.
 You can search the existing tests to find examples of their usage.
 
 ---

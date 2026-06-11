@@ -338,13 +338,13 @@ test_archive_string_normalization_nfc(const char *testdata)
 		nfd[sizeof(nfd)-1] = '\0';
 
 		/*
-		 * Get an NFC patterns.
+		 * Get an NFC pattern.
 		 */
 		scan_unicode_pattern(utf8_nfc, wc_nfc, utf16be_nfc, utf16le_nfc,
 		    nfc, 0);
 
 		/*
-		 * Get an NFD patterns.
+		 * Get an NFD pattern.
 		 */
 		scan_unicode_pattern(utf8_nfd, wc_nfd, utf16be_nfd, utf16le_nfd,
 		    nfd, 0);
@@ -550,7 +550,7 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 		nfd[sizeof(nfd)-1] = '\0';
 
 		/*
-		 * Get an NFC patterns.
+		 * Get an NFC pattern.
 		 */
 		should_be_nfc = scan_unicode_pattern(utf8_nfc, wc_nfc,
 			utf16be_nfc, utf16le_nfc, nfc, 1);

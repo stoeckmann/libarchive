@@ -347,11 +347,9 @@ struct _7zip {
 	struct {
 		const unsigned char	*next_in;
 		int64_t			 avail_in;
-		int64_t			 total_in;
 		int64_t			 stream_in;
 		unsigned char		*next_out;
 		int64_t			 avail_out;
-		int64_t			 total_out;
 		int			 overconsumed;
 	} ppstream;
 	int			 ppmd7_valid;
@@ -1335,7 +1333,6 @@ ppmd_read(void *p)
 		b = *zip->ppstream.next_in++;
 	}
 	zip->ppstream.avail_in--;
-	zip->ppstream.total_in++;
 	zip->ppstream.stream_in++;
 	return (b);
 }
@@ -1645,8 +1642,6 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		zip->ppmd7_valid = 1;
 		zip->ppmd7_stat = 0;
 		zip->ppstream.overconsumed = 0;
-		zip->ppstream.total_in = 0;
-		zip->ppstream.total_out = 0;
 		break;
 	}
 	case _7Z_X86:
@@ -1929,7 +1924,6 @@ decompress(struct archive_read *a, struct _7zip *zip,
 			}
 			*zip->ppstream.next_out++ = (unsigned char)sym;
 			zip->ppstream.avail_out--;
-			zip->ppstream.total_out++;
 			if (flush_bytes)
 				flush_bytes--;
 		} while (zip->ppstream.avail_out &&

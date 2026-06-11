@@ -2388,7 +2388,6 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 	int64_t t;
 	long n;
 	const char *p;
-	ssize_t bytes_read;
 	int err = ARCHIVE_OK;
 
 	switch (key[0]) {
@@ -2472,7 +2471,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 								  (unsigned long long)sparse_map_limit);
 						err = ARCHIVE_FAILED;
 					} else {
-						p = __archive_read_ahead(a, value_length, &bytes_read);
+						p = __archive_read_ahead(a, value_length, NULL);
 						if (p == NULL) {
 							archive_set_error(&a->archive, EINVAL,
 									  "Truncated archive"
@@ -2560,7 +2559,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 			else if (key_length == 11 && memcmp(key, "symlinktype", 11) == 0) {
 				/* LIBARCHIVE.symlinktype */
 				if (value_length < 16) {
-					p = __archive_read_ahead(a, value_length, &bytes_read);
+					p = __archive_read_ahead(a, value_length, NULL);
 					if (p == NULL) {
 						archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 								  "Truncated tar archive "
@@ -2594,7 +2593,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 				if (value_length > xattr_limit) {
 					err = ARCHIVE_WARN;
 				} else {
-					p = __archive_read_ahead(a, value_length, &bytes_read);
+					p = __archive_read_ahead(a, value_length, NULL);
 					if (p == NULL) {
 						archive_set_error(&a->archive, EINVAL,
 								  "Truncated archive"
@@ -2624,7 +2623,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 				/* TODO: Should this be FAILED instead? */
 				err = ARCHIVE_WARN;
 			} else {
-				p = __archive_read_ahead(a, value_length, &bytes_read);
+				p = __archive_read_ahead(a, value_length, NULL);
 				if (p == NULL) {
 					archive_set_error(&a->archive, EINVAL,
 							  "Truncated archive"
@@ -2677,7 +2676,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 			}
 			else if (key_length == 6 && memcmp(key, "fflags", 6) == 0) {
 				if (value_length < fflags_limit) {
-					p = __archive_read_ahead(a, value_length, &bytes_read);
+					p = __archive_read_ahead(a, value_length, NULL);
 					if (p == NULL) {
 						/* Truncated archive */
 						archive_set_error(&a->archive, EINVAL,
@@ -2724,7 +2723,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 				key_length -= 6;
 				key += 6;
 				if (value_length < xattr_limit) {
-					p = __archive_read_ahead(a, value_length, &bytes_read);
+					p = __archive_read_ahead(a, value_length, NULL);
 					if (p == NULL) {
 						archive_set_error(&a->archive, EINVAL,
 								  "Truncated archive"
@@ -2754,7 +2753,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 			if (key_length == 9 && memcmp(key, "holesdata", 9) == 0) {
 				/* SUN.holesdata */
 				if (value_length < sparse_map_limit) {
-					p = __archive_read_ahead(a, value_length, &bytes_read);
+					p = __archive_read_ahead(a, value_length, NULL);
 					if (p == NULL) {
 						archive_set_error(&a->archive, EINVAL,
 								  "Truncated archive"
@@ -2828,7 +2827,7 @@ pax_attribute(struct archive_read *a, struct tar *tar, struct archive_entry *ent
 	case 'h':
 		if (key_length == 10 && memcmp(key, "hdrcharset", 10) == 0) {
 			if (value_length < 64) {
-				p = __archive_read_ahead(a, value_length, &bytes_read);
+				p = __archive_read_ahead(a, value_length, NULL);
 				if (p == NULL) {
 					archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 							  "Truncated tar archive "
@@ -3204,7 +3203,6 @@ static int
 gnu_sparse_old_read(struct archive_read *a, struct tar *tar,
     const struct archive_entry_header_gnutar *header, int64_t *unconsumed)
 {
-	ssize_t bytes_read;
 	const void *data;
 	struct extended {
 		struct gnu_sparse sparse[21];
@@ -3222,7 +3220,7 @@ gnu_sparse_old_read(struct archive_read *a, struct tar *tar,
 		if (tar_flush_unconsumed(a, unconsumed) != ARCHIVE_OK) {
 			return (ARCHIVE_FATAL);
 		}
-		data = __archive_read_ahead(a, 512, &bytes_read);
+		data = __archive_read_ahead(a, 512, NULL);
 		if (data == NULL) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated tar archive "

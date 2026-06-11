@@ -1574,11 +1574,9 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 	 * correctly compute the sum of CFDATA accordingly.
 	 */
 	if (cfdata->compressed_bytes_remaining > 0) {
-		ssize_t bytes_avail;
-
-		d = __archive_read_ahead(a, cfdata->compressed_bytes_remaining,
-		    &bytes_avail);
-		if (bytes_avail <= 0) {
+		d = __archive_read_ahead(a,
+		    cfdata->compressed_bytes_remaining, NULL);
+		if (d == NULL) {
 			*avail = truncated_error(a);
 			return (NULL);
 		}
@@ -1746,11 +1744,9 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 	 * Make sure a read pointer advances to next CFDATA.
 	 */
 	if (cfdata->compressed_bytes_remaining > 0) {
-		ssize_t bytes_avail;
-
-		d = __archive_read_ahead(a, cfdata->compressed_bytes_remaining,
-		    &bytes_avail);
-		if (bytes_avail <= 0) {
+		d = __archive_read_ahead(a,
+		    cfdata->compressed_bytes_remaining, NULL);
+		if (d == NULL) {
 			*avail = truncated_error(a);
 			return (NULL);
 		}

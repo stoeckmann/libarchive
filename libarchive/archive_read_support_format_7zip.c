@@ -736,7 +736,6 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset, int compat)
 	int64_t r;
 	const char *h;
 	char big_endian, format_64;
-	ssize_t bytes;
 	size_t request;
 	uint64_t e_shoff, strtab_offset, strtab_size;
 	uint16_t e_shentsize, e_shnum, e_shstrndx;
@@ -753,7 +752,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset, int compat)
 		/*
 		 * Read Elf header to find bitness & endianness
 		 */
-		h = __archive_read_ahead(a, ELF_HDR_MIN_LEN, &bytes);
+		h = __archive_read_ahead(a, ELF_HDR_MIN_LEN, NULL);
 		if (h == NULL) {
 			return (ARCHIVE_FATAL);
 		}
@@ -811,7 +810,7 @@ get_elf_sfx_offset(struct archive_read *a, int64_t *sfx_offset, int compat)
 		if (request > SFX_MAX_SEEK) {
 			return (ARCHIVE_FATAL);
 		}
-		h = __archive_read_ahead(a, request, &bytes);
+		h = __archive_read_ahead(a, request, NULL);
 		if (h == NULL) {
 			return (ARCHIVE_FATAL);
 		}
@@ -1322,7 +1321,7 @@ ppmd_read(void *p)
 		ssize_t bytes_avail = 0;
 		const uint8_t* data = __archive_read_ahead(a,
 		    (size_t)zip->ppstream.stream_in+1, &bytes_avail);
-		if(data == NULL || bytes_avail < zip->ppstream.stream_in+1) {
+		if(data == NULL) {
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated 7z file data");

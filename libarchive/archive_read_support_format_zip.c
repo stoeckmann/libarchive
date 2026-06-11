@@ -281,11 +281,10 @@ ppmd_read(void* p) {
 	/* Get the handle to current decompression context. */
 	struct archive_read *a = ((IByteIn*)p)->a;
 	struct zip *zip = (struct zip*) a->format->data;
-	ssize_t bytes_avail = 0;
 
 	/* Fetch next byte. */
-	const uint8_t* data = __archive_read_ahead(a, 1, &bytes_avail);
-	if(bytes_avail < 1) {
+	const uint8_t* data = __archive_read_ahead(a, 1, NULL);
+	if(data == NULL) {
 		zip->ppmd8_stream_failed = 1;
 		return 0;
 	}
@@ -2182,7 +2181,6 @@ zip_read_data_zipx_ppmd(struct archive_read *a, const void **buff,
 	struct zip* zip = (struct zip *)(a->format->data);
 	int ret;
 	size_t consumed_bytes = 0;
-	ssize_t bytes_avail = 0;
 
 	(void) offset; /* UNUSED */
 
@@ -2196,8 +2194,7 @@ zip_read_data_zipx_ppmd(struct archive_read *a, const void **buff,
 
 	/* Fetch for more data. We're reading 1 byte here, but libarchive
 	 * should prefetch more bytes. */
-	(void) __archive_read_ahead(a, 1, &bytes_avail);
-	if(bytes_avail < 0) {
+	if(__archive_read_ahead(a, 1, NULL) == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated PPMd8 file body");
 		return (ARCHIVE_FATAL);

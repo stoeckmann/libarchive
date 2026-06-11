@@ -1072,7 +1072,7 @@ atol16u(const char *p, unsigned char_cnt)
 		else if (*p >= '0' && *p <= '9')
 			digit = *p - '0';
 		else
-			return ((int64_t)l);
+			return (l);
 		p++;
 		l <<= 4;
 		l |= digit;

@@ -3550,7 +3550,13 @@ compile_program(const uint8_t *bytes, size_t length)
 
   if (membr_bits(&br, 1))
   {
-    prog->staticdatalen = membr_next_rarvm_number(&br) + 1;
+    uint32_t staticdatalen = membr_next_rarvm_number(&br);
+    if (staticdatalen >= VM_MEMORY_SIZE)
+    {
+      delete_program_code(prog);
+      return NULL;
+    }
+    prog->staticdatalen = staticdatalen + 1;
     prog->staticdata = malloc(prog->staticdatalen);
     if (!prog->staticdata)
     {

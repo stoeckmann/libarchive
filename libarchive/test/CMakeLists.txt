@@ -233,6 +233,7 @@ IF(ENABLE_TEST)
     test_read_format_zip_winzip_aes.c
     test_read_format_zip_winzip_aes_large.c
     test_read_format_zip_zip64.c
+    test_read_format_zip_zipx_encrypted.c
     test_read_format_zip_zipx_lzma_oom.c
     test_read_format_zip_with_invalid_traditional_eocd.c
     test_read_large.c

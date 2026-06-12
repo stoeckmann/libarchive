@@ -1816,32 +1816,42 @@ header_ustar(struct archive_read *a, struct tar *tar,
     struct archive_entry *entry, const void *h)
 {
 	const struct archive_entry_header_ustar	*header;
-	struct archive_string as;
 	int err = ARCHIVE_OK, r;
 
 	header = (const struct archive_entry_header_ustar *)h;
 
-	/* Copy name into an internal buffer to ensure null-termination. */
+	/*
+	 * The name field is fixed-width and may not be NUL-terminated.
+	 * Use a temporary string only when prefix/name joining is required.
+	 */
 	const char *existing_pathname = archive_entry_pathname(entry);
 	const wchar_t *existing_wcs_pathname = archive_entry_pathname_w(entry);
 	if ((existing_pathname == NULL || existing_pathname[0] == '\0')
 	    && (existing_wcs_pathname == NULL || existing_wcs_pathname[0] == '\0')) {
+		struct archive_string as;
+		const char *pathname;
+		size_t pathname_length;
+
 		archive_string_init(&as);
 		if (header->prefix[0]) {
 			archive_strncpy(&as, header->prefix, sizeof(header->prefix));
 			if (as.s[archive_strlen(&as) - 1] != '/')
 				archive_strappend_char(&as, '/');
 			archive_strncat(&as, header->name, sizeof(header->name));
+			pathname = as.s;
+			pathname_length = archive_strlen(&as);
 		} else {
-			archive_strncpy(&as, header->name, sizeof(header->name));
+			pathname = header->name;
+			pathname_length = sizeof(header->name);
 		}
-		if (archive_entry_copy_pathname_l(entry, as.s, archive_strlen(&as),
-		    tar->sconv) != 0) {
+		r = archive_entry_copy_pathname_l(entry, pathname,
+		    pathname_length, tar->sconv);
+		archive_string_free(&as);
+		if (r != 0) {
 			err = set_conversion_failed_error(a, tar->sconv, "Pathname");
 			if (err == ARCHIVE_FATAL)
 				return (err);
 		}
-		archive_string_free(&as);
 	}
 
 	/* Handle rest of common fields. */

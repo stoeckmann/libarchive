@@ -114,7 +114,7 @@ test_encrypted_zipx(const char *compression_name)
 	assertEqualInt(sizeof(file_data) - 1, archive_write_data(a, file_data, sizeof(file_data) - 1));
 	archive_entry_free(ae);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
 	/* ---- Read back without password — should fail ---- */
 	assert((a = archive_read_new()) != NULL);

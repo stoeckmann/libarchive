@@ -55,7 +55,7 @@ DEFINE_TEST(test_write_filter_lzma)
 	memset(data, 0, datasize);
 
 	/*
-	 * Write a 100 files and read them all back.
+	 * Write 100 files and read them all back.
 	 */
 	assert((a = archive_write_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));

@@ -1072,7 +1072,7 @@ atol16u(const char *p, unsigned char_cnt)
 		else if (*p >= '0' && *p <= '9')
 			digit = *p - '0';
 		else
-			return ((int64_t)l);
+			return (l);
 		p++;
 		l <<= 4;
 		l |= digit;
@@ -1127,8 +1127,8 @@ record_hardlink(struct archive_read *a,
 	const char *pathname = archive_entry_pathname(entry);
 	if (pathname == NULL) {
 		archive_set_error(&a->archive,
-			ARCHIVE_ERRNO_FILE_FORMAT,
-           "Invalid hardlink entry with no pathname");
+		    ARCHIVE_ERRNO_FILE_FORMAT,
+		    "Invalid hardlink entry with no pathname");
 		free(le);
 		return (ARCHIVE_FATAL);
 	}

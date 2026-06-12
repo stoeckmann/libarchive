@@ -104,8 +104,7 @@ archive_errno(struct archive *a)
 const char *
 archive_error_string(struct archive *a)
 {
-
-	if (a->error != NULL  &&  *a->error != '\0')
+	if (a->error != NULL && *a->error != '\0')
 		return (a->error);
 	else
 		return (NULL);

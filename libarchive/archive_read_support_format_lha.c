@@ -107,8 +107,8 @@ struct lzh_dec {
 		unsigned char	*bitlen;
 
 		/*
-		 * Use a index table. It's faster than searching a huffman
-		 * coding tree, which is a binary tree. But a use of a large
+		 * Use an index table. It's faster than searching a huffman
+		 * coding tree, which is a binary tree. But usage of a large
 		 * index table causes L1 cache read miss many times.
 		 */
 #define HTBL_BITS	10

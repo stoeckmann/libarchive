@@ -415,8 +415,8 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 	}
 
 	if (a->client.nodes == UINT_MAX ||
-    	(size_t)a->client.nodes + 1 >
-        SIZE_MAX / sizeof(*a->client.dataset)) {
+	    (size_t)a->client.nodes + 1 >
+	    SIZE_MAX / sizeof(*a->client.dataset)) {
 		archive_set_error(&a->archive, ENOMEM,
 			"No memory");
 		return ARCHIVE_FATAL;

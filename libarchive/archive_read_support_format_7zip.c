@@ -346,10 +346,10 @@ struct _7zip {
 	IByteIn			 bytein;
 	struct {
 		const unsigned char	*next_in;
-		int64_t			 avail_in;
-		int64_t			 stream_in;
+		size_t			 avail_in;
+		size_t			 stream_in;
 		unsigned char		*next_out;
-		int64_t			 avail_out;
+		size_t			 avail_out;
 		int			 overconsumed;
 	} ppstream;
 	int			 ppmd7_valid;
@@ -1332,28 +1332,26 @@ ppmd_read(void *p)
 	struct _7zip *zip = (struct _7zip *)(a->format->data);
 	Byte b;
 
-	if (zip->ppstream.avail_in <= 0) {
+	if (zip->ppstream.avail_in == 0) {
 		/*
 		 * Ppmd7_DecodeSymbol might require reading multiple bytes
 		 * and we are on boundary;
 		 * last resort to read using __archive_read_ahead.
 		 */
-		ssize_t bytes_avail = 0;
 		const uint8_t* data = __archive_read_ahead(a,
-		    (size_t)zip->ppstream.stream_in+1, &bytes_avail);
-		if(data == NULL || bytes_avail < zip->ppstream.stream_in+1) {
+		    zip->ppstream.stream_in + 1, NULL);
+		if (data == NULL) {
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated 7z file data");
 			zip->ppstream.overconsumed = 1;
 			return (0);
 		}
-		zip->ppstream.next_in++;
 		b = data[zip->ppstream.stream_in];
 	} else {
 		b = *zip->ppstream.next_in++;
+		zip->ppstream.avail_in--;
 	}
-	zip->ppstream.avail_in--;
 	zip->ppstream.stream_in++;
 	return (b);
 }
@@ -1950,8 +1948,8 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		} while (zip->ppstream.avail_out &&
 			(zip->ppstream.avail_in || flush_bytes));
 
-		t_avail_in = (size_t)zip->ppstream.avail_in;
-		t_avail_out = (size_t)zip->ppstream.avail_out;
+		t_avail_in = zip->ppstream.avail_in;
+		t_avail_out = zip->ppstream.avail_out;
 		break;
 	}
 	default:

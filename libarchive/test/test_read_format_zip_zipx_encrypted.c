@@ -232,3 +232,8 @@ DEFINE_TEST(test_read_format_zip_deflate_encrypted_streaming)
 {
 	test_encrypted_zipx("zip:compression=deflate", 1);
 }
+
+DEFINE_TEST(test_read_format_zip_zipx_zstd_encrypted_streaming)
+{
+	test_encrypted_zipx("zip:compression=zstd", 1);
+}

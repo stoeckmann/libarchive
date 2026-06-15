@@ -2695,7 +2695,7 @@ zip_read_data_zipx_zstd(struct archive_read *a, const void **buff,
     size_t *size, int64_t *offset)
 {
 	struct zip *zip = (struct zip *)(a->format->data);
-	ssize_t bytes_avail = 0, in_bytes, to_consume;
+	ssize_t bytes_avail = 0, to_consume;
 	const void *compressed_buff;
 	const void *sp;
 	int r;
@@ -2715,14 +2715,11 @@ zip_read_data_zipx_zstd(struct archive_read *a, const void **buff,
 
 	/* Fetch more compressed bytes */
 	compressed_buff = sp = __archive_read_ahead(a, 1, &bytes_avail);
-	if(bytes_avail < 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Truncated zstd file body");
-		return (ARCHIVE_FATAL);
+	if (0 == (zip->entry->zip_flags & ZIP_LENGTH_AT_END)
+		&& bytes_avail > zip->entry_bytes_remaining) {
+		bytes_avail = (ssize_t)zip->entry_bytes_remaining;
 	}
-
-	in_bytes = (ssize_t)zipmin(zip->entry_bytes_remaining, bytes_avail);
-	if(in_bytes < 1) {
+	if(bytes_avail < 1) {
 		/* zstd doesn't complain when caller feeds avail_in == 0.
 		 * It will actually return success in this case, which is
 		 * undesirable. This is why we need to make this check
@@ -2732,12 +2729,12 @@ zip_read_data_zipx_zstd(struct archive_read *a, const void **buff,
 		return (ARCHIVE_FATAL);
 	}
 
-	zip_read_decrypt(zip, compressed_buff, in_bytes,
-	    &compressed_buff, &in_bytes, &sp);
+	zip_read_decrypt(zip, compressed_buff, bytes_avail,
+	    &compressed_buff, &bytes_avail, &sp);
 
 	/* Setup buffer boundaries */
 	in.src = compressed_buff;
-	in.size = in_bytes;
+	in.size = bytes_avail;
 	in.pos = 0;
 	out = (ZSTD_outBuffer) { zip->uncompressed_buffer, zip->uncompressed_buffer_size, 0 };
 
@@ -2748,6 +2745,10 @@ zip_read_data_zipx_zstd(struct archive_read *a, const void **buff,
 			"Error during zstd decompression: %s",
 			ZSTD_getErrorName(ret));
 		return (ARCHIVE_FATAL);
+	}
+	/* End of stream handling for zips with ZIP_LENGTH_AT_END flag */
+	if (ret == 0 && (zip->entry->zip_flags & ZIP_LENGTH_AT_END)) {
+		zip->end_of_entry = 1;
 	}
 
 	/* Check end of the stream. */

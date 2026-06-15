@@ -2540,7 +2540,7 @@ zip_read_data_zipx_bzip2(struct archive_read *a, const void **buff,
     size_t *size, int64_t *offset)
 {
 	struct zip *zip = (struct zip *)(a->format->data);
-	ssize_t bytes_avail = 0, in_bytes, to_consume;
+	ssize_t bytes_avail = 0, to_consume;
 	const void *compressed_buff;
 	const void *sp;
 	int r;
@@ -2557,30 +2557,26 @@ zip_read_data_zipx_bzip2(struct archive_read *a, const void **buff,
 
 	/* Fetch more compressed bytes. */
 	compressed_buff = __archive_read_ahead(a, 1, &bytes_avail);
-	if(bytes_avail < 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Truncated bzip2 file body");
-		return (ARCHIVE_FATAL);
+	if (0 == (zip->entry->zip_flags & ZIP_LENGTH_AT_END)
+		&& bytes_avail > zip->entry_bytes_remaining) {
+		bytes_avail = (ssize_t)zip->entry_bytes_remaining;
 	}
-
-	in_bytes = (ssize_t)zipmin(zip->entry_bytes_remaining, bytes_avail);
-	if(in_bytes < 1) {
+	if(bytes_avail < 1) {
 		/* libbz2 doesn't complain when caller feeds avail_in == 0.
 		 * It will actually return success in this case, which is
 		 * undesirable. This is why we need to make this check
 		 * manually. */
-
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated bzip2 file body");
 		return (ARCHIVE_FATAL);
 	}
 
-	zip_read_decrypt(zip, compressed_buff, in_bytes,
-	    &compressed_buff, &in_bytes, &sp);
+	zip_read_decrypt(zip, compressed_buff, bytes_avail,
+	    &compressed_buff, &bytes_avail, &sp);
 
 	/* Setup buffer boundaries. */
 	zip->bzstream.next_in = (char*)(uintptr_t) compressed_buff;
-	zip->bzstream.avail_in = (uint32_t)in_bytes;
+	zip->bzstream.avail_in = (uint32_t)bytes_avail;
 	zip->bzstream.total_in_hi32 = 0;
 	zip->bzstream.total_in_lo32 = 0;
 	zip->bzstream.next_out = (char*) zip->uncompressed_buffer;

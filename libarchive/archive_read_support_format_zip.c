@@ -2077,7 +2077,7 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 	lzma_ret lz_ret;
 	const void* compressed_buf;
 	const void* sp;
-	ssize_t bytes_avail, in_bytes, to_consume = 0;
+	ssize_t bytes_avail, to_consume = 0;
 
 	(void) offset; /* UNUSED */
 
@@ -2089,19 +2089,21 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 	}
 
 	compressed_buf = sp = __archive_read_ahead(a, 1, &bytes_avail);
+	if (0 == (zip->entry->zip_flags & ZIP_LENGTH_AT_END)
+		&& bytes_avail > zip->entry_bytes_remaining) {
+		bytes_avail = (ssize_t)zip->entry_bytes_remaining;
+	}
 	if (bytes_avail < 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated xz file body");
 		return (ARCHIVE_FATAL);
 	}
 
-	in_bytes = (ssize_t)zipmin(zip->entry_bytes_remaining, bytes_avail);
-
-	zip_read_decrypt(zip, compressed_buf, in_bytes,
-		&compressed_buf, &in_bytes, &sp);
+	zip_read_decrypt(zip, compressed_buf, bytes_avail,
+		&compressed_buf, &bytes_avail, &sp);
 
 	zip->zipx_lzma_stream.next_in = compressed_buf;
-	zip->zipx_lzma_stream.avail_in = in_bytes;
+	zip->zipx_lzma_stream.avail_in = bytes_avail;
 	zip->zipx_lzma_stream.total_in = 0;
 	zip->zipx_lzma_stream.next_out = zip->uncompressed_buffer;
 	zip->zipx_lzma_stream.avail_out = zip->uncompressed_buffer_size;
@@ -2128,8 +2130,10 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 			lzma_end(&zip->zipx_lzma_stream);
 			zip->zipx_lzma_valid = 0;
 
-			if((int64_t) zip->zipx_lzma_stream.total_in !=
-			    zip->entry_bytes_remaining)
+			/* This assertion is only possible if the size of the compressed data
+			 * stream is known -> !ZIP_LENGTH_AT_END */
+			if((int64_t) zip->zipx_lzma_stream.total_in != zip->entry_bytes_remaining
+				&& !(zip->entry->zip_flags & ZIP_LENGTH_AT_END))
 			{
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,

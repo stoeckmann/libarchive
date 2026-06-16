@@ -125,6 +125,7 @@ IF(ENABLE_TEST)
     test_read_format_cab_filename.c
     test_read_format_cab_lzx_oob.c
     test_read_format_cab_mszip_oob.c
+    test_read_format_cab_multi.c
     test_read_format_cab_skip_malformed.c
     test_read_format_cpio_afio.c
     test_read_format_cpio_bin.c

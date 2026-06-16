@@ -624,7 +624,7 @@ cab_read_header(struct archive_read *a)
 	struct cab *cab;
 	struct cfheader *hd;
 	size_t bytes, used;
-	ssize_t len;
+	ssize_t avail, len;
 	int64_t skip;
 	int err, i;
 	int cur_folder, prev_folder;
@@ -688,29 +688,34 @@ cab_read_header(struct archive_read *a)
 		hd->cffolder = 0;/* Avoid compiling warning. */
 	if (hd->flags & PREV_CABINET) {
 		/* How many bytes are used for szCabinetPrev. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = cab_read_ahead_remaining(a, used + 256,
+		    &avail)) == NULL || (size_t)avail <= used)
 			return (truncated_error(a));
-		if ((len = cab_strnlen(p + used, 255)) <= 0)
+		if ((len = cab_strnlen(p + used, avail - used - 1)) <= 0) {
 			goto invalid;
+		}
 		used += len + 1;
 		/* How many bytes are used for szDiskPrev. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = cab_read_ahead_remaining(a, used + 256,
+		    &avail)) == NULL || (size_t)avail <= used)
 			return (truncated_error(a));
-		if ((len = cab_strnlen(p + used, 255)) <= 0)
+		if ((len = cab_strnlen(p + used, avail - used - 1)) < 0)
 			goto invalid;
 		used += len + 1;
 	}
 	if (hd->flags & NEXT_CABINET) {
 		/* How many bytes are used for szCabinetNext. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = cab_read_ahead_remaining(a, used + 256,
+		    &avail)) == NULL || (size_t)avail <= used)
 			return (truncated_error(a));
-		if ((len = cab_strnlen(p + used, 255)) <= 0)
+		if ((len = cab_strnlen(p + used, avail - used - 1)) <= 0)
 			goto invalid;
 		used += len + 1;
 		/* How many bytes are used for szDiskNext. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = cab_read_ahead_remaining(a, used + 256,
+		    &avail)) == NULL || (size_t)avail <= used)
 			return (truncated_error(a));
-		if ((len = cab_strnlen(p + used, 255)) <= 0)
+		if ((len = cab_strnlen(p + used, avail - used - 1)) < 0)
 			goto invalid;
 		used += len + 1;
 	}
@@ -792,7 +797,6 @@ cab_read_header(struct archive_read *a)
 	prev_folder = -1;
 	for (i = 0; i < hd->file_count; i++) {
 		struct cffile *file = &(hd->file_array[i]);
-		ssize_t avail;
 
 		if ((p = __archive_read_ahead(a, 16, NULL)) == NULL)
 			return (truncated_error(a));

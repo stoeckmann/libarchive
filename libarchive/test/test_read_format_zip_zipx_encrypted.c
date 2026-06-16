@@ -252,3 +252,16 @@ DEFINE_TEST(test_read_format_zip_zipx_zstd_encrypted_streaming)
 {
 	test_encrypted_zipx("zip:compression=zstd", 1);
 }
+
+DEFINE_TEST(test_read_format_zip_ppmd8_aes256_streaming)
+{
+	const char *refname = "test_read_format_zip_ppmd8_aes256_streaming.zipx";
+	size_t used;
+	char buff[600];
+	extract_reference_file(refname);
+	FILE *f = fopen(refname, "rb");
+	used = fread(buff, 1, sizeof(buff), f);
+	fclose(f);
+	test_encrypted_zipx_read_mem(buff, used);
+	test_encrypted_zipx_read_callback(buff, used);
+}

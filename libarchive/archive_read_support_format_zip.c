@@ -1691,6 +1691,26 @@ consume_end_of_file_marker(struct archive_read *a, struct zip *zip)
 		return;
 	}
 
+	/* None of the exact patterns matched. If entry size was unknown
+	 * (ZIP_LENGTH_AT_END flag), before treating this as
+	 * corruption, check whether the next ZIP record follows the data
+	 * immediately: a length-at-end entry whose compression format has
+	 * its own end-of-stream marker (e.g. PPMd) may be written with no
+	 * data descriptor at all.  In that case the byte counts we measured
+	 * during decompression are authoritative, so trust them and leave
+	 * the stream untouched. */
+	if (zip->entry->zip_flags & ZIP_LENGTH_AT_END)
+	{
+		const uint32_t sig = archive_le32dec(p);
+		if (sig == 0x04034b50U     /* Local file header */
+		    || sig == 0x02014b50U  /* Central directory record */
+		    || sig == 0x06054b50U) /* End of central directory */ {
+			zip->entry->compressed_size = compressed_actual;
+			zip->entry->uncompressed_size = uncompressed_actual;
+			return;
+		}
+	}
+
 	/* If none of the above patterns gives us a full exact match,
 	 * then there's something definitely amiss.  The fallback code
 	 * below will parse out some plausible values for error

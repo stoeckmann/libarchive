@@ -483,6 +483,13 @@ zip_read_decrypt(struct zip *zip, const void *compressed_buff,
 {
 	*sp = compressed_buff;
 
+	/* Safety check to prevent potential OOB reads if something went wrong
+	 * previously. We should not have a negative bytes_avail count here.
+	 * If we do, set them to zero so that reading the ZIP will fail later,
+	 * safely as corrupted instead of crashing. */
+	if (bytes_avail < 0)
+		bytes_avail = 0;
+
 	if (zip->tctx_valid || zip->cctx_valid) {
 		if (zip->decrypted_bytes_remaining < (size_t)bytes_avail) {
 			size_t buff_remaining =

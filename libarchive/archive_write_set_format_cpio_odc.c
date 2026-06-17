@@ -277,12 +277,12 @@ write_header(struct archive_write *a, struct archive_entry *entry)
 {
 	struct cpio *cpio;
 	const char *p, *path;
-	int pathlength, ret, ret_final;
+	int ret, ret_final;
 	int64_t	ino;
 	char h[76];
 	struct archive_string_conv *sconv;
 	struct archive_entry *entry_main;
-	size_t len;
+	size_t len, pathlength;
 
 	cpio = (struct cpio *)a->format_data;
 	ret_final = ARCHIVE_OK;
@@ -320,7 +320,7 @@ write_header(struct archive_write *a, struct archive_entry *entry)
 		ret_final = ARCHIVE_WARN;
 	}
 	/* Include trailing null. */
-	pathlength = (int)len + 1;
+	pathlength = len + 1;
 
 	memset(h, 0, sizeof(h));
 	format_octal(070707, h + c_magic_offset, c_magic_size);

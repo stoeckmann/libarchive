@@ -44,6 +44,7 @@
 
 #include "archive.h"
 #include "archive_endian.h"
+#include "archive_integer.h"
 #include "archive_private.h"
 #include "archive_read_private.h"
 #include "archive_xxhash.h"
@@ -175,6 +176,7 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 	magic_number = archive_le32dec(buffer);
 
 	while ((magic_number & LZ4_SKIPPABLE_MASK) == LZ4_SKIPPABLE_START) {
+		size_t min;
 		uint32_t frame_data_size;
 
 		/* Skip over the magic number */
@@ -194,24 +196,24 @@ lz4_reader_bid(struct archive_read_filter_bidder *self,
 		offset_in_buffer += 4;
 
 		/* Skip over the value stored there. */
-		if (frame_data_size > SIZE_MAX - offset_in_buffer)
+		if (archive_ckd_add_size(&offset_in_buffer,
+		    offset_in_buffer, frame_data_size))
 			return (0);
-		offset_in_buffer += frame_data_size;
 
 		/*
 		 * There should be at least one more frame
 		 * if this is LZ4 data.
 		 */
-		if (min_lz4_frame_size > SIZE_MAX - offset_in_buffer)
+		if (archive_ckd_add_size(&min,
+		    offset_in_buffer, min_lz4_frame_size))
 			return (0);
 		/* TODO: should this be >= ? */
-		if (offset_in_buffer + min_lz4_frame_size > (size_t)avail) {
-			if (offset_in_buffer + min_lz4_frame_size >
-			    max_lookahead)
+		if (min > (size_t)avail) {
+			if (min > max_lookahead)
 				return (0); 
 
 			buffer = __archive_read_filter_ahead(filter,
-			    offset_in_buffer + min_lz4_frame_size, &avail);
+			    min, &avail);
 			if (buffer == NULL)
 				return (0); 
 		}

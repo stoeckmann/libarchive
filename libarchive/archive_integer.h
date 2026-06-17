@@ -112,6 +112,24 @@ archive_ckd_add_i64(int64_t *result, int64_t a, int64_t b)
 
 /* Returns 0 on success, a non-zero value otherwise. */
 static inline int
+archive_ckd_add_size(size_t *result, size_t a, size_t b)
+{
+#if USE_STDCKDINT
+	return ckd_add(result, a, b);
+#elif USE_BUILTIN
+	return __builtin_add_overflow(a, b, result);
+#elif USE_INTSAFE
+	return SizeTAdd(a, b, result);
+#else
+	if (a > SIZE_MAX - b)
+		return 1;
+	*result = a + b;
+	return 0;
+#endif
+}
+
+/* Returns 0 on success, a non-zero value otherwise. */
+static inline int
 archive_ckd_add_u64(uint64_t *result, uint64_t a, uint64_t b)
 {
 #if USE_STDCKDINT
@@ -155,6 +173,24 @@ archive_ckd_mul_i64(int64_t *result, int64_t a, int64_t b)
 	    (a < 0 && b < 0 && a < INT64_MAX / b))
 		return 1;
 
+	*result = a * b;
+	return 0;
+#endif
+}
+
+/* Returns 0 on success, a non-zero value otherwise. */
+static inline int
+archive_ckd_mul_size(size_t *result, size_t a, size_t b)
+{
+#if USE_STDCKDINT
+	return ckd_mul(result, a, b);
+#elif USE_BUILTIN
+	return __builtin_mul_overflow(a, b, result);
+#elif USE_INTSAFE
+	return SizeTMult(a, b, result);
+#else
+	if (b != 0 && a > SIZE_MAX / b)
+		return 1;
 	*result = a * b;
 	return 0;
 #endif

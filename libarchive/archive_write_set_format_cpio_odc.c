@@ -351,7 +351,12 @@ write_header(struct archive_write *a, struct archive_entry *entry)
 	else
 	    format_octal(0, h + c_rdev_offset, c_rdev_size);
 	format_octal(archive_entry_mtime(entry), h + c_mtime_offset, c_mtime_size);
-	format_octal(pathlength, h + c_namesize_offset, c_namesize_size);
+	if (format_octal((int64_t)pathlength, h + c_namesize_offset, c_namesize_size)) {
+		archive_set_error(&a->archive, ERANGE,
+		    "Filename is too long for cpio format");
+		ret_final = ARCHIVE_FAILED;
+		goto exit_write_header;
+	}
 
 	/* Non-regular files don't store bodies. */
 	if (archive_entry_filetype(entry) != AE_IFREG)

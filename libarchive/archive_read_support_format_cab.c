@@ -554,14 +554,16 @@ cab_strnlen(const unsigned char *p, size_t maxlen)
 	return ((ssize_t)i);
 }
 
-/* Read bytes as much as remaining. */
+/* Read up to max remaining bytes. */
 static const void *
-cab_read_ahead_remaining(struct archive_read *a, size_t min, ssize_t *avail)
+cab_read_ahead_remaining(struct archive_read *a, size_t max, ssize_t *avail)
 {
-	const void *p = __archive_read_ahead(a, min, avail);
+	const void *p = __archive_read_ahead(a, max, avail);
 
 	if (p == NULL && *avail > 0)
 		p = __archive_read_ahead(a, *avail, avail);
+	if (p != NULL && (size_t)*avail > max)
+		*avail = max;
 
 	return (p);
 }

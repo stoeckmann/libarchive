@@ -13,7 +13,7 @@ jobs:
         bs: [autotools, cmake]
     steps:
     - name: Build and test on a FreeBSD 15 firecracker VM
-      uses: acj/freebsd-firecracker-action@bab3e77871573c7943b80816f1641b6c1ce36896 # v0.9.1
+      uses: acj/freebsd-firecracker-action@ff79eb955fd19c697a708a02834995e47a6e58ed # v0.10.0
       with:
         run-in-vm: |
           chflags -R noschg / && \
@@ -33,7 +33,7 @@ jobs:
       matrix:
         bs: [autotools, cmake]
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - name: Install dependencies
       run: ./build/ci/github_actions/install-macos-dependencies.sh
     - name: Autogen
@@ -68,7 +68,7 @@ jobs:
       run: ./build/ci/build.sh -a artifact
       env:
         BS: ${{ matrix.bs }}
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: libarchive-macos-${{ matrix.bs }}-${{ github.sha }}
         path: libarchive.tar.xz
@@ -80,7 +80,7 @@ jobs:
         bs: [autotools, cmake]
         crypto: [mbedtls, nettle, openssl]
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - name: Update apt cache
       run: sudo apt-get update
     - name: Install dependencies
@@ -114,14 +114,14 @@ jobs:
       run: ./build/ci/build.sh -a artifact
       env:
         BS: ${{ matrix.bs }}
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: libarchive-ubuntu-${{ matrix.bs }}-${{ matrix.crypto }}-${{ github.sha }}
         path: libarchive.tar.xz
   Ubuntu-distcheck:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - name: Update package definitions
       run: sudo apt-get update
     - name: Install dependencies
@@ -136,7 +136,7 @@ jobs:
         SKIP_OPEN_FD_ERR_TEST: 1
     - name: Dist-Artifact
       run: ./build/ci/build.sh -a dist-artifact
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: libarchive-${{ github.sha }}
         path: libarchive-dist.tar
@@ -148,9 +148,9 @@ jobs:
       matrix:
         be: [mingw-gcc, cygwin-gcc, msvc]
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
     - name: Install Cygwin
-      uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6
+      uses: cygwin/cygwin-install-action@3f0a3f9f988f7e96b8c18098ae05eaec175f5b52 # v6
       if:  ${{ matrix.be=='cygwin-gcc' }}
       with:
         install-dir: "D:\\cygwin"
@@ -202,7 +202,7 @@ jobs:
       shell: cmd
       env:
         BE: ${{ matrix.be }}
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: libarchive-windows-${{ matrix.be }}-${{ github.sha }}
         path: ${{ matrix.be=='cygwin-gcc' && 'libarchive.tar.xz' || 'libarchive.zip' }}

@@ -46,6 +46,7 @@ archive_entry_sparse_clear(struct archive_entry *entry)
 		entry->sparse_head = sp;
 	}
 	entry->sparse_tail = NULL;
+	entry->sparse_p = NULL;
 }
 
 void

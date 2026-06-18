@@ -52,6 +52,7 @@
 
 #include "archive.h"
 #include "archive_entry.h"
+#include "archive_integer.h"
 #include "archive_private.h"
 #include "archive_read_private.h"
 
@@ -403,6 +404,7 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 {
 	struct archive_read *a = (struct archive_read *)_a;
 	void *p;
+	size_t alloc_size;
 	unsigned int i;
 	unsigned int nodes;
 
@@ -415,15 +417,15 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 	}
 
 	if (a->client.nodes == UINT_MAX ||
-	    (size_t)a->client.nodes + 1 >
-	    SIZE_MAX / sizeof(*a->client.dataset)) {
+	    archive_ckd_mul_size(&alloc_size,
+	    (size_t)a->client.nodes + 1, sizeof(*a->client.dataset))) {
 		archive_set_error(&a->archive, ENOMEM,
 			"No memory");
 		return ARCHIVE_FATAL;
 	}
 
 	nodes = a->client.nodes + 1;
-	p = realloc(a->client.dataset, sizeof(*a->client.dataset) * nodes);
+	p = realloc(a->client.dataset, alloc_size);
 	if (p == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
 			"No memory");

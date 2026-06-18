@@ -40,6 +40,7 @@
 #endif
 
 #include "archive.h"
+#include "archive_integer.h"
 #include "archive_private.h"
 #include "archive_entry.h"
 #include "archive_pathmatch.h"
@@ -1699,18 +1700,18 @@ add_owner_id(struct archive_match *a, struct id_array *ids, int64_t id)
 
 	if (ids->count + 1 >= ids->size) {
 		void *p;
-		size_t new_size;
+		size_t alloc_size, new_size;
 
 		if (ids->size == 0)
 			new_size = 8;
 		else {
-			if (ids->size > SIZE_MAX / 2)
+			if (archive_ckd_mul_size(&new_size, ids->size, 2))
 				return (error_nomem(a));
-			new_size = ids->size * 2;
 		}
-		if (new_size > SIZE_MAX / sizeof(*ids->ids))
+		if (archive_ckd_mul_size(&alloc_size,
+		    new_size, sizeof(*ids->ids)))
 			return (error_nomem(a));
-		p = realloc(ids->ids, sizeof(*ids->ids) * new_size);
+		p = realloc(ids->ids, alloc_size);
 		if (p == NULL)
 			return (error_nomem(a));
 		ids->ids = (int64_t *)p;

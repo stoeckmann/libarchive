@@ -1049,7 +1049,7 @@ write_data_block(struct archive_write_disk *a, const char *buff, size_t size)
 		return (ARCHIVE_OK);
 
 	if (a->filesize == 0 || a->fh == INVALID_HANDLE_VALUE) {
-		archive_set_error(&a->archive, 0,
+		archive_set_error(&a->archive, EIO,
 		    "Attempt to write to an empty file");
 		return (ARCHIVE_WARN);
 	}
@@ -1133,7 +1133,7 @@ _archive_write_disk_data_block(struct archive *_a,
 	if (r < ARCHIVE_OK)
 		return (r);
 	if ((size_t)r < size) {
-		archive_set_error(&a->archive, 0,
+		archive_set_error(&a->archive, EOVERFLOW,
 		    "Write request too large");
 		return (ARCHIVE_WARN);
 	}
@@ -1550,7 +1550,7 @@ restore_entry(struct archive_write_disk *a)
 		if (a->skip_file_set &&
 		    bhfi_dev(&a->st) == a->skip_file_dev &&
 		    bhfi_ino(&a->st) == a->skip_file_ino) {
-			archive_set_error(&a->archive, 0,
+			archive_set_error(&a->archive, EIO,
 			    "Refusing to overwrite archive");
 			return (ARCHIVE_FAILED);
 		}
@@ -2141,7 +2141,7 @@ check_symlinks(struct archive_write_disk *a)
 				 * symlink with another symlink.
 				 */
 				if (!S_ISLNK(a->mode)) {
-					archive_set_error(&a->archive, 0,
+					archive_set_error(&a->archive, -1,
 					    "Removing symlink %ls",
 					    a->name);
 				}
@@ -2161,7 +2161,7 @@ check_symlinks(struct archive_write_disk *a)
 					r = disk_unlink(a->name);
 				}
 				if (r != 0) {
-					archive_set_error(&a->archive, 0,
+					archive_set_error(&a->archive, EIO,
 					    "Cannot remove intervening "
 					    "symlink %ls", a->name);
 					pn[0] = c;
@@ -2169,7 +2169,7 @@ check_symlinks(struct archive_write_disk *a)
 				}
 				a->pst = NULL;
 			} else {
-				archive_set_error(&a->archive, 0,
+				archive_set_error(&a->archive, ELOOP,
 				    "Cannot extract through symlink %ls",
 				    a->name);
 				pn[0] = c;

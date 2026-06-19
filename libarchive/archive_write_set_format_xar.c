@@ -1864,7 +1864,8 @@ copy_out(struct archive_write *a, uint64_t offset, uint64_t length)
 			return (ARCHIVE_FATAL);
 		}
 		if (rs == 0) {
-			archive_set_error(&(a->archive), 0,
+			archive_set_error(&(a->archive),
+			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated xar archive");
 			return (ARCHIVE_FATAL);
 		}

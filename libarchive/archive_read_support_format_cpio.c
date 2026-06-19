@@ -895,7 +895,8 @@ header_afiol(struct archive_read *a, struct cpio *cpio,
 
 	t = atol16(header + afiol_filesize_offset, afiol_filesize_size);
 	if (t < 0) {
-		archive_set_error(&a->archive, 0, "Nonsensical file size");
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		    "Nonsensical file size");
 		return (ARCHIVE_FATAL);
 	}
 	cpio->entry_bytes_remaining = t;
@@ -919,7 +920,7 @@ header_bin_le(struct archive_read *a, struct cpio *cpio,
 	/* Read fixed-size portion of header. */
 	h = __archive_read_ahead(a, bin_header_size, NULL);
 	if (h == NULL) {
-	    archive_set_error(&a->archive, 0,
+	    archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		"End of file trying to read next cpio header");
 	    return (ARCHIVE_FATAL);
 	}
@@ -964,7 +965,7 @@ header_bin_be(struct archive_read *a, struct cpio *cpio,
 	/* Read fixed-size portion of header. */
 	h = __archive_read_ahead(a, bin_header_size, NULL);
 	if (h == NULL) {
-	    archive_set_error(&a->archive, 0,
+	    archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		"End of file trying to read next cpio header");
 	    return (ARCHIVE_FATAL);
 	}

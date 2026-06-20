@@ -5917,28 +5917,18 @@ idr_register(struct idr *idr, struct isoent *isoent, int weight, int noff)
 static void
 idr_extend_identifier(struct idrent *wnp, int numsize, int nullsize)
 {
-	unsigned char *p;
-	int wnp_ext_off;
-	int new_id_len;
-
-	wnp_ext_off = wnp->isoent->ext_off;
-	if (wnp->noff + numsize != wnp_ext_off) {
-		new_id_len = wnp->noff + numsize + wnp->isoent->ext_len;
+	if (wnp->noff + numsize != wnp->isoent->ext_off) {
 		/*
-		 * Reallocate the identifier buffer to fit the expanded
-		 * name.  Add extra space for a version suffix (";1")
-		 * that may be appended later.
+		 * Extend the filename; foo.c --> foo___.c
+		 *
+		 * The caller must verify that enough memory is available.
 		 */
-		p = (unsigned char *)realloc(wnp->isoent->identifier,
-		    new_id_len + nullsize + numsize + 4);
-		if (p == NULL)
-			return;
-		wnp->isoent->identifier = (char *)p;
-		/* Extend the filename; foo.c --> foo___.c */
-		memmove(p + wnp->noff + numsize, p + wnp_ext_off,
+		memmove(wnp->isoent->identifier + wnp->noff + numsize,
+		    wnp->isoent->identifier + wnp->isoent->ext_off,
 		    wnp->isoent->ext_len + nullsize);
-		wnp->isoent->ext_off = wnp_ext_off = wnp->noff + numsize;
-		wnp->isoent->id_len = wnp_ext_off + wnp->isoent->ext_len;
+		wnp->isoent->ext_off = wnp->noff + numsize;
+		wnp->isoent->id_len =
+		    wnp->isoent->ext_off + wnp->isoent->ext_len;
 	}
 }
 
@@ -6018,6 +6008,10 @@ isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
 	static const struct archive_rb_tree_ops rb_ops = {
 		isoent_cmp_node_iso9660, isoent_cmp_key_iso9660
 	};
+	const int num_size = 3;
+	const int dot_size = 1;
+	const int version_size = 2;
+	const int null_size = 1;
 
 	if (isoent->children.cnt == 0)
 		return (0);
@@ -6058,7 +6052,7 @@ isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
 			fnmax = ffmax = dnmax = 207;
 	}
 
-	r = idr_start(a, idr, isoent->children.cnt, ffmax, 3, 1, &rb_ops);
+	r = idr_start(a, idr, isoent->children.cnt, ffmax, num_size, null_size, &rb_ops);
 	if (r < 0)
 		return (r);
 
@@ -6067,7 +6061,7 @@ isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
 		int ext_off, noff, weight;
 
 		l = (int)np->file->basename.length;
-		p = malloc(l+31+2+1);
+		p = malloc(l + num_size + dot_size + version_size + null_size);
 		if (p == NULL) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");

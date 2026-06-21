@@ -345,7 +345,7 @@ system_unlink(const char *pathname) {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	if (unlink(pathname) == -1) {
 		/* Windows treats directory symbolic links specially. */
-		(void)rmdir(pathname);
+		rmdir(pathname);
 	}
 #else
 	(void)unlink(pathname);
@@ -372,7 +372,6 @@ make_dir(const char *path, int mode)
 		 * even compromise (if this non-directory happens to be a
 		 * symlink to somewhere unsafe), so we don't.
 		 */
-
 		system_unlink(path);
 	}
 	if (system_mkdir(path, (mode_t)mode) != 0 && errno != EEXIST)

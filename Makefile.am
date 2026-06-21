@@ -1669,8 +1669,10 @@ bsdunzip_SOURCES= \
 	unzip/cmdline.c
 
 if INC_WINDOWS_FILES
-noinst_HEADERS+=
-bsdunzip_SOURCES+=
+noinst_HEADERS+= \
+	unzip/bsdunzip_windows.h
+bsdunzip_SOURCES+= \
+	unzip/bsdunzip_windows.c
 endif
 
 bsdunzip_DEPENDENCIES = libarchive.la libarchive_fe.la
@@ -1689,6 +1691,8 @@ bsdunzip_CPPFLAGS= -I$(top_srcdir)/libarchive -I$(top_srcdir)/libarchive_fe $(bs
 bsdunzip_LDFLAGS= $(bsdunzip_ldstatic) $(DEAD_CODE_REMOVAL)
 
 bsdunzip_EXTRA_DIST= \
+	unzip/bsdunzip_windows.h \
+	unzip/bsdunzip_windows.c \
 	unzip/bsdunzip.1 \
 	unzip/CMakeLists.txt
 

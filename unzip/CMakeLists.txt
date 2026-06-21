@@ -25,6 +25,10 @@ IF(ENABLE_UNZIP)
     ../libarchive_fe/passphrase.h
   )
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../libarchive_fe)
+  IF(WIN32 AND NOT CYGWIN)
+    LIST(APPEND bsdunzip_SOURCES bsdunzip_windows.c)
+    LIST(APPEND bsdunzip_SOURCES bsdunzip_windows.h)
+  ENDIF(WIN32 AND NOT CYGWIN)
 
   # bsdunzip documentation
   SET(bsdunzip_MANS bsdunzip.1)

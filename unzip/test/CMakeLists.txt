@@ -18,6 +18,7 @@ IF(ENABLE_UNZIP AND ENABLE_TEST)
     test_C.c
     test_p.c
     test_d.c
+    test_f.c
     test_j.c
     test_L.c
     test_n.c

@@ -1698,6 +1698,7 @@ bsdunzip_test_SOURCES= \
 	unzip/test/test_0.c \
 	unzip/test/test_basic.c \
 	unzip/test/test_doubledash.c \
+	unzip/test/test_f.c \
 	unzip/test/test_glob.c \
 	unzip/test/test_not_exist.c \
 	unzip/test/test_singlefile.c \
@@ -1741,6 +1742,8 @@ bsdunzip_test_EXTRA_DIST= \
 	unzip/test/list.h \
 	unzip/test/test_basic.zip.uu \
 	unzip/test/test_encrypted.zip.uu \
+	unzip/test/test_f_new.zip.uu \
+	unzip/test/test_f_old.zip.uu \
 	unzip/test/test_singlefile.zip.uu \
 	unzip/test/test_t_bad.zip.uu \
 	unzip/test/test_I.zip.uu \

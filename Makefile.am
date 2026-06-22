@@ -1712,6 +1712,7 @@ bsdunzip_test_SOURCES= \
 	unzip/test/test_q.c \
 	unzip/test/test_t.c \
 	unzip/test/test_t_bad.c \
+	unzip/test/test_u.c \
 	unzip/test/test_version.c \
 	unzip/test/test_x.c \
 	unzip/test/test_Z1.c \
@@ -1746,5 +1747,7 @@ bsdunzip_test_EXTRA_DIST= \
 	unzip/test/test_f_old.zip.uu \
 	unzip/test/test_singlefile.zip.uu \
 	unzip/test/test_t_bad.zip.uu \
+	unzip/test/test_u_new.zip.uu \
+	unzip/test/test_u_old.zip.uu \
 	unzip/test/test_I.zip.uu \
 	unzip/test/CMakeLists.txt

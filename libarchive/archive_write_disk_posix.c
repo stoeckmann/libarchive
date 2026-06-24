@@ -4350,7 +4350,7 @@ copy_metadata(struct archive_write_disk *a, const char *metadata,
 		 * with at least a writing mode(O_RDWR or O_WRONLY). it
 		 * makes the data fork uncompressed.
 		 */
-		dffd = open(datafork, 0);
+		dffd = open(datafork, O_SYMLINK);
 		if (dffd == -1) {
 			archive_set_error(&a->archive, errno,
 			    "Failed to open the data fork for metadata");
@@ -4459,7 +4459,9 @@ fixup_appledouble(struct archive_write_disk *a, const char *pathname)
 	if (la_stat(datafork.s, &st) == -1)
 		goto skip_appledouble;
 #endif
-	if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+	if (!S_ISREG(st.st_mode) &&
+	    !S_ISDIR(st.st_mode) &&
+	    !S_ISLNK(st.st_mode))
 		goto skip_appledouble;
 
 	/*

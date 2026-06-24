@@ -2375,7 +2375,7 @@ create_filesystem_object(struct archive_write_disk *a)
 #endif
 			if (r != 0)
 				r = errno;
-			else if ((st.st_mode & AE_IFMT) == AE_IFREG) {
+			else if (S_ISREG(st.st_mode)) {
 				a->fd = open(a->name, O_WRONLY | O_TRUNC |
 				    O_BINARY | O_CLOEXEC | O_NOFOLLOW);
 				__archive_ensure_cloexec_flag(a->fd);
@@ -4452,14 +4452,14 @@ fixup_appledouble(struct archive_write_disk *a, const char *pathname)
 	 */
 	archive_strncpy(&datafork, pathname, p - pathname);
 	archive_strcat(&datafork, p + 2);
-	if (
 #ifdef HAVE_LSTAT
-		lstat(datafork.s, &st) == -1 ||
+	if (lstat(datafork.s, &st) == -1)
+		goto skip_appledouble;
 #else
-		la_stat(datafork.s, &st) == -1 ||
+	if (la_stat(datafork.s, &st) == -1)
+		goto skip_appledouble;
 #endif
-	    (((st.st_mode & AE_IFMT) != AE_IFREG) &&
-		((st.st_mode & AE_IFMT) != AE_IFDIR)))
+	if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
 		goto skip_appledouble;
 
 	/*

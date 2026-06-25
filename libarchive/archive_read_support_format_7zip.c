@@ -410,8 +410,6 @@ files_info_numfiles_is_sane(const struct _7zip *zip)
 {
 	uint64_t empty_stream_map_bytes;
 
-	if (zip->numFiles > UMAX_ENTRY)
-		return (0);
 	if (zip->numFiles > SIZE_MAX / sizeof(*zip->entries))
 		return (0);
 
@@ -453,6 +451,7 @@ static ssize_t	get_uncompressed_data(struct archive_read *, const void **,
 static const unsigned char * header_bytes(struct archive_read *, size_t);
 static int	init_decompression(struct archive_read *, struct _7zip *,
 		    const struct _7z_coder *, const struct _7z_coder *);
+static int	parse_7zip_size(struct archive_read *, uint64_t *);
 static int	parse_7zip_uint64(struct archive_read *, uint64_t *);
 static int	read_Bools(struct archive_read *, unsigned char *, size_t);
 static int	read_CodersInfo(struct archive_read *,
@@ -2070,6 +2069,14 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 }
 
 static int
+parse_7zip_size(struct archive_read *a, uint64_t *val)
+{
+	if (parse_7zip_uint64(a, val) < 0 || *val > UMAX_ENTRY)
+		return (-1);
+	return (0);
+}
+
+static int
 parse_7zip_uint64(struct archive_read *a, uint64_t *val)
 {
 	const unsigned char *p;
@@ -2185,11 +2192,9 @@ read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
 	/*
 	 * Read NumPackStreams.
 	 */
-	if (parse_7zip_uint64(a, &(pi->numPackStreams)) < 0)
+	if (parse_7zip_size(a, &(pi->numPackStreams)) < 0)
 		return (-1);
 	if (pi->numPackStreams == 0)
-		return (-1);
-	if (UMAX_ENTRY < pi->numPackStreams)
 		return (-1);
 
 	/*
@@ -2274,7 +2279,7 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 	/*
 	 * Read NumCoders.
 	 */
-	if (parse_7zip_uint64(a, &(f->numCoders)) < 0)
+	if (parse_7zip_size(a, &(f->numCoders)) < 0)
 		return (-1);
 	if (f->numCoders > 4)
 		/* Too many coders. */
@@ -2316,23 +2321,17 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 			f->coders[i].numInStreams = 1;
 			f->coders[i].numOutStreams = 1;
 		} else {
-			if (parse_7zip_uint64(
+			if (parse_7zip_size(
 			    a, &(f->coders[i].numInStreams)) < 0)
 				return (-1);
-			if (UMAX_ENTRY < f->coders[i].numInStreams)
-				return (-1);
-			if (parse_7zip_uint64(
+			if (parse_7zip_size(
 			    a, &(f->coders[i].numOutStreams)) < 0)
-				return (-1);
-			if (UMAX_ENTRY < f->coders[i].numOutStreams)
 				return (-1);
 		}
 
 		if (attr) {
-			if (parse_7zip_uint64(
+			if (parse_7zip_size(
 			    a, &(f->coders[i].propertiesSize)) < 0)
-				return (-1);
-			if (UMAX_ENTRY < f->coders[i].propertiesSize)
 				return (-1);
 			if ((p = header_bytes(
 			    a, (size_t)f->coders[i].propertiesSize)) == NULL)
@@ -2367,13 +2366,9 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 	} else
 		f->bindPairs = NULL;
 	for (i = 0; i < f->numBindPairs; i++) {
-		if (parse_7zip_uint64(a, &(f->bindPairs[i].inIndex)) < 0)
+		if (parse_7zip_size(a, &(f->bindPairs[i].inIndex)) < 0)
 			return (-1);
-		if (UMAX_ENTRY < f->bindPairs[i].inIndex)
-			return (-1);
-		if (parse_7zip_uint64(a, &(f->bindPairs[i].outIndex)) < 0)
-			return (-1);
-		if (UMAX_ENTRY < f->bindPairs[i].outIndex)
+		if (parse_7zip_size(a, &(f->bindPairs[i].outIndex)) < 0)
 			return (-1);
 	}
 
@@ -2397,9 +2392,7 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 		f->packedStreams[0] = i;
 	} else {
 		for (i = 0; i < f->numPackedStreams; i++) {
-			if (parse_7zip_uint64(a, &(f->packedStreams[i])) < 0)
-				return (-1);
-			if (UMAX_ENTRY < f->packedStreams[i])
+			if (parse_7zip_size(a, &(f->packedStreams[i])) < 0)
 				return (-1);
 		}
 	}
@@ -2439,10 +2432,8 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 	/*
 	 * Read NumFolders.
 	 */
-	if (parse_7zip_uint64(a, &(ci->numFolders)) < 0)
+	if (parse_7zip_size(a, &(ci->numFolders)) < 0)
 		goto failed;
-	if (UMAX_ENTRY < ci->numFolders)
-		return (-1);
 
 	/*
 	 * Read External.
@@ -2461,9 +2452,7 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 		}
 		break;
 	case 1:
-		if (parse_7zip_uint64(a, &(ci->dataStreamIndex)) < 0)
-			return (-1);
-		if (UMAX_ENTRY < ci->dataStreamIndex)
+		if (parse_7zip_size(a, &(ci->dataStreamIndex)) < 0)
 			return (-1);
 		if (ci->numFolders > 0) {
 			archive_set_error(&a->archive, -1,
@@ -2843,7 +2832,7 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 	if (*p != kFilesInfo)
 		return (-1);
 
-	if (parse_7zip_uint64(a, &(zip->numFiles)) < 0)
+	if (parse_7zip_size(a, &(zip->numFiles)) < 0)
 		return (-1);
 	if (!files_info_numfiles_is_sane(zip))
 		return (-1);
@@ -3161,9 +3150,7 @@ read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
 	if ((p = header_bytes(a, 1)) == NULL)
 		goto failed;
 	if (*p) {
-		if (parse_7zip_uint64(a, &(h->dataIndex)) < 0)
-			goto failed;
-		if (UMAX_ENTRY < h->dataIndex)
+		if (parse_7zip_size(a, &(h->dataIndex)) < 0)
 			goto failed;
 	}
 

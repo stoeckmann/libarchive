@@ -53,6 +53,7 @@
 #include "archive.h"
 #include "archive_entry.h"
 #include "archive_entry_locale.h"
+#include "archive_integer.h"
 #include "archive_ppmd7_private.h"
 #include "archive_private.h"
 #include "archive_read_private.h"
@@ -397,6 +398,9 @@ struct _7zip {
  * the files. */
 #define UMAX_ENTRY	ARCHIVE_LITERAL_ULL(100000000)
 
+/* Don't try to read more than 16 MB at a time */
+#define MAX_READ	16 * 1024 * 1024
+
 /*
  * Files without unpack streams must be described by the EmptyStream bitmap,
  * which consumes one bit for every file entry in FilesInfo.
@@ -468,7 +472,7 @@ static void	read_consume(struct archive_read *);
 static ssize_t	read_stream(struct archive_read *, const void **, size_t,
 		    size_t);
 static int	seek_pack(struct archive_read *);
-static int64_t	skip_stream(struct archive_read *, size_t);
+static int	skip_stream(struct archive_read *, uint64_t);
 static int	get_data_offset(struct archive_read *, int64_t *, int);
 static int	get_pe_sfx_offset(struct archive_read *, int64_t *);
 static int	get_elf_sfx_offset(struct archive_read *, int64_t *, int);
@@ -1151,7 +1155,7 @@ archive_read_format_7zip_read_data(struct archive_read *a,
 	if (zip->end_of_entry)
 		return (ARCHIVE_EOF);
 
-	size_t bytes_to_read = 16 * 1024 * 1024;  // Don't try to read more than 16 MB at a time
+	size_t bytes_to_read = MAX_READ;
 	if ((uint64_t)bytes_to_read > zip->entry_bytes_remaining) {
 		bytes_to_read = (size_t)zip->entry_bytes_remaining;
 	}
@@ -1199,7 +1203,7 @@ static int
 archive_read_format_7zip_read_data_skip(struct archive_read *a)
 {
 	struct _7zip *zip;
-	int64_t bytes_skipped;
+	int r;
 
 	zip = (struct _7zip *)(a->format->data);
 
@@ -1214,9 +1218,9 @@ archive_read_format_7zip_read_data_skip(struct archive_read *a)
 	 * If the length is at the beginning, we can skip the
 	 * compressed data much more quickly.
 	 */
-	bytes_skipped = skip_stream(a, (size_t)zip->entry_bytes_remaining);
-	if (bytes_skipped < 0)
-		return ((int)bytes_skipped);
+	r = skip_stream(a, zip->entry_bytes_remaining);
+	if (r < 0)
+		return (r);
 	zip->entry_bytes_remaining = 0;
 
 	/* This entry is finished and done. */
@@ -4054,26 +4058,40 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 	return (ARCHIVE_OK);
 }
 
-static int64_t
-skip_stream(struct archive_read *a, size_t skip_bytes)
+static int
+skip_stream(struct archive_read *a, uint64_t skip_bytes)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const void *p;
 	int64_t skipped_bytes;
-	size_t bytes = skip_bytes;
+	uint64_t bytes = skip_bytes;
 
 	if (zip->folder_index == 0) {
+		uint64_t *v;
+
 		/*
 		 * Optimization for a list mode.
 		 * Avoid unnecessary decoding operations.
 		 */
-		zip->si.ci.folders[zip->entry->folderIndex].skipped_bytes
-		    += skip_bytes;
-		return (skip_bytes);
+		v = &zip->si.ci.folders[zip->entry->folderIndex].skipped_bytes;
+		if (archive_ckd_add_u64(v, *v, skip_bytes)) {
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "Too many bytes to skip");
+			return (ARCHIVE_FATAL);
+		}
+		return (ARCHIVE_OK);
 	}
 
 	while (bytes) {
-		skipped_bytes = read_stream(a, &p, bytes, 0);
+		size_t request;
+
+		if (bytes > MAX_READ)
+			request = MAX_READ;
+		else
+			request = (size_t)bytes;
+
+		skipped_bytes = read_stream(a, &p, request, 0);
 		if (skipped_bytes < 0)
 			return (skipped_bytes);
 		if (skipped_bytes == 0) {
@@ -4082,11 +4100,11 @@ skip_stream(struct archive_read *a, size_t skip_bytes)
 			    "Truncated 7-Zip file body");
 			return (ARCHIVE_FATAL);
 		}
-		bytes -= (size_t)skipped_bytes;
+		bytes -= (uint64_t)skipped_bytes;
 		if (zip->pack_stream_bytes_unconsumed)
 			read_consume(a);
 	}
-	return (skip_bytes);
+	return (ARCHIVE_OK);
 }
 
 /*

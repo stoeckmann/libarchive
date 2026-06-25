@@ -174,50 +174,50 @@ struct _7z_digests {
 };
 
 struct _7z_folder {
-	uint64_t		 numCoders;
+	size_t			 numCoders;
 	struct _7z_coder {
 		int64_t		 codec;
-		uint64_t	 numInStreams;
-		uint64_t	 numOutStreams;
-		uint64_t	 propertiesSize;
+		size_t		 numInStreams;
+		size_t		 numOutStreams;
+		size_t		 propertiesSize;
 		unsigned char	*properties;
 	} *coders;
-	uint64_t		 numBindPairs;
+	size_t			 numBindPairs;
 	struct {
-		uint64_t	 inIndex;
-		uint64_t	 outIndex;
+		size_t		 inIndex;
+		size_t		 outIndex;
 	} *bindPairs;
-	uint64_t		 numPackedStreams;
-	uint64_t		*packedStreams;
-	uint64_t		 numInStreams;
-	uint64_t		 numOutStreams;
-	uint64_t		*unPackSize;
+	size_t			 numPackedStreams;
+	size_t			*packedStreams;
+	size_t			 numInStreams;
+	size_t			 numOutStreams;
+	int64_t			*unPackSize;
 	unsigned char		 digest_defined;
 	uint32_t		 digest;
-	uint64_t		 numUnpackStreams;
-	uint32_t		 packIndex;
+	size_t			 numUnpackStreams;
+	size_t			 packIndex;
 	/* Unoperated bytes. */
-	uint64_t		 skipped_bytes;
+	int64_t			 skipped_bytes;
 };
 
 struct _7z_coders_info {
-	uint64_t		 numFolders;
+	size_t			 numFolders;
 	struct _7z_folder	*folders;
-	uint64_t		 dataStreamIndex;
+	size_t			 dataStreamIndex;
 };
 
 struct _7z_pack_info {
-	uint64_t		 pos;
-	uint64_t		 numPackStreams;
-	uint64_t		*sizes;
+	int64_t			 pos;
+	size_t			 numPackStreams;
+	int64_t			*sizes;
 	struct _7z_digests	 digest;
 	/* Calculated from pos and numPackStreams. */
-	uint64_t		*positions;
+	int64_t			*positions;
 };
 
 struct _7z_substream_info {
 	size_t			 unpack_streams;
-	uint64_t		*unpackSizes;
+	int64_t			*unpackSizes;
 	unsigned char		*digestsDefined;
 	uint32_t		*digests;
 };
@@ -229,7 +229,7 @@ struct _7z_stream_info {
 };
 
 struct _7z_header_info {
-	uint64_t		 dataIndex;
+	size_t			 dataIndex;
 
 	unsigned char		*emptyStreamBools;
 	unsigned char		*emptyFileBools;
@@ -243,8 +243,8 @@ struct _7zip_entry {
 #if defined(_WIN32) && !defined(__CYGWIN__) && defined(_DEBUG)
 	const wchar_t		*wname;
 #endif
-	uint32_t		 folderIndex;
-	uint32_t		 ssIndex;
+	size_t			 folderIndex;
+	size_t			 ssIndex;
 	unsigned		 flg;
 #define MTIME_IS_SET	(1<<0)
 #define ATIME_IS_SET	(1<<1)
@@ -268,24 +268,24 @@ struct _7zip {
 
 	int			 header_is_being_read;
 	int			 header_is_encoded;
-	uint64_t		 header_bytes_remaining;
+	int64_t			 header_bytes_remaining;
 	unsigned long		 header_crc32;
 	/* Header offset to check that reading points of the file contents
 	 * will not exceed the header. */
-	uint64_t		 header_offset;
+	int64_t			 header_offset;
 	/* Base offset of the archive file for a seek in case reading SFX. */
-	uint64_t		 seek_base;
+	int64_t			 seek_base;
 
 	/* List of entries */
 	size_t			 entries_remaining;
-	uint64_t		 numFiles;
+	size_t			 numFiles;
 	struct _7zip_entry	*entries;
 	struct _7zip_entry	*entry;
 	unsigned char		*entry_names;
 
 	/* entry_bytes_remaining is the number of bytes we expect. */
 	int64_t			 entry_offset;
-	uint64_t		 entry_bytes_remaining;
+	int64_t			 entry_bytes_remaining;
 
 	/* Running CRC32 of the decompressed data */
 	unsigned long		 entry_crc32;
@@ -306,12 +306,12 @@ struct _7zip {
 	/*
 	 * Decompressing control data.
 	 */
-	unsigned		 folder_index;
-	uint64_t		 folder_outbytes_remaining;
-	unsigned		 pack_stream_index;
-	unsigned		 pack_stream_remaining;
-	uint64_t		 pack_stream_inbytes_remaining;
-	size_t			 pack_stream_bytes_unconsumed;
+	size_t			 folder_index;
+	int64_t			 folder_outbytes_remaining;
+	size_t			 pack_stream_index;
+	size_t			 pack_stream_remaining;
+	int64_t			 pack_stream_inbytes_remaining;
+	int64_t			 pack_stream_bytes_unconsumed;
 
 	/* The codec information of a folder. */
 	int64_t			 codec;
@@ -365,7 +365,7 @@ struct _7zip {
 	uint32_t		 bcj_ip;
 
 	/* Decoding BCJ2 data. */
-	size_t			 main_stream_bytes_remaining;
+	int64_t			 main_stream_bytes_remaining;
 	unsigned char		*sub_stream_buff[3];
 	size_t			 sub_stream_size[3];
 	size_t			 sub_stream_bytes_remaining[3];
@@ -382,7 +382,7 @@ struct _7zip {
 	uint8_t			 bcj2_prevByte;
 	uint32_t		 bcj2_range;
 	uint32_t		 bcj2_code;
-	uint64_t		 bcj2_outPos;
+	size_t			 bcj2_outPos;
 
 	/* Filename character-set conversion data. */
 	struct archive_string_conv *sconv;
@@ -396,7 +396,7 @@ struct _7zip {
 /* Maximum entry size. This limitation prevents reading intentional
  * corrupted 7-zip files on assuming there are not so many entries in
  * the files. */
-#define UMAX_ENTRY	ARCHIVE_LITERAL_ULL(100000000)
+#define UMAX_ENTRY	ARCHIVE_LITERAL_LL(100000000)
 
 /* Don't try to read more than 16 MB at a time */
 #define MAX_READ	16 * 1024 * 1024
@@ -408,7 +408,7 @@ struct _7zip {
 static int
 files_info_numfiles_is_sane(const struct _7zip *zip)
 {
-	uint64_t empty_stream_map_bytes;
+	int64_t empty_stream_map_bytes;
 
 	if (zip->numFiles > SIZE_MAX / sizeof(*zip->entries))
 		return (0);
@@ -430,14 +430,14 @@ static int	archive_read_format_7zip_read_data(struct archive_read *,
 static int	archive_read_format_7zip_read_data_skip(struct archive_read *);
 static int	archive_read_format_7zip_read_header(struct archive_read *,
 		    struct archive_entry *);
-static int	check_7zip_header_in_sfx(const unsigned char *);
+static size_t	check_7zip_header_in_sfx(const unsigned char *);
 static int	decode_codec_id(const unsigned char *, size_t, int64_t *);
 static int	decode_encoded_header_info(struct archive_read *,
 		    struct _7z_stream_info *);
 static int	decompress(struct archive_read *, struct _7zip *,
 		    void *, size_t *, const void *, size_t *);
 static ssize_t	extract_pack_stream(struct archive_read *, size_t);
-static uint64_t folder_uncompressed_size(struct _7z_folder *);
+static int64_t	folder_uncompressed_size(struct _7z_folder *);
 static void	free_CodersInfo(struct _7z_coders_info *);
 static void	free_Digest(struct _7z_digests *);
 static void	free_Folder(struct _7z_folder *);
@@ -451,8 +451,8 @@ static ssize_t	get_uncompressed_data(struct archive_read *, const void **,
 static const unsigned char * header_bytes(struct archive_read *, size_t);
 static int	init_decompression(struct archive_read *, struct _7zip *,
 		    const struct _7z_coder *, const struct _7z_coder *);
-static int	parse_7zip_size(struct archive_read *, uint64_t *);
-static int	parse_7zip_uint64(struct archive_read *, uint64_t *);
+static int	parse_7zip_size(struct archive_read *, size_t *);
+static int	parse_7zip_int64(struct archive_read *, int64_t *);
 static int	read_Bools(struct archive_read *, unsigned char *, size_t);
 static int	read_CodersInfo(struct archive_read *,
 		    struct _7z_coders_info *);
@@ -472,7 +472,7 @@ static void	read_consume(struct archive_read *);
 static ssize_t	read_stream(struct archive_read *, const void **, size_t,
 		    size_t);
 static int	seek_pack(struct archive_read *);
-static int	skip_stream(struct archive_read *, uint64_t);
+static int	skip_stream(struct archive_read *, int64_t);
 static int	get_data_offset(struct archive_read *, int64_t *, int);
 static int	get_pe_sfx_offset(struct archive_read *, int64_t *);
 static int	get_elf_sfx_offset(struct archive_read *, int64_t *, int);
@@ -606,7 +606,7 @@ get_data_offset(struct archive_read *a, int64_t *data_offset, int compat)
 		}
 		p = buff + offset;
 		while (p + 32 < buff + bytes_avail) {
-			int step = check_7zip_header_in_sfx(p);
+			size_t step = check_7zip_header_in_sfx(p);
 			if (step == 0) {
 				*data_offset = p - buff;
 				return (ARCHIVE_OK);
@@ -637,7 +637,7 @@ archive_read_format_7zip_bid(struct archive_read *a, int best_bid)
 	return (48);
 }
 
-static int
+static size_t
 check_7zip_header_in_sfx(const unsigned char *p)
 {
 	switch (p[5]) {
@@ -924,7 +924,6 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 	struct _7zip_entry *zip_entry;
 	int r, ret = ARCHIVE_OK;
 	struct _7z_folder *folder = 0;
-	uint64_t fidx = 0;
 
 	/*
 	 * It should be sufficient to call archive_read_next_header() for
@@ -949,14 +948,14 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 		free_Header(&header);
 		if (r != ARCHIVE_OK)
 			return (r);
-		zip->entries_remaining = (size_t)zip->numFiles;
+		zip->entries_remaining = zip->numFiles;
 		zip->entry = zip->entries;
 	} else {
 		++zip->entry;
 	}
 	zip_entry = zip->entry;
 
-	if (zip->entries_remaining <= 0 || zip_entry == NULL)
+	if (zip->entries_remaining == 0 || zip_entry == NULL)
 		return ARCHIVE_EOF;
 	--zip->entries_remaining;
 
@@ -977,6 +976,8 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 	   has a coder with a _7Z_CRYPTO codec then the folder is encrypted.
 	   Hence the entry must also be encrypted. */
 	if (zip_entry && zip_entry->folderIndex < zip->si.ci.numFolders) {
+		size_t fidx = 0;
+
 		folder = &(zip->si.ci.folders[zip_entry->folderIndex]);
 		for (fidx=0; folder && fidx<folder->numCoders; fidx++) {
 			switch(folder->coders[fidx].codec) {
@@ -1025,7 +1026,7 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 	if (zip_entry->flg & ATIME_IS_SET)
 		archive_entry_set_atime(entry, zip_entry->atime,
 		    zip_entry->atime_ns);
-	if (zip_entry->ssIndex != (uint32_t)-1) {
+	if (zip_entry->ssIndex != (size_t)-1) {
 		zip->entry_bytes_remaining =
 		    zip->si.ss.unpackSizes[zip_entry->ssIndex];
 		archive_entry_set_size(entry, zip->entry_bytes_remaining);
@@ -1156,7 +1157,7 @@ archive_read_format_7zip_read_data(struct archive_read *a,
 		return (ARCHIVE_EOF);
 
 	size_t bytes_to_read = MAX_READ;
-	if ((uint64_t)bytes_to_read > zip->entry_bytes_remaining) {
+	if ((int64_t)bytes_to_read > zip->entry_bytes_remaining) {
 		bytes_to_read = (size_t)zip->entry_bytes_remaining;
 	}
 	bytes = read_stream(a, buff, bytes_to_read, 0);
@@ -1521,7 +1522,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		filters[fi].options = NULL;
 		ff = &filters[fi];
 		r = lzma_properties_decode(&filters[fi], NULL,
-		    coder1->properties, (size_t)coder1->propertiesSize);
+		    coder1->properties, coder1->propertiesSize);
 		if (r != LZMA_OK) {
 			set_error(a, r);
 			return (ARCHIVE_FAILED);
@@ -1888,7 +1889,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 #endif
 	case _7Z_PPMD:
 	{
-		uint64_t flush_bytes;
+		int64_t flush_bytes;
 
 		if (!zip->ppmd7_valid || zip->ppmd7_stat < 0 ||
 		    t_avail_out <= 0) {
@@ -1946,7 +1947,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 			}
 			*zip->ppstream.next_out++ = (unsigned char)sym;
 			zip->ppstream.avail_out--;
-			if (flush_bytes)
+			if (flush_bytes > 0)
 				flush_bytes--;
 		} while (zip->ppstream.avail_out &&
 			(zip->ppstream.avail_in || flush_bytes));
@@ -2001,7 +2002,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		zip->tmp_stream_bytes_avail =
 		    zip->tmp_stream_buff_size - t_avail_out;
 		if (zip->tmp_stream_bytes_avail >
-		      zip->main_stream_bytes_remaining)
+		      (uint64_t)zip->main_stream_bytes_remaining)
 			zip->tmp_stream_bytes_avail =
 			    zip->main_stream_bytes_remaining;
 		zip->tmp_stream_bytes_remaining = zip->tmp_stream_bytes_avail;
@@ -2069,16 +2070,21 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 }
 
 static int
-parse_7zip_size(struct archive_read *a, uint64_t *val)
+parse_7zip_size(struct archive_read *a, size_t *val)
 {
-	if (parse_7zip_uint64(a, val) < 0 || *val > UMAX_ENTRY)
+	int64_t v;
+
+	if (parse_7zip_int64(a, &v) < 0 || v > UMAX_ENTRY)
 		return (-1);
+
+	*val = (size_t)v;
 	return (0);
 }
 
 static int
-parse_7zip_uint64(struct archive_read *a, uint64_t *val)
+parse_7zip_int64(struct archive_read *a, int64_t *val)
 {
+	uint64_t v;
 	const unsigned char *p;
 	unsigned char avail, mask;
 	int i;
@@ -2087,18 +2093,21 @@ parse_7zip_uint64(struct archive_read *a, uint64_t *val)
 		return (-1);
 	avail = *p;
 	mask = 0x80;
-	*val = 0;
+	v = 0;
 	for (i = 0; i < 8; i++) {
 		if (avail & mask) {
 			if ((p = header_bytes(a, 1)) == NULL)
 				return (-1);
-			*val |= ((uint64_t)*p) << (8 * i);
+			v |= ((uint64_t)*p) << (8 * i);
 			mask >>= 1;
 			continue;
 		}
-		*val += ((uint64_t)(avail & (mask -1))) << (8 * i);
+		v += ((uint64_t)(avail & (mask -1))) << (8 * i);
 		break;
 	}
+	if (v > (uint64_t)INT64_MAX)
+		return (-1);
+	*val = (int64_t)v;
 	return (0);
 }
 
@@ -2106,7 +2115,8 @@ static int
 read_Bools(struct archive_read *a, unsigned char *data, size_t num)
 {
 	const unsigned char *p;
-	unsigned i, mask = 0, avail = 0;
+	size_t i;
+	unsigned mask = 0, avail = 0;
 
 	for (i = 0; i < num; i++) {
 		if (mask == 0) {
@@ -2132,7 +2142,7 @@ static int
 read_Digests(struct archive_read *a, struct _7z_digests *d, size_t num)
 {
 	const unsigned char *p;
-	unsigned i;
+	size_t i;
 
 	if (num == 0)
 		return (-1);
@@ -2179,14 +2189,14 @@ static int
 read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
 {
 	const unsigned char *p;
-	unsigned i;
+	size_t i;
 
 	memset(pi, 0, sizeof(*pi));
 
 	/*
 	 * Read PackPos.
 	 */
-	if (parse_7zip_uint64(a, &(pi->pos)) < 0)
+	if (parse_7zip_int64(a, &(pi->pos)) < 0)
 		return (-1);
 
 	/*
@@ -2207,13 +2217,13 @@ read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
 		return (0);
 	if (*p != kSize)
 		return (-1);
-	pi->sizes = calloc((size_t)pi->numPackStreams, sizeof(uint64_t));
-	pi->positions = calloc((size_t)pi->numPackStreams, sizeof(uint64_t));
+	pi->sizes = calloc(pi->numPackStreams, sizeof(int64_t));
+	pi->positions = calloc(pi->numPackStreams, sizeof(int64_t));
 	if (pi->sizes == NULL || pi->positions == NULL)
 		return (-1);
 
 	for (i = 0; i < pi->numPackStreams; i++) {
-		if (parse_7zip_uint64(a, &(pi->sizes[i])) < 0)
+		if (parse_7zip_int64(a, &(pi->sizes[i])) < 0)
 			return (-1);
 	}
 
@@ -2225,9 +2235,9 @@ read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
 	if (*p == kEnd) {
 		/* PackStreamDigests[num] are not present. */
 		pi->digest.defineds =
-		    calloc((size_t)pi->numPackStreams, sizeof(*pi->digest.defineds));
+		    calloc(pi->numPackStreams, sizeof(*pi->digest.defineds));
 		pi->digest.digests =
-		    calloc((size_t)pi->numPackStreams, sizeof(*pi->digest.digests));
+		    calloc(pi->numPackStreams, sizeof(*pi->digest.digests));
 		if (pi->digest.defineds == NULL || pi->digest.digests == NULL)
 			return (-1);
 		return (0);
@@ -2236,7 +2246,7 @@ read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
 	if (*p != kCRC)
 		return (-1);
 
-	if (read_Digests(a, &(pi->digest), (size_t)pi->numPackStreams) < 0)
+	if (read_Digests(a, &(pi->digest), pi->numPackStreams) < 0)
 		return (-1);
 
 	/*
@@ -2252,9 +2262,9 @@ read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
 static void
 free_Folder(struct _7z_folder *f)
 {
-	unsigned i;
-
 	if (f->coders) {
+		size_t i;
+
 		for (i = 0; i< f->numCoders; i++) {
 			free(f->coders[i].properties);
 		}
@@ -2270,9 +2280,9 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
-	uint64_t numInStreamsTotal = 0;
-	uint64_t numOutStreamsTotal = 0;
-	unsigned i;
+	size_t numInStreamsTotal = 0;
+	size_t numOutStreamsTotal = 0;
+	size_t i;
 
 	memset(f, 0, sizeof(*f));
 
@@ -2285,7 +2295,7 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 		/* Too many coders. */
 		return (-1);
 
-	f->coders = calloc((size_t)f->numCoders, sizeof(*f->coders));
+	f->coders = calloc(f->numCoders, sizeof(*f->coders));
 	if (f->coders == NULL)
 		return (-1);
 	for (i = 0; i< f->numCoders; i++) {
@@ -2334,19 +2344,19 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 			    a, &(f->coders[i].propertiesSize)) < 0)
 				return (-1);
 			if ((p = header_bytes(
-			    a, (size_t)f->coders[i].propertiesSize)) == NULL)
+			    a, f->coders[i].propertiesSize)) == NULL)
 				return (-1);
 			f->coders[i].properties =
-			    malloc((size_t)f->coders[i].propertiesSize);
+			    malloc(f->coders[i].propertiesSize);
 			if (f->coders[i].properties == NULL)
 				return (-1);
 			memcpy(f->coders[i].properties, p,
-			    (size_t)f->coders[i].propertiesSize);
+			    f->coders[i].propertiesSize);
 		}
 
-		if (archive_ckd_add_u64(&numInStreamsTotal,
+		if (archive_ckd_add_size(&numInStreamsTotal,
 		    numInStreamsTotal, f->coders[i].numInStreams) ||
-		    archive_ckd_add_u64(&numOutStreamsTotal,
+		    archive_ckd_add_size(&numOutStreamsTotal,
 		    numOutStreamsTotal, f->coders[i].numOutStreams))
 			return (-1);
 	}
@@ -2356,11 +2366,11 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 		return (-1);
 
 	f->numBindPairs = numOutStreamsTotal - 1;
-	if (zip->header_bytes_remaining < f->numBindPairs)
+	if ((uint64_t)zip->header_bytes_remaining < f->numBindPairs)
 			return (-1);
 	if (f->numBindPairs > 0) {
 		f->bindPairs =
-			calloc((size_t)f->numBindPairs, sizeof(*f->bindPairs));
+			calloc(f->numBindPairs, sizeof(*f->bindPairs));
 		if (f->bindPairs == NULL)
 			return (-1);
 	} else
@@ -2374,12 +2384,12 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 
 	f->numPackedStreams = numInStreamsTotal - f->numBindPairs;
 	f->packedStreams =
-	    calloc((size_t)f->numPackedStreams, sizeof(*f->packedStreams));
+	    calloc(f->numPackedStreams, sizeof(*f->packedStreams));
 	if (f->packedStreams == NULL)
 		return (-1);
 	if (f->numPackedStreams == 1) {
 		for (i = 0; i < numInStreamsTotal; i++) {
-			unsigned j;
+			size_t j;
 			for (j = 0; j < f->numBindPairs; j++) {
 				if (f->bindPairs[j].inIndex == i)
 					break;
@@ -2405,7 +2415,7 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 static void
 free_CodersInfo(struct _7z_coders_info *ci)
 {
-	unsigned i;
+	size_t i;
 
 	if (ci->folders) {
 		for (i = 0; i < ci->numFolders; i++)
@@ -2419,7 +2429,7 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 {
 	const unsigned char *p;
 	struct _7z_digests digest;
-	unsigned i;
+	size_t i;
 
 	memset(ci, 0, sizeof(*ci));
 	memset(&digest, 0, sizeof(digest));
@@ -2443,7 +2453,7 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 	switch (*p) {
 	case 0:
 		ci->folders =
-			calloc((size_t)ci->numFolders, sizeof(*ci->folders));
+			calloc(ci->numFolders, sizeof(*ci->folders));
 		if (ci->folders == NULL)
 			return (-1);
 		for (i = 0; i < ci->numFolders; i++) {
@@ -2473,14 +2483,14 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 
 	for (i = 0; i < ci->numFolders; i++) {
 		struct _7z_folder *folder = &(ci->folders[i]);
-		unsigned j;
+		size_t j;
 
 		folder->unPackSize =
-		    calloc((size_t)folder->numOutStreams, sizeof(*folder->unPackSize));
+		    calloc(folder->numOutStreams, sizeof(*folder->unPackSize));
 		if (folder->unPackSize == NULL)
 			goto failed;
 		for (j = 0; j < folder->numOutStreams; j++) {
-			if (parse_7zip_uint64(a, &(folder->unPackSize[j])) < 0)
+			if (parse_7zip_int64(a, &(folder->unPackSize[j])) < 0)
 				goto failed;
 		}
 	}
@@ -2494,7 +2504,7 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 		return (0);
 	if (*p != kCRC)
 		goto failed;
-	if (read_Digests(a, &digest, (size_t)ci->numFolders) < 0)
+	if (read_Digests(a, &digest, ci->numFolders) < 0)
 		goto failed;
 	for (i = 0; i < ci->numFolders; i++) {
 		ci->folders[i].digest_defined = digest.defineds[i];
@@ -2515,16 +2525,16 @@ failed:
 	return (-1);
 }
 
-static uint64_t
+static int64_t
 folder_uncompressed_size(struct _7z_folder *f)
 {
-	int n = (int)f->numOutStreams;
-	unsigned pairs = (unsigned)f->numBindPairs;
+	size_t n = f->numOutStreams;
+	size_t pairs = f->numBindPairs;
 
-	while (--n >= 0) {
-		unsigned i;
+	while (n-- > 0) {
+		size_t i;
 		for (i = 0; i < pairs; i++) {
-			if (f->bindPairs[i].outIndex == (uint64_t)n)
+			if (f->bindPairs[i].outIndex == n)
 				break;
 		}
 		if (i >= pairs)
@@ -2546,11 +2556,11 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
     struct _7z_folder *f, size_t numFolders)
 {
 	const unsigned char *p;
-	uint64_t *usizes;
+	int64_t *usizes;
 	size_t numDigests;
 	size_t unpack_streams;
+	size_t i;
 	int type;
-	unsigned i;
 
 	memset(ss, 0, sizeof(*ss));
 
@@ -2601,8 +2611,8 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 
 	usizes = ss->unpackSizes;
 	for (i = 0; i < numFolders; i++) {
-		unsigned pack;
-		uint64_t size, sum;
+		int64_t size, sum;
+		size_t pack;
 
 		if (f[i].numUnpackStreams == 0)
 			continue;
@@ -2610,9 +2620,9 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 		sum = 0;
 		if (type == kSize) {
 			for (pack = 1; pack < f[i].numUnpackStreams; pack++) {
-				if (parse_7zip_uint64(a, usizes) < 0)
+				if (parse_7zip_int64(a, usizes) < 0)
 					return (-1);
-				if (archive_ckd_add_u64(&sum, sum, *usizes++))
+				if (archive_ckd_add_i64(&sum, sum, *usizes++))
 					return (-1);
 			}
 		}
@@ -2631,8 +2641,7 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 	numDigests = 0;
 	for (i = 0; i < numFolders; i++) {
 		if (f[i].numUnpackStreams != 1 || !f[i].digest_defined)
-			if (f[i].numUnpackStreams > SIZE_MAX ||
-			    archive_ckd_add_size(&numDigests,
+			if (archive_ckd_add_size(&numDigests,
 			    numDigests, f[i].numUnpackStreams)) {
 				errno = ENOMEM;
 				return (-1);
@@ -2643,7 +2652,7 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 		struct _7z_digests tmpDigests;
 		unsigned char *digestsDefined = ss->digestsDefined;
 		uint32_t * digests = ss->digests;
-		int di = 0;
+		size_t di = 0;
 
 		memset(&tmpDigests, 0, sizeof(tmpDigests));
 		if (read_Digests(a, &(tmpDigests), numDigests) < 0) {
@@ -2655,7 +2664,7 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 				*digestsDefined++ = 1;
 				*digests++ = f[i].digest;
 			} else {
-				unsigned j;
+				size_t j;
 
 				for (j = 0; j < f[i].numUnpackStreams;
 				    j++, di++) {
@@ -2693,14 +2702,14 @@ read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
-	unsigned i;
+	size_t i;
 
 	memset(si, 0, sizeof(*si));
 
 	if ((p = header_bytes(a, 1)) == NULL)
 		return (-1);
 	if (*p == kPackInfo) {
-		uint64_t packPos;
+		int64_t packPos;
 
 		if (read_PackInfo(a, &(si->pi)) < 0)
 			return (-1);
@@ -2713,7 +2722,7 @@ read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
 		packPos = si->pi.pos;
 		for (i = 0; i < si->pi.numPackStreams; i++) {
 			si->pi.positions[i] = packPos;
-			if (archive_ckd_add_u64(&packPos,
+			if (archive_ckd_add_i64(&packPos,
 			    packPos, si->pi.sizes[i]))
 				return (-1);
 			if (packPos > zip->header_offset)
@@ -2723,7 +2732,7 @@ read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
 			return (-1);
 	}
 	if (*p == kUnPackInfo) {
-		uint32_t packIndex;
+		size_t packIndex;
 		struct _7z_folder *f;
 
 		if (read_CodersInfo(a, &(si->ci)) < 0)
@@ -2736,12 +2745,9 @@ read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
 		f = si->ci.folders;
 		for (i = 0; i < si->ci.numFolders; i++) {
 			f[i].packIndex = packIndex;
-			if (f[i].numPackedStreams > UINT32_MAX)
-				return (-1);
-			if (packIndex > UINT32_MAX - (uint32_t)f[i].numPackedStreams)
-				return (-1);
-			packIndex += (uint32_t)f[i].numPackedStreams;
-			if (packIndex > si->pi.numPackStreams)
+			if (archive_ckd_add_size(&packIndex,
+			    packIndex, f[i].numPackedStreams) ||
+			    packIndex > si->pi.numPackStreams)
 				return (-1);
 		}
 		if ((p = header_bytes(a, 1)) == NULL)
@@ -2750,7 +2756,7 @@ read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
 
 	if (*p == kSubStreamsInfo) {
 		if (read_SubStreamsInfo(a, &(si->ss),
-		    si->ci.folders, (size_t)si->ci.numFolders) < 0)
+		    si->ci.folders, si->ci.numFolders) < 0)
 			return (-1);
 		if ((p = header_bytes(a, 1)) == NULL)
 			return (-1);
@@ -2782,9 +2788,9 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 	struct _7z_folder *folders;
 	struct _7z_stream_info *si = &(zip->si);
 	struct _7zip_entry *entries;
-	uint32_t folderIndex, indexInFolder;
-	unsigned i;
-	int eindex, empty_streams, sindex;
+	size_t folderIndex, indexInFolder;
+	size_t i;
+	size_t eindex, empty_streams, sindex;
 
 	if (check_header_id) {
 		/*
@@ -2803,12 +2809,12 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 		return (-1);
 	if (*p == kArchiveProperties) {
 		for (;;) {
-			uint64_t size;
+			int64_t size;
 			if ((p = header_bytes(a, 1)) == NULL)
 				return (-1);
 			if (*p == 0)
 				break;
-			if (parse_7zip_uint64(a, &size) < 0)
+			if (parse_7zip_int64(a, &size) < 0)
 				return (-1);
 		}
 		if ((p = header_bytes(a, 1)) == NULL)
@@ -2838,7 +2844,7 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 	if (!files_info_numfiles_is_sane(zip))
 		return (-1);
 
-	zip->entries = calloc((size_t)zip->numFiles, sizeof(*zip->entries));
+	zip->entries = calloc(zip->numFiles, sizeof(*zip->entries));
 	if (zip->entries == NULL)
 		return (-1);
 	entries = zip->entries;
@@ -2846,7 +2852,7 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 	empty_streams = 0;
 	for (;;) {
 		int type;
-		uint64_t size;
+		int64_t size;
 		size_t ll;
 
 		if ((p = header_bytes(a, 1)) == NULL)
@@ -2855,9 +2861,10 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 		if (type == kEnd)
 			break;
 
-		if (parse_7zip_uint64(a, &size) < 0)
+		if (parse_7zip_int64(a, &size) < 0)
 			return (-1);
-		if (zip->header_bytes_remaining < size || size > SIZE_MAX / 4)
+		if (zip->header_bytes_remaining < size ||
+		    size > (int64_t)(SIZE_MAX / 4))
 			return (-1);
 		ll = (size_t)size;
 
@@ -2865,12 +2872,12 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 		case kEmptyStream:
 			if (h->emptyStreamBools != NULL)
 				return (-1);
-			h->emptyStreamBools = calloc((size_t)zip->numFiles,
+			h->emptyStreamBools = calloc(zip->numFiles,
 			    sizeof(*h->emptyStreamBools));
 			if (h->emptyStreamBools == NULL)
 				return (-1);
 			if (read_Bools(
-			    a, h->emptyStreamBools, (size_t)zip->numFiles) < 0)
+			    a, h->emptyStreamBools, zip->numFiles) < 0)
 				return (-1);
 			empty_streams = 0;
 			for (i = 0; i < zip->numFiles; i++) {
@@ -2985,15 +2992,15 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 			allAreDefined = *p;
 			if (h->attrBools != NULL)
 				return (-1);
-			h->attrBools = calloc((size_t)zip->numFiles,
+			h->attrBools = calloc(zip->numFiles,
 			    sizeof(*h->attrBools));
 			if (h->attrBools == NULL)
 				return (-1);
 			if (allAreDefined)
-				memset(h->attrBools, 1, (size_t)zip->numFiles);
+				memset(h->attrBools, 1, zip->numFiles);
 			else {
 				if (read_Bools(a, h->attrBools,
-				      (size_t)zip->numFiles) < 0)
+				      zip->numFiles) < 0)
 					return (-1);
 			}
 			for (i = 0; i < zip->numFiles; i++) {
@@ -3050,7 +3057,7 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 		}
 
 		if (entries[i].flg & HAS_STREAM) {
-			if ((size_t)sindex >= si->ss.unpack_streams)
+			if (sindex >= si->ss.unpack_streams)
 				return (-1);
 			if (entries[i].mode == 0)
 				entries[i].mode = AE_IFREG | 0666;
@@ -3130,9 +3137,9 @@ read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
 	struct _7zip_entry *entries = zip->entries;
 	unsigned char *timeBools;
 	int allAreDefined;
-	unsigned i;
+	size_t i;
 
-	timeBools = calloc((size_t)zip->numFiles, sizeof(*timeBools));
+	timeBools = calloc(zip->numFiles, sizeof(*timeBools));
 	if (timeBools == NULL)
 		return (-1);
 
@@ -3141,9 +3148,9 @@ read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
 		goto failed;
 	allAreDefined = *p;
 	if (allAreDefined)
-		memset(timeBools, 1, (size_t)zip->numFiles);
+		memset(timeBools, 1, zip->numFiles);
 	else {
-		if (read_Bools(a, timeBools, (size_t)zip->numFiles) < 0)
+		if (read_Bools(a, timeBools, zip->numFiles) < 0)
 			goto failed;
 	}
 
@@ -3211,8 +3218,8 @@ decode_encoded_header_info(struct archive_read *a, struct _7z_stream_info *si)
 	}
 
 	if (zip->header_offset < si->pi.pos + si->pi.sizes[0] ||
-	    (int64_t)(si->pi.pos + si->pi.sizes[0]) < 0 ||
-	    si->pi.sizes[0] == 0 || (int64_t)si->pi.pos < 0) {
+	    si->pi.pos + si->pi.sizes[0] < 0 ||
+	    si->pi.sizes[0] == 0 || si->pi.pos < 0) {
 		archive_set_error(&a->archive, -1, "Malformed Header offset");
 		return (ARCHIVE_FATAL);
 	}
@@ -3226,7 +3233,7 @@ header_bytes(struct archive_read *a, size_t rbytes)
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
 
-	if (zip->header_bytes_remaining < rbytes)
+	if ((uint64_t)zip->header_bytes_remaining < rbytes)
 		return (NULL);
 	if (zip->pack_stream_bytes_unconsumed)
 		read_consume(a);
@@ -3258,8 +3265,8 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
     struct _7z_header_info *header)
 {
 	const unsigned char *p;
-	uint64_t next_header_offset;
-	uint64_t next_header_size;
+	int64_t next_header_offset;
+	int64_t next_header_size;
 	uint32_t next_header_crc;
 	ssize_t bytes_avail;
 	int64_t data_offset;
@@ -3277,7 +3284,10 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 		return (ARCHIVE_FATAL);
 	}
 
-	zip->seek_base = (uint64_t)data_offset + 32;
+	if (archive_ckd_add_i64(&zip->seek_base, data_offset, 32)) {
+		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
+		return (ARCHIVE_FATAL);
+	}
 
 	if (memcmp(p, _7ZIP_SIGNATURE, 6) != 0) {
 		archive_set_error(&a->archive, -1, "Not 7-Zip archive file");
@@ -3294,25 +3304,35 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 	}
 
 	next_header_offset = archive_le64dec(p + 12);
+	if (next_header_offset < 0) {
+		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
+		return (ARCHIVE_FATAL);
+	}
 	next_header_size = archive_le64dec(p + 20);
+	if (next_header_size < 0) {
+		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
+		return (ARCHIVE_FATAL);
+	}
 	next_header_crc = archive_le32dec(p + 28);
 
 	if (next_header_size == 0)
 		/* There is no entry in an archive file. */
 		return (ARCHIVE_EOF);
 
-	if (((int64_t)next_header_offset) < 0) {
-		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
-		return (ARCHIVE_FATAL);
-	}
 	__archive_read_consume(a, 32);
 	if (next_header_offset != 0) {
-		if (bytes_avail >= (ssize_t)next_header_offset)
+		if (bytes_avail >= next_header_offset)
 			__archive_read_consume(a, next_header_offset);
-		else if (seek_compat(a,
-		    next_header_offset + zip->seek_base, SEEK_SET, 1) < 0) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
-			return (ARCHIVE_FATAL);
+		else {
+			int64_t target;
+
+			if (archive_ckd_add_i64(&target,
+			    zip->seek_base, next_header_offset) ||
+			    seek_compat(a, target, SEEK_SET, 1) < 0) {
+				archive_set_error(&a->archive,
+				    ARCHIVE_ERRNO_MISC, "Seek error");
+				return (ARCHIVE_FATAL);
+			}
 		}
 	}
 	zip->stream_offset = next_header_offset;
@@ -3501,10 +3521,10 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 			    "Truncated 7-Zip file body");
 			return (ARCHIVE_FATAL);
 		}
-		if ((uint64_t)bytes_avail > zip->pack_stream_inbytes_remaining)
+		if (bytes_avail > zip->pack_stream_inbytes_remaining)
 			bytes_avail = (ssize_t)zip->pack_stream_inbytes_remaining;
 		zip->pack_stream_inbytes_remaining -= bytes_avail;
-		if ((uint64_t)bytes_avail > zip->folder_outbytes_remaining)
+		if (bytes_avail > zip->folder_outbytes_remaining)
 			bytes_avail = (ssize_t)zip->folder_outbytes_remaining;
 		zip->folder_outbytes_remaining -= bytes_avail;
 		zip->uncompressed_buffer_bytes_remaining = bytes_avail;
@@ -3591,7 +3611,7 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 		bytes_out = zip->uncompressed_buffer_size
 			- zip->uncompressed_buffer_bytes_remaining;
 		bytes_in = bytes_avail;
-		if (bytes_in > zip->pack_stream_inbytes_remaining)
+		if (bytes_in > (uint64_t)zip->pack_stream_inbytes_remaining)
 			bytes_in = (size_t)zip->pack_stream_inbytes_remaining;
 		/* Drive decompression. */
 		r = decompress(a, zip, buff_out, &bytes_out,
@@ -3607,7 +3627,7 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 			return (ARCHIVE_FATAL);
 		}
 		zip->pack_stream_inbytes_remaining -= bytes_in;
-		if (bytes_out > zip->folder_outbytes_remaining)
+		if (bytes_out > (uint64_t)zip->folder_outbytes_remaining)
 			bytes_out = (size_t)zip->folder_outbytes_remaining;
 		zip->folder_outbytes_remaining -= bytes_out;
 		zip->uncompressed_buffer_bytes_remaining += bytes_out;
@@ -3648,7 +3668,7 @@ seek_pack(struct archive_read *a)
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	int64_t pack_offset;
 
-	if (zip->pack_stream_remaining <= 0) {
+	if (zip->pack_stream_remaining == 0) {
 		archive_set_error(&(a->archive),
 		    ARCHIVE_ERRNO_MISC, "Damaged 7-Zip archive");
 		return (ARCHIVE_FATAL);
@@ -3657,8 +3677,11 @@ seek_pack(struct archive_read *a)
 	    zip->si.pi.sizes[zip->pack_stream_index];
 	pack_offset = zip->si.pi.positions[zip->pack_stream_index];
 	if (zip->stream_offset != pack_offset) {
-		if (0 > seek_compat(a, pack_offset + zip->seek_base,
-		    SEEK_SET, 1)) {
+		int64_t target;
+
+		if (archive_ckd_add_i64(&target,
+		    zip->seek_base, pack_offset) ||
+		    0 > seek_compat(a, target, SEEK_SET, 1)) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
@@ -3674,7 +3697,7 @@ read_stream(struct archive_read *a, const void **buff, size_t size,
     size_t minimum)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
-	uint64_t skip_bytes = 0;
+	int64_t skip_bytes = 0;
 	ssize_t r;
 
 	if (zip->uncompressed_buffer_bytes_remaining == 0) {
@@ -3795,7 +3818,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const struct _7z_coder *coder1, *coder2;
 	const char *cname = (header)?"archive header":"file content";
-	unsigned i;
+	size_t i;
 	int r, found_bcj2 = 0;
 
 	/*
@@ -3853,8 +3876,8 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 	/*
 	 * Initialize a stream reader.
 	 */
-	zip->pack_stream_remaining = (unsigned)folder->numPackedStreams;
-	zip->pack_stream_index = (unsigned)folder->packIndex;
+	zip->pack_stream_remaining = folder->numPackedStreams;
+	zip->pack_stream_index = folder->packIndex;
 	zip->folder_outbytes_remaining = folder_uncompressed_size(folder);
 	zip->uncompressed_buffer_bytes_remaining = 0;
 	coder1 = &(folder->coders[0]);
@@ -3876,8 +3899,8 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 		const void *buff;
 		ssize_t bytes;
 		unsigned char *b[3] = {NULL, NULL, NULL};
-		uint64_t sunpack[3] ={-1, -1, -1};
-		uint64_t remaining;
+		int64_t sunpack[3] ={-1, -1, -1};
+		int64_t remaining;
 		size_t s[3] = {0, 0, 0};
 		int idx[3] = {0, 1, 2};
 
@@ -3931,27 +3954,20 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 			}
 			coder2 = &(fc[3]);
 			zip->main_stream_bytes_remaining =
-				(size_t)folder->unPackSize[2];
+				folder->unPackSize[2];
 			remaining = folder->unPackSize[2];
 		} else if (coder2 != NULL && coder2->codec == _7Z_X86_BCJ2 &&
 		    zip->pack_stream_remaining == 4 &&
 		    folder->numInStreams == 5 && folder->numOutStreams == 2) {
 			/* Source type 0 made by 7z */
 			zip->main_stream_bytes_remaining =
-				(size_t)folder->unPackSize[0];
+				folder->unPackSize[0];
 			remaining = folder->unPackSize[0];
 		} else {
 			/* We got an unexpected form. */
 			archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC,
 			    "Unsupported form of BCJ2 streams");
-			return (ARCHIVE_FATAL);
-		}
-		if (remaining > SIZE_MAX) {
-			archive_set_error(&(a->archive),
-			    ARCHIVE_ERRNO_MISC,
-			    "7-Zip sub-stream size exceeds "
-			    "platform maximum");
 			return (ARCHIVE_FATAL);
 		}
 		zip->main_stream_bytes_remaining = remaining;
@@ -3961,7 +3977,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 		if ((r = seek_pack(a)) < 0)
 			return (r);
 		zip->pack_stream_bytes_unconsumed =
-		    (size_t)zip->pack_stream_inbytes_remaining;
+		    zip->pack_stream_inbytes_remaining;
 		read_consume(a);
 
 		/* Read following three sub streams. */
@@ -3973,7 +3989,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 				return (r);
 			}
 
-			if (sunpack[i] == (uint64_t)-1)
+			if (sunpack[i] == -1)
 				zip->folder_outbytes_remaining =
 				    zip->pack_stream_inbytes_remaining;
 			else
@@ -3987,7 +4003,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 
 			/* Allocate memory for the decoded data of a sub
 			 * stream. */
-			if (zip->folder_outbytes_remaining > SIZE_MAX) {
+			if ((uint64_t)zip->folder_outbytes_remaining > SIZE_MAX) {
 				free(b[0]); free(b[1]); free(b[2]);
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
@@ -4052,7 +4068,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 		 * of BCJ2.
 		 */
 		zip->pack_stream_remaining = 1;
-		zip->pack_stream_index = (unsigned)folder->packIndex;
+		zip->pack_stream_index = folder->packIndex;
 		zip->folder_outbytes_remaining =
 		    folder_uncompressed_size(folder);
 		zip->uncompressed_buffer_bytes_remaining = 0;
@@ -4068,22 +4084,22 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 }
 
 static int
-skip_stream(struct archive_read *a, uint64_t skip_bytes)
+skip_stream(struct archive_read *a, int64_t skip_bytes)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const void *p;
 	int64_t skipped_bytes;
-	uint64_t bytes = skip_bytes;
+	int64_t bytes = skip_bytes;
 
 	if (zip->folder_index == 0) {
-		uint64_t *v;
+		int64_t *v;
 
 		/*
 		 * Optimization for a list mode.
 		 * Avoid unnecessary decoding operations.
 		 */
 		v = &zip->si.ci.folders[zip->entry->folderIndex].skipped_bytes;
-		if (archive_ckd_add_u64(v, *v, skip_bytes)) {
+		if (archive_ckd_add_i64(v, *v, skip_bytes)) {
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Too many bytes to skip");
@@ -4109,7 +4125,7 @@ skip_stream(struct archive_read *a, uint64_t skip_bytes)
 			    "Truncated 7-Zip file body");
 			return (ARCHIVE_FATAL);
 		}
-		bytes -= (uint64_t)skipped_bytes;
+		bytes -= skipped_bytes;
 		if (zip->pack_stream_bytes_unconsumed)
 			read_consume(a);
 	}
@@ -4466,7 +4482,7 @@ Bcj2_Decode(struct _7zip *zip, uint8_t *outBuf, size_t outSize)
 	const uint8_t *buf0, *buf1, *buf2, *buf3;
 	size_t size0, size1, size2, size3;
 	const uint8_t *buffer, *bufferLim;
-	unsigned int i, j;
+	size_t i, j;
 
 	size0 = zip->tmp_stream_bytes_remaining;
 	buf0 = zip->tmp_stream_buff + zip->tmp_stream_bytes_avail - size0;
@@ -4565,7 +4581,7 @@ Bcj2_Decode(struct _7zip *zip, uint8_t *outBuf, size_t outSize)
 				size2 -= 4;
 			}
 			dest = archive_be32dec(v) -
-			    ((uint32_t)zip->bcj2_outPos + (uint32_t)outPos + 4);
+			    (zip->bcj2_outPos + outPos + 4);
 			archive_le32enc(out, dest);
 			zip->bcj2_prevByte = out[3];
 

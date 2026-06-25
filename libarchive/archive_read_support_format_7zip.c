@@ -188,7 +188,6 @@ struct _7z_folder {
 		size_t		 outIndex;
 	} *bindPairs;
 	size_t			 numPackedStreams;
-	size_t			*packedStreams;
 	size_t			 numInStreams;
 	size_t			 numOutStreams;
 	int64_t			*unPackSize;
@@ -203,7 +202,6 @@ struct _7z_folder {
 struct _7z_coders_info {
 	size_t			 numFolders;
 	struct _7z_folder	*folders;
-	size_t			 dataStreamIndex;
 };
 
 struct _7z_pack_info {
@@ -229,8 +227,6 @@ struct _7z_stream_info {
 };
 
 struct _7z_header_info {
-	size_t			 dataIndex;
-
 	unsigned char		*emptyStreamBools;
 	unsigned char		*emptyFileBools;
 	unsigned char		*antiBools;
@@ -466,8 +462,7 @@ static int	read_StreamsInfo(struct archive_read *,
 		    struct _7z_stream_info *);
 static int	read_SubStreamsInfo(struct archive_read *,
 		    struct _7z_substream_info *, struct _7z_folder *, size_t);
-static int	read_Times(struct archive_read *, struct _7z_header_info *,
-		    int);
+static int	read_Times(struct archive_read *, int);
 static int	read_consume(struct archive_read *);
 static ssize_t	read_stream(struct archive_read *, const void **, size_t,
 		    size_t);
@@ -2286,7 +2281,6 @@ free_Folder(struct _7z_folder *f)
 		free(f->coders);
 	}
 	free(f->bindPairs);
-	free(f->packedStreams);
 	free(f->unPackSize);
 }
 
@@ -2398,10 +2392,7 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 	}
 
 	f->numPackedStreams = numInStreamsTotal - f->numBindPairs;
-	f->packedStreams =
-	    calloc(f->numPackedStreams, sizeof(*f->packedStreams));
-	if (f->packedStreams == NULL)
-		return (-1);
+	/* packedStreams are not needed; parse/verify nonetheless */
 	if (f->numPackedStreams == 1) {
 		for (i = 0; i < numInStreamsTotal; i++) {
 			size_t j;
@@ -2414,10 +2405,10 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 		}
 		if (i == numInStreamsTotal)
 			return (-1);
-		f->packedStreams[0] = i;
 	} else {
 		for (i = 0; i < f->numPackedStreams; i++) {
-			if (parse_7zip_size(a, &(f->packedStreams[i])) < 0)
+			size_t packedStream;
+			if (parse_7zip_size(a, &packedStream) < 0)
 				return (-1);
 		}
 	}
@@ -2444,7 +2435,7 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 {
 	const unsigned char *p;
 	struct _7z_digests digest;
-	size_t i;
+	size_t dataStreamIndex, i;
 
 	memset(ci, 0, sizeof(*ci));
 	memset(&digest, 0, sizeof(digest));
@@ -2477,7 +2468,7 @@ read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
 		}
 		break;
 	case 1:
-		if (parse_7zip_size(a, &(ci->dataStreamIndex)) < 0)
+		if (parse_7zip_size(a, &dataStreamIndex) < 0)
 			return (-1);
 		if (ci->numFolders > 0) {
 			archive_set_error(&a->archive, -1,
@@ -2935,7 +2926,7 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 		case kCTime:
 		case kATime:
 		case kMTime:
-			if (read_Times(a, h, type) < 0)
+			if (read_Times(a, type) < 0)
 				return (-1);
 			break;
 		case kName:
@@ -3145,14 +3136,14 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 }
 
 static int
-read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
+read_Times(struct archive_read *a, int type)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
 	struct _7zip_entry *entries = zip->entries;
 	unsigned char *timeBools;
 	int allAreDefined;
-	size_t i;
+	size_t dataIndex, i;
 
 	timeBools = calloc(zip->numFiles, sizeof(*timeBools));
 	if (timeBools == NULL)
@@ -3173,7 +3164,7 @@ read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
 	if ((p = header_bytes(a, 1)) == NULL)
 		goto failed;
 	if (*p) {
-		if (parse_7zip_size(a, &(h->dataIndex)) < 0)
+		if (parse_7zip_size(a, &dataIndex) < 0)
 			goto failed;
 	}
 

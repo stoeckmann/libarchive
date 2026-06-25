@@ -73,12 +73,12 @@
 /*
  * PE format
  */
-#define PE_DOS_HDR_LEN				0x40
+#define PE_DOS_HDR_LEN			0x40
 #define PE_DOS_HDR_ELFANEW_OFFSET	0x3c
-#define PE_COFF_HDR_LEN				0x18
+#define PE_COFF_HDR_LEN			0x18
 #define PE_COFF_HDR_SEC_CNT_OFFSET	0x6
 #define PE_COFF_HDR_OPT_SZ_OFFSET	0x14
-#define PE_SEC_HDR_LEN 				0x28
+#define PE_SEC_HDR_LEN 			0x28
 #define PE_SEC_HDR_RAW_ADDR_OFFSET	0x14
 #define PE_SEC_HDR_RAW_SZ_OFFSET	0x10
 
@@ -99,8 +99,8 @@
 #define _7Z_BZ2		0x040202
 #define _7Z_PPMD	0x030401
 #define _7Z_DELTA	0x03
-#define _7Z_CRYPTO_MAIN_ZIP			0x06F10101 /* Main Zip crypto algo */
-#define _7Z_CRYPTO_RAR_29			0x06F10303 /* Rar29 AES-128 + (modified SHA-1) */
+#define _7Z_CRYPTO_MAIN_ZIP		0x06F10101 /* Main Zip crypto algo */
+#define _7Z_CRYPTO_RAR_29		0x06F10303 /* Rar29 AES-128 + (modified SHA-1) */
 #define _7Z_CRYPTO_AES_256_SHA_256	0x06F10701 /* AES-256 + SHA-256 */
 
 
@@ -399,7 +399,7 @@ struct _7zip {
 
 static size_t	align_size(size_t);
 static int	archive_read_format_7zip_has_encrypted_entries(struct archive_read *);
-static int	archive_read_support_format_7zip_capabilities(struct archive_read *a);
+static int	archive_read_support_format_7zip_capabilities(struct archive_read *);
 static int	archive_read_format_7zip_bid(struct archive_read *, int);
 static int	archive_read_format_7zip_cleanup(struct archive_read *);
 static int	archive_read_format_7zip_read_data(struct archive_read *,
@@ -426,7 +426,7 @@ static void	free_SubStreamsInfo(struct _7z_substream_info *);
 static int	free_decompression(struct archive_read *, struct _7zip *);
 static ssize_t	get_uncompressed_data(struct archive_read *, const void **,
 		    size_t, size_t);
-static const unsigned char * header_bytes(struct archive_read *, size_t);
+static const unsigned char *header_bytes(struct archive_read *, size_t);
 static int	init_decompression(struct archive_read *, struct _7zip *,
 		    const struct _7z_coder *, const struct _7z_coder *);
 static int	parse_7zip_size(struct archive_read *, size_t *);
@@ -462,7 +462,7 @@ static size_t	x86_Convert(struct _7zip *, uint8_t *, size_t);
 static void	arm_Init(struct _7zip *);
 static size_t	arm_Convert(struct _7zip *, uint8_t *, size_t);
 static size_t	arm64_Convert(struct _7zip *, uint8_t *, size_t);
-static ssize_t		Bcj2_Decode(struct _7zip *, uint8_t *, size_t);
+static ssize_t	Bcj2_Decode(struct _7zip *, uint8_t *, size_t);
 static size_t	sparc_Convert(struct _7zip *, uint8_t *, size_t);
 static size_t	powerpc_Convert(struct _7zip *, uint8_t *, size_t);
 static int64_t	seek_compat(struct archive_read *, int64_t, int, int);
@@ -511,19 +511,18 @@ archive_read_support_format_7zip(struct archive *_a)
 }
 
 static int
-archive_read_support_format_7zip_capabilities(struct archive_read * a)
+archive_read_support_format_7zip_capabilities(struct archive_read *a)
 {
 	(void)a; /* UNUSED */
 	return (ARCHIVE_READ_FORMAT_CAPS_ENCRYPT_DATA |
 			ARCHIVE_READ_FORMAT_CAPS_ENCRYPT_METADATA);
 }
 
-
 static int
-archive_read_format_7zip_has_encrypted_entries(struct archive_read *_a)
+archive_read_format_7zip_has_encrypted_entries(struct archive_read *a)
 {
-	if (_a && _a->format) {
-		struct _7zip * zip = (struct _7zip *)_a->format->data;
+	if (a && a->format) {
+		struct _7zip *zip = (struct _7zip *)a->format->data;
 		if (zip) {
 			return zip->has_encrypted_entries;
 		}
@@ -956,7 +955,7 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 		size_t fidx = 0;
 
 		folder = &(zip->si.ci.folders[zip_entry->folderIndex]);
-		for (fidx=0; folder && fidx<folder->numCoders; fidx++) {
+		for (fidx = 0; folder && fidx < folder->numCoders; fidx++) {
 			switch(folder->coders[fidx].codec) {
 				case _7Z_CRYPTO_MAIN_ZIP:
 				case _7Z_CRYPTO_RAR_29:
@@ -1163,7 +1162,7 @@ archive_read_format_7zip_read_data(struct archive_read *a,
 		    zip->entry_crc32) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "7-Zip bad CRC: 0x%lx should be 0x%lx",
-			    (unsigned long)zip->entry_crc32,
+			    zip->entry_crc32,
 			    (unsigned long)zip->si.ss.digests[
 			    		zip->entry->ssIndex]);
 			ret = ARCHIVE_WARN;
@@ -1246,7 +1245,6 @@ read_consume(struct archive_read *a)
 }
 
 #ifdef HAVE_LZMA_H
-
 /*
  * Set an error code and choose an error message for liblzma.
  */
@@ -1294,7 +1292,6 @@ set_error(struct archive_read *a, int ret)
 		break;
 	}
 }
-
 #endif
 
 static int
@@ -1324,7 +1321,7 @@ ppmd_read(void *p)
 		 * and we are on boundary;
 		 * last resort to read using __archive_read_ahead.
 		 */
-		const uint8_t* data = __archive_read_ahead(a,
+		const uint8_t *data = __archive_read_ahead(a,
 		    zip->ppstream.stream_in + 1, NULL);
 		if (data == NULL) {
 			archive_set_error(&a->archive,
@@ -1453,7 +1450,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 				memset(&delta_opt, 0, sizeof(delta_opt));
 				delta_opt.type = LZMA_DELTA_TYPE_BYTE;
 				delta_opt.dist =
-				    (uint32_t)coder2->properties[0] + 1;
+				    coder2->properties[0] + 1;
 				filters[fi].options = &delta_opt;
 				fi++;
 				break;
@@ -1729,7 +1726,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 	bcj2_avail_out = t_avail_out;
 	if (zip->codec2 == _7Z_X86_BCJ2) {
 		/*
-		 * Decord a remaining decompressed main stream for BCJ2.
+		 * Decode a remaining decompressed main stream for BCJ2.
 		 */
 		if (zip->tmp_stream_bytes_remaining) {
 			ssize_t bytes;
@@ -1763,8 +1760,8 @@ decompress(struct archive_read *a, struct _7zip *zip,
 	switch (zip->codec) {
 	case _7Z_COPY:
 	{
-		size_t bytes =
-		    (t_avail_in > t_avail_out)?t_avail_out:t_avail_in;
+		size_t bytes = (t_avail_in > t_avail_out) ?
+		    t_avail_out : t_avail_in;
 
 		memcpy(t_next_out, t_next_in, bytes);
 		t_avail_in -= bytes;
@@ -1866,12 +1863,17 @@ decompress(struct archive_read *a, struct _7zip *zip,
 #if HAVE_ZSTD_H && HAVE_LIBZSTD
 	case _7Z_ZSTD:
 	{
-		ZSTD_inBuffer input = { t_next_in, t_avail_in, 0 }; // src, size, pos
-		ZSTD_outBuffer output = { t_next_out, t_avail_out, 0 }; // dst, size, pos
+		/* src, size, pos */
+		ZSTD_inBuffer input = { t_next_in, t_avail_in, 0 };
+		/* dst, size, pos */
+		ZSTD_outBuffer output = { t_next_out, t_avail_out, 0 };
 
-		size_t const zret = ZSTD_decompressStream(zip->zstd_dstream, &output, &input);
+		size_t const zret = ZSTD_decompressStream(zip->zstd_dstream,
+		    &output, &input);
 		if (ZSTD_isError(zret)) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Zstd decompression failed: %s", ZSTD_getErrorName(zret));
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			    "Zstd decompression failed: %s",
+			    ZSTD_getErrorName(zret));
 			return ARCHIVE_FAILED;
 		}
 		t_avail_in -= input.pos;
@@ -1960,7 +1962,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 	*outbytes = o_avail_out - t_avail_out;
 
 	/*
-	 * Decord BCJ.
+	 * Decode BCJ.
 	 */
 	if (zip->codec != _7Z_LZMA2) {
 		if (zip->codec2 == _7Z_X86) {
@@ -1968,9 +1970,10 @@ decompress(struct archive_read *a, struct _7zip *zip,
 
 			zip->odd_bcj_size = *outbytes - l;
 			if (zip->odd_bcj_size > 0 && zip->odd_bcj_size <= 4 &&
-		    	o_avail_in && ret != ARCHIVE_EOF) {
-				memcpy(zip->odd_bcj, ((unsigned char *)buff) + l,
-			    	zip->odd_bcj_size);
+			    o_avail_in && ret != ARCHIVE_EOF) {
+				memcpy(zip->odd_bcj,
+				    ((unsigned char *)buff) + l,
+				    zip->odd_bcj_size);
 				*outbytes = l;
 			} else
 				zip->odd_bcj_size = 0;
@@ -1986,7 +1989,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 	}
 
 	/*
-	 * Decord BCJ2 with a decompressed main stream.
+	 * Decode BCJ2 with a decompressed main stream.
 	 */
 	if (zip->codec2 == _7Z_X86_BCJ2) {
 		ssize_t bytes;
@@ -2094,7 +2097,7 @@ parse_7zip_int64(struct archive_read *a, int64_t *val)
 			mask >>= 1;
 			continue;
 		}
-		v += ((uint64_t)(avail & (mask -1))) << (8 * i);
+		v += ((uint64_t)(avail & (mask - 1))) << (8 * i);
 		break;
 	}
 	if (v > (uint64_t)INT64_MAX)
@@ -2117,7 +2120,7 @@ read_Bools(struct archive_read *a, unsigned char *data, size_t num)
 			avail = *p;
 			mask = 0x80;
 		}
-		data[i] = (avail & mask)?1:0;
+		data[i] = (avail & mask) ? 1 : 0;
 		mask >>= 1;
 	}
 	return (0);
@@ -2304,7 +2307,7 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 		 * 7:  Must be zero.
 		 */
 		codec_size = *p & 0xf;
-		simple = (*p & 0x10)?0:1;
+		simple = (*p & 0x10) ? 0 : 1;
 		attr = *p & 0x20;
 		if (*p & 0x80)
 			return (-1);/* Not supported. */
@@ -2639,7 +2642,7 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 	if (type == kCRC) {
 		struct _7z_digests tmpDigests;
 		unsigned char *digestsDefined = ss->digestsDefined;
-		uint32_t * digests = ss->digests;
+		uint32_t *digests = ss->digests;
 		size_t di = 0;
 
 		memset(&tmpDigests, 0, sizeof(tmpDigests));
@@ -4604,7 +4607,7 @@ Bcj2_Decode(struct _7zip *zip, uint8_t *outBuf, size_t outSize)
 				 * Save odd bytes which we could not add into
 				 * the output buffer because of out of space.
 				 */
-				zip->odd_bcj_size = 4 -i;
+				zip->odd_bcj_size = 4 - i;
 				for (; i < 4; i++) {
 					j = i - 4 + (unsigned)zip->odd_bcj_size;
 					zip->odd_bcj[j] = out[i];

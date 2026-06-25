@@ -397,25 +397,6 @@ struct _7zip {
 /* Don't try to read more than 16 MB at a time */
 #define MAX_READ	16 * 1024 * 1024
 
-/*
- * Files without unpack streams must be described by the EmptyStream bitmap,
- * which consumes one bit for every file entry in FilesInfo.
- */
-static int
-files_info_numfiles_is_sane(const struct _7zip *zip)
-{
-	int64_t empty_stream_map_bytes;
-
-	if (zip->numFiles > SIZE_MAX / sizeof(*zip->entries))
-		return (0);
-
-	if (zip->numFiles <= zip->si.ss.unpack_streams)
-		return (1);
-
-	empty_stream_map_bytes = (zip->numFiles + 7) / 8;
-	return (empty_stream_map_bytes <= zip->header_bytes_remaining);
-}
-
 static size_t	align_size(size_t);
 static int	archive_read_format_7zip_has_encrypted_entries(struct archive_read *);
 static int	archive_read_support_format_7zip_capabilities(struct archive_read *a);
@@ -433,6 +414,7 @@ static int	decode_encoded_header_info(struct archive_read *,
 static int	decompress(struct archive_read *, struct _7zip *,
 		    void *, size_t *, const void *, size_t *);
 static ssize_t	extract_pack_stream(struct archive_read *, size_t);
+static int	files_info_numfiles_is_sane(const struct _7zip *);
 static int64_t	folder_uncompressed_size(struct _7z_folder *);
 static void	free_CodersInfo(struct _7z_coders_info *);
 static void	free_Digest(struct _7z_digests *);
@@ -2783,6 +2765,25 @@ free_Header(struct _7z_header_info *h)
 	free(h->emptyFileBools);
 	free(h->antiBools);
 	free(h->attrBools);
+}
+
+/*
+ * Files without unpack streams must be described by the EmptyStream bitmap,
+ * which consumes one bit for every file entry in FilesInfo.
+ */
+static int
+files_info_numfiles_is_sane(const struct _7zip *zip)
+{
+	int64_t empty_stream_map_bytes;
+
+	if (zip->numFiles > SIZE_MAX / sizeof(*zip->entries))
+		return (0);
+
+	if (zip->numFiles <= zip->si.ss.unpack_streams)
+		return (1);
+
+	empty_stream_map_bytes = (zip->numFiles + 7) / 8;
+	return (empty_stream_map_bytes <= zip->header_bytes_remaining);
 }
 
 static int

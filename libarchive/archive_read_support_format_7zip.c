@@ -176,7 +176,7 @@ struct _7z_digests {
 struct _7z_folder {
 	uint64_t		 numCoders;
 	struct _7z_coder {
-		uint64_t	 codec;
+		int64_t		 codec;
 		uint64_t	 numInStreams;
 		uint64_t	 numOutStreams;
 		uint64_t	 propertiesSize;
@@ -314,8 +314,8 @@ struct _7zip {
 	size_t			 pack_stream_bytes_unconsumed;
 
 	/* The codec information of a folder. */
-	unsigned long		 codec;
-	unsigned long		 codec2;
+	int64_t			 codec;
+	int64_t			 codec2;
 
 	/*
 	 * Decompressor controllers.
@@ -433,7 +433,7 @@ static int	archive_read_format_7zip_read_data_skip(struct archive_read *);
 static int	archive_read_format_7zip_read_header(struct archive_read *,
 		    struct archive_entry *);
 static int	check_7zip_header_in_sfx(const unsigned char *);
-static int	decode_codec_id(const unsigned char *, size_t, uint64_t *);
+static int	decode_codec_id(const unsigned char *, size_t, int64_t *);
 static int	decode_encoded_header_info(struct archive_read *,
 		    struct _7z_stream_info *);
 static int	decompress(struct archive_read *, struct _7zip *,
@@ -1314,18 +1314,16 @@ set_error(struct archive_read *a, int ret)
 #endif
 
 static int
-decode_codec_id(const unsigned char *codecId, size_t id_size, uint64_t *id)
+decode_codec_id(const unsigned char *codecId, size_t id_size, int64_t *id)
 {
-	unsigned i;
-	uint64_t v = 0;
+	size_t i;
 
+	*id = 0;
 	for (i = 0; i < id_size; i++) {
-		if (v > (uint64_t)INT64_MAX / 256)
+		if (archive_ckd_mul_i64(id, *id, 256) ||
+		    archive_ckd_add_i64(id, *id, codecId[i]))
 			return (-1);
-		v <<= 8;
-		v += codecId[i];
 	}
-	*id = v;
 	return (0);
 }
 
@@ -1511,7 +1509,8 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 			default:
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
-				    "Unexpected codec ID: %lX", zip->codec2);
+				    "Unexpected codec ID: %jX",
+				    (uintmax_t)zip->codec2);
 				return (ARCHIVE_FAILED);
 			}
 		}
@@ -1678,7 +1677,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 	case _7Z_SPARC:
 	case _7Z_DELTA:
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Unexpected codec ID: %lX", zip->codec);
+		    "Unexpected codec ID: %jX", (uintmax_t)zip->codec);
 		return (ARCHIVE_FAILED);
 	case _7Z_CRYPTO_MAIN_ZIP:
 	case _7Z_CRYPTO_RAR_29:
@@ -1689,11 +1688,12 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 			zip->has_encrypted_entries = 1;
 		}
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Crypto codec not supported yet (ID: 0x%lX)", zip->codec);
+		    "Crypto codec not supported yet (ID: 0x%jX)",
+		    (uintmax_t)zip->codec);
 		return (ARCHIVE_FAILED);
 	default:
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Unknown codec ID: %lX", zip->codec);
+		    "Unknown codec ID: %jX", (uintmax_t)zip->codec);
 		return (ARCHIVE_FAILED);
 	}
 
@@ -3437,7 +3437,7 @@ get_uncompressed_data(struct archive_read *a, const void **buff, size_t size,
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	ssize_t bytes_avail;
 
-	if (zip->codec == _7Z_COPY && zip->codec2 == (unsigned long)-1) {
+	if (zip->codec == _7Z_COPY && zip->codec2 == -1) {
 		/* Copy mode. */
 
 		*buff = __archive_read_ahead(a, minimum, &bytes_avail);
@@ -3501,7 +3501,7 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 	ssize_t bytes_avail;
 	int r;
 
-	if (zip->codec == _7Z_COPY && zip->codec2 == (unsigned long)-1) {
+	if (zip->codec == _7Z_COPY && zip->codec2 == -1) {
 		if (minimum == 0)
 			minimum = 1;
 		if (__archive_read_ahead(a, minimum, &bytes_avail) == NULL

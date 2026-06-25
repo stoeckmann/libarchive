@@ -3200,6 +3200,7 @@ static int
 decode_encoded_header_info(struct archive_read *a, struct _7z_stream_info *si)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
+	int64_t pi_end;
 
 	errno = 0;
 	if (read_StreamsInfo(a, si) < 0) {
@@ -3217,9 +3218,12 @@ decode_encoded_header_info(struct archive_read *a, struct _7z_stream_info *si)
 		return (ARCHIVE_FATAL);
 	}
 
-	if (zip->header_offset < si->pi.pos + si->pi.sizes[0] ||
-	    si->pi.pos + si->pi.sizes[0] < 0 ||
-	    si->pi.sizes[0] == 0 || si->pi.pos < 0) {
+	if (archive_ckd_add_i64(&pi_end, si->pi.pos, si->pi.sizes[0])) {
+		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
+		return (ARCHIVE_FATAL);
+	}
+
+	if (zip->header_offset < pi_end) {
 		archive_set_error(&a->archive, -1, "Malformed Header offset");
 		return (ARCHIVE_FATAL);
 	}

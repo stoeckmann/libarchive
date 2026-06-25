@@ -2345,8 +2345,11 @@ read_Folder(struct archive_read *a, struct _7z_folder *f)
 			    (size_t)f->coders[i].propertiesSize);
 		}
 
-		numInStreamsTotal += f->coders[i].numInStreams;
-		numOutStreamsTotal += f->coders[i].numOutStreams;
+		if (archive_ckd_add_u64(&numInStreamsTotal,
+		    numInStreamsTotal, f->coders[i].numInStreams) ||
+		    archive_ckd_add_u64(&numOutStreamsTotal,
+		    numOutStreamsTotal, f->coders[i].numOutStreams))
+			return (-1);
 	}
 
 	if (numOutStreamsTotal == 0 ||
@@ -2619,9 +2622,8 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 			for (pack = 1; pack < f[i].numUnpackStreams; pack++) {
 				if (parse_7zip_uint64(a, usizes) < 0)
 					return (-1);
-				if (*usizes > UINT64_MAX - sum)
+				if (archive_ckd_add_u64(&sum, sum, *usizes++))
 					return (-1);
-				sum += *usizes++;
 			}
 		}
 		size = folder_uncompressed_size(&f[i]);
@@ -2721,9 +2723,9 @@ read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
 		packPos = si->pi.pos;
 		for (i = 0; i < si->pi.numPackStreams; i++) {
 			si->pi.positions[i] = packPos;
-			if (packPos > UINT64_MAX - si->pi.sizes[i])
+			if (archive_ckd_add_u64(&packPos,
+			    packPos, si->pi.sizes[i]))
 				return (-1);
-			packPos += si->pi.sizes[i];
 			if (packPos > zip->header_offset)
 				return (-1);
 		}

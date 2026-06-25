@@ -2564,19 +2564,20 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 	if (type == kNumUnPackStream) {
 		unpack_streams = 0;
 		for (i = 0; i < numFolders; i++) {
-			if (parse_7zip_uint64(a, &(f[i].numUnpackStreams)) < 0)
+			if (parse_7zip_size(a, &(f[i].numUnpackStreams)) < 0)
 				return (-1);
-			if (f[i].numUnpackStreams >
-			    UMAX_ENTRY - unpack_streams) {
+			if (archive_ckd_add_size(&unpack_streams,
+			    unpack_streams, f[i].numUnpackStreams))
 				return (-1);
-			}
-			unpack_streams += (size_t)f[i].numUnpackStreams;
 		}
 		if ((p = header_bytes(a, 1)) == NULL)
 			return (-1);
 		type = *p;
 	} else
 		unpack_streams = numFolders;
+
+	if (unpack_streams > UMAX_ENTRY)
+		return (-1);
 
 	if (type != kSize) {
 		for (i = 0; i < numFolders; i++) {

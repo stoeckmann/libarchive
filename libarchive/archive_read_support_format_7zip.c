@@ -468,7 +468,7 @@ static int	read_SubStreamsInfo(struct archive_read *,
 		    struct _7z_substream_info *, struct _7z_folder *, size_t);
 static int	read_Times(struct archive_read *, struct _7z_header_info *,
 		    int);
-static void	read_consume(struct archive_read *);
+static int	read_consume(struct archive_read *);
 static ssize_t	read_stream(struct archive_read *, const void **, size_t,
 		    size_t);
 static int	seek_pack(struct archive_read *);
@@ -1249,16 +1249,23 @@ archive_read_format_7zip_cleanup(struct archive_read *a)
 	return (ARCHIVE_OK);
 }
 
-static void
+static int
 read_consume(struct archive_read *a)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 
 	if (zip->pack_stream_bytes_unconsumed) {
-		__archive_read_consume(a, zip->pack_stream_bytes_unconsumed);
+		int64_t r;
+
+		if ((r = __archive_read_consume(a,
+		    zip->pack_stream_bytes_unconsumed)) < 0)
+			return ((int)r);
+
 		zip->stream_offset += zip->pack_stream_bytes_unconsumed;
 		zip->pack_stream_bytes_unconsumed = 0;
 	}
+
+	return (ARCHIVE_OK);
 }
 
 #ifdef HAVE_LZMA_H
@@ -3990,7 +3997,8 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 			return (r);
 		zip->pack_stream_bytes_unconsumed =
 		    zip->pack_stream_inbytes_remaining;
-		read_consume(a);
+		if ((r = read_consume(a)) < 0)
+			return (r);
 
 		/* Read following three sub streams. */
 		for (i = 0; i < 3; i++) {

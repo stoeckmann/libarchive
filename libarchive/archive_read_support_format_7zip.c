@@ -2555,10 +2555,10 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 {
 	const unsigned char *p;
 	uint64_t *usizes;
+	size_t numDigests;
 	size_t unpack_streams;
 	int type;
 	unsigned i;
-	uint32_t numDigests;
 
 	memset(ss, 0, sizeof(*ss));
 
@@ -2639,7 +2639,12 @@ read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
 	numDigests = 0;
 	for (i = 0; i < numFolders; i++) {
 		if (f[i].numUnpackStreams != 1 || !f[i].digest_defined)
-			numDigests += (uint32_t)f[i].numUnpackStreams;
+			if (f[i].numUnpackStreams > SIZE_MAX ||
+			    archive_ckd_add_size(&numDigests,
+			    numDigests, f[i].numUnpackStreams)) {
+				errno = ENOMEM;
+				return (-1);
+			}
 	}
 
 	if (type == kCRC) {

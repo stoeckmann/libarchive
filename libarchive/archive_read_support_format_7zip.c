@@ -422,6 +422,7 @@ files_info_numfiles_is_sane(const struct _7zip *zip)
 	return (empty_stream_map_bytes <= zip->header_bytes_remaining);
 }
 
+static size_t	align_size(size_t);
 static int	archive_read_format_7zip_has_encrypted_entries(struct archive_read *);
 static int	archive_read_support_format_7zip_capabilities(struct archive_read *a);
 static int	archive_read_format_7zip_bid(struct archive_read *, int);
@@ -3477,6 +3478,17 @@ get_uncompressed_data(struct archive_read *a, const void **buff, size_t size,
 	return (bytes_avail);
 }
 
+static size_t
+align_size(size_t s)
+{
+	size_t r;
+
+	if (archive_ckd_add_size(&r, s, 1023))
+		return (s);
+	r &= ~0x3ff;
+	return (r);
+}
+
 static ssize_t
 extract_pack_stream(struct archive_read *a, size_t minimum)
 {
@@ -3506,18 +3518,17 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 
 	/* If the buffer hasn't been allocated, allocate it now. */
 	if (zip->uncompressed_buffer == NULL) {
-		zip->uncompressed_buffer_size = UBUFF_SIZE;
-		if (zip->uncompressed_buffer_size < minimum) {
-			zip->uncompressed_buffer_size = minimum + 1023;
-			zip->uncompressed_buffer_size &= ~0x3ff;
-		}
-		zip->uncompressed_buffer =
-		    malloc(zip->uncompressed_buffer_size);
+		size_t new_size = UBUFF_SIZE;
+
+		if (new_size < minimum)
+		    new_size = align_size(minimum);
+		zip->uncompressed_buffer = malloc(new_size);
 		if (zip->uncompressed_buffer == NULL) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "No memory for 7-Zip decompression");
 			return (ARCHIVE_FATAL);
 		}
+		zip->uncompressed_buffer_size = new_size;
 		zip->uncompressed_buffer_bytes_remaining = 0;
 	} else if (zip->uncompressed_buffer_size < minimum ||
 	    zip->uncompressed_buffer_bytes_remaining < minimum) {
@@ -3538,10 +3549,8 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 			 * the minimum size.
 			 */
 			void *p;
-			size_t new_size;
+			size_t new_size = align_size(minimum);
 
-			new_size = minimum + 1023;
-			new_size &= ~0x3ff;
 			p = realloc(zip->uncompressed_buffer, new_size);
 			if (p == NULL) {
 				archive_set_error(&a->archive, ENOMEM,

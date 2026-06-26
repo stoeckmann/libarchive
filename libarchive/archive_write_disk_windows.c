@@ -195,7 +195,7 @@ struct archive_write_disk {
 static int	disk_unlink(const wchar_t *);
 static int	disk_rmdir(const wchar_t *);
 static int	check_symlinks_by_path(struct archive_write_disk *,
-		    wchar_t *, size_t *);
+		    wchar_t *, size_t *, int);
 static int	check_symlinks(struct archive_write_disk *);
 static int	create_filesystem_object(struct archive_write_disk *);
 static struct fixup_entry *current_fixup(struct archive_write_disk *,
@@ -1677,6 +1677,22 @@ create_filesystem_object(struct archive_write_disk *a)
 			free(linksanitized);
 			return (r);
 		}
+
+		if (a->flags & ARCHIVE_EXTRACT_SECURE_SYMLINKS) {
+			r = check_symlinks_by_path(a, linksanitized, NULL, 1);
+			if (r != ARCHIVE_OK) {
+				/*
+				 * Prevent extracting a hardlink to a symlink.
+				 * libarchive supports the POSIX feature of
+				 * hardlinks with data payloads, which would
+				 * provide a way to write through an otherwise
+				 * disallowed symlink.
+				 */
+				free(linksanitized);
+				return (r);
+			}
+		}
+
 		linkfull = __la_win_permissive_name_w(linksanitized);
 		free(linksanitized);
 		namefull = __la_win_permissive_name_w(a->name);
@@ -2085,7 +2101,7 @@ current_fixup(struct archive_write_disk *a, const wchar_t *pathname)
  */
 static int
 check_symlinks_by_path(struct archive_write_disk *a,
-    wchar_t *path, size_t *safe_len)
+    wchar_t *path, size_t *safe_len, int checking_linkname)
 {
 	wchar_t *pn, *p, *su;
 	wchar_t c;
@@ -2125,6 +2141,13 @@ check_symlinks_by_path(struct archive_write_disk *a,
 				break;
 		} else if (S_ISLNK(st_mode)) {
 			if (c == '\0') {
+				if (checking_linkname) {
+					archive_set_error(&a->archive, ELOOP,
+					    "Cannot write hardlink to symlink %ls",
+					    path);
+					pn[0] = c;
+					return (ARCHIVE_FAILED);
+				}
 				/*
 				 * Last element is a file or directory symlink.
 				 * Remove it so we can overwrite it with the
@@ -2212,7 +2235,7 @@ check_symlinks(struct archive_write_disk *a)
 {
 	int r;
 	size_t safe_len;
-	r = check_symlinks_by_path(a, a->name, &safe_len);
+	r = check_symlinks_by_path(a, a->name, &safe_len, 0);
 
 	if (r == ARCHIVE_OK) {
 		/*

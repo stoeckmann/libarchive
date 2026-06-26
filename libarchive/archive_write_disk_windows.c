@@ -1755,6 +1755,12 @@ create_filesystem_object(struct archive_write_disk *a)
 				disk_unlink(a->name);
 		}
 
+		/*
+		 * Since the symlink-safe path cache is just an optimization, and we
+		 * are about to create a new symlink, invalidating the cache prevents
+		 * incidentally writing through the entry we are about to create.
+		 */
+		a->path_safe.s[0] = 0;
 #if HAVE_SYMLINK
 		return symlink(linkname, a->name) ? errno : 0;
 #else

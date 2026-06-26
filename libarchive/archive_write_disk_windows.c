@@ -195,7 +195,7 @@ struct archive_write_disk {
 static int	disk_unlink(const wchar_t *);
 static int	disk_rmdir(const wchar_t *);
 static int	check_symlinks_by_path(struct archive_write_disk *,
-		    wchar_t *, int);
+		    wchar_t *, size_t *);
 static int	check_symlinks(struct archive_write_disk *);
 static int	create_filesystem_object(struct archive_write_disk *);
 static struct fixup_entry *current_fixup(struct archive_write_disk *,
@@ -1754,6 +1754,7 @@ create_filesystem_object(struct archive_write_disk *a)
 			else
 				disk_unlink(a->name);
 		}
+
 #if HAVE_SYMLINK
 		return symlink(linkname, a->name) ? errno : 0;
 #else
@@ -2077,9 +2078,10 @@ current_fixup(struct archive_write_disk *a, const wchar_t *pathname)
  * recent paths.
  */
 static int
-check_symlinks_by_path(struct archive_write_disk *a, wchar_t *path)
+check_symlinks_by_path(struct archive_write_disk *a,
+    wchar_t *path, size_t *safe_len)
 {
-	wchar_t *pn, *p;
+	wchar_t *pn, *p, *su;
 	wchar_t c;
 	int r;
 	BY_HANDLE_FILE_INFORMATION st;
@@ -2097,6 +2099,10 @@ check_symlinks_by_path(struct archive_write_disk *a, wchar_t *path)
 	/* Skip leading backslashes */
 	while (*pn == '\\')
 		++pn;
+	su = pn;
+	/* The end-of-safe region, however, should not cover a partial leaf name */
+	while (su > path && *su != '\\')
+		--su;
 	c = pn[0];
 	/* Keep going until we've checked the entire name. */
 	while (pn[0] != '\0' && (pn[0] != '\\' || pn[1] != '\0')) {
@@ -2146,10 +2152,15 @@ check_symlinks_by_path(struct archive_write_disk *a, wchar_t *path)
 					archive_set_error(&a->archive, -1,
 					    "Removing symlink %ls",
 					    path);
+					/*
+					 * We can safely return the entire path as a safe range,
+					 * having deleted the symlink at the leaf with no intent
+					 * to create another symlink.
+					 */
+					su = pn;
 				}
 				/* Symlink gone.  No more problem! */
-				pn[0] = c;
-				return (0);
+				break;
 			} else if (a->flags & ARCHIVE_EXTRACT_UNLINK) {
 				/* User asked us to remove problems. */
 				if (a->flags &
@@ -2178,12 +2189,15 @@ check_symlinks_by_path(struct archive_write_disk *a, wchar_t *path)
 				return (ARCHIVE_FAILED);
 			}
 		}
+		su = pn;
 		if (!c)
 			break;
 		pn[0] = c;
 		pn++;
 	}
 	pn[0] = c;
+	if (safe_len)
+		*safe_len = su - path;
 	return (ARCHIVE_OK);
 }
 
@@ -2191,11 +2205,21 @@ static int
 check_symlinks(struct archive_write_disk *a)
 {
 	int r;
-	r = check_symlinks_by_path(a, a->name, 0);
+	size_t safe_len;
+	r = check_symlinks_by_path(a, a->name, &safe_len);
 
 	if (r == ARCHIVE_OK) {
-		/* We've checked and/or cleaned the whole path, so remember it. */
-		archive_wstrcpy(&a->path_safe, a->name);
+		/*
+		 * We've checked and/or cleaned the whole path, so remember the
+		 * portion check_symlinks_by_path returned as "safe" (typically
+		 * the parent of the entry we are about to create, unless that
+		 * entry was just unlinked.)
+		 *
+		 * We only cache path safety info for entry paths (which we
+		 * operate on in a->name). We do not cache safety info for
+		 * any other paths.
+		 */
+		archive_wstrncpy(&a->path_safe, a->name, safe_len);
 	}
 
 	return (r);

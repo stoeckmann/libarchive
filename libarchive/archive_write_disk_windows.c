@@ -631,6 +631,7 @@ la_CreateSymbolicLinkW(const wchar_t *linkname, const wchar_t *target,
 	DWORD attrs = 0;
 	DWORD flags = 0;
 	DWORD newflags = 0;
+	DWORD lasterr = 0;
 
 	len = wcslen(target);
 	if (len == 0) {
@@ -695,10 +696,14 @@ la_CreateSymbolicLinkW(const wchar_t *linkname, const wchar_t *target,
 	ret = CreateSymbolicLinkW(linkname, ttarget, newflags);
 	/*
 	 * Prior to Windows 10 calling CreateSymbolicLinkW() will fail
-	 * if SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE is set
+	 * if SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE is set; however,
+	 * trying this fallback if we fail due to a bad path will replace
+	 * ENOENT with EPERM and confuse later error recovery efforts.
 	 */
 	if (!ret) {
-		ret = CreateSymbolicLinkW(linkname, ttarget, flags);
+		lasterr = GetLastError();
+		if (lasterr != ERROR_PATH_NOT_FOUND)
+			ret = CreateSymbolicLinkW(linkname, ttarget, flags);
 	}
 	free(ttarget);
 #endif

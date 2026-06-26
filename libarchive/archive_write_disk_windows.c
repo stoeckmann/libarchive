@@ -194,6 +194,8 @@ struct archive_write_disk {
 
 static int	disk_unlink(const wchar_t *);
 static int	disk_rmdir(const wchar_t *);
+static int	check_symlinks_by_path(struct archive_write_disk *,
+		    wchar_t *, int);
 static int	check_symlinks(struct archive_write_disk *);
 static int	create_filesystem_object(struct archive_write_disk *);
 static struct fixup_entry *current_fixup(struct archive_write_disk *,
@@ -2075,7 +2077,7 @@ current_fixup(struct archive_write_disk *a, const wchar_t *pathname)
  * recent paths.
  */
 static int
-check_symlinks(struct archive_write_disk *a)
+check_symlinks_by_path(struct archive_write_disk *a, wchar_t *path)
 {
 	wchar_t *pn, *p;
 	wchar_t c;
@@ -2088,7 +2090,7 @@ check_symlinks(struct archive_write_disk *a)
 	 * destination would be altered by a symlink.
 	 */
 	/* Whatever we checked last time doesn't need to be re-checked. */
-	pn = a->name;
+	pn = path;
 	p = a->path_safe.s;
 	while ((*pn != '\0') && (*p == *pn))
 		++p, ++pn;
@@ -2104,7 +2106,7 @@ check_symlinks(struct archive_write_disk *a)
 		c = pn[0];
 		pn[0] = '\0';
 		/* Check that we haven't hit a symlink. */
-		r = file_information(a->name, &st, &st_mode, 1);
+		r = file_information(path, &st, &st_mode, 1);
 		if (r != 0) {
 			/* We've hit a dir that doesn't exist; stop now. */
 			if (errno == ENOENT)
@@ -2122,14 +2124,14 @@ check_symlinks(struct archive_write_disk *a)
 				}
 				if (st.dwFileAttributes &
 				    FILE_ATTRIBUTE_DIRECTORY) {
-					r = disk_rmdir(a->name);
+					r = disk_rmdir(path);
 				} else {
-					r = disk_unlink(a->name);
+					r = disk_unlink(path);
 				}
 				if (r) {
 					archive_set_error(&a->archive, errno,
 					    "Could not remove symlink %ls",
-					    a->name);
+					    path);
 					pn[0] = c;
 					return (ARCHIVE_FAILED);
 				}
@@ -2143,7 +2145,7 @@ check_symlinks(struct archive_write_disk *a)
 				if (!S_ISLNK(a->mode)) {
 					archive_set_error(&a->archive, -1,
 					    "Removing symlink %ls",
-					    a->name);
+					    path);
 				}
 				/* Symlink gone.  No more problem! */
 				pn[0] = c;
@@ -2156,14 +2158,14 @@ check_symlinks(struct archive_write_disk *a)
 				}
 				if (st.dwFileAttributes &
 				    FILE_ATTRIBUTE_DIRECTORY) {
-					r = disk_rmdir(a->name);
+					r = disk_rmdir(path);
 				} else {
-					r = disk_unlink(a->name);
+					r = disk_unlink(path);
 				}
 				if (r != 0) {
 					archive_set_error(&a->archive, EIO,
 					    "Cannot remove intervening "
-					    "symlink %ls", a->name);
+					    "symlink %ls", path);
 					pn[0] = c;
 					return (ARCHIVE_FAILED);
 				}
@@ -2171,7 +2173,7 @@ check_symlinks(struct archive_write_disk *a)
 			} else {
 				archive_set_error(&a->archive, ELOOP,
 				    "Cannot extract through symlink %ls",
-				    a->name);
+				    path);
 				pn[0] = c;
 				return (ARCHIVE_FAILED);
 			}
@@ -2182,9 +2184,21 @@ check_symlinks(struct archive_write_disk *a)
 		pn++;
 	}
 	pn[0] = c;
-	/* We've checked and/or cleaned the whole path, so remember it. */
-	archive_wstrcpy(&a->path_safe, a->name);
 	return (ARCHIVE_OK);
+}
+
+static int
+check_symlinks(struct archive_write_disk *a)
+{
+	int r;
+	r = check_symlinks_by_path(a, a->name, 0);
+
+	if (r == ARCHIVE_OK) {
+		/* We've checked and/or cleaned the whole path, so remember it. */
+		archive_wstrcpy(&a->path_safe, a->name);
+	}
+
+	return (r);
 }
 
 static int

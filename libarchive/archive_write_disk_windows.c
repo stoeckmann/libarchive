@@ -244,8 +244,8 @@ static ssize_t	_archive_write_disk_data_block(struct archive *, const void *,
     ((((int64_t)(bhfi)->nFileSizeHigh) << 32) | (bhfi)->nFileSizeLow)
 
 static int
-file_information(struct archive_write_disk *a, wchar_t *path,
-    BY_HANDLE_FILE_INFORMATION *st, mode_t *mode, int sim_lstat)
+file_information(wchar_t *path, BY_HANDLE_FILE_INFORMATION *st,
+    mode_t *mode, int sim_lstat)
 {
 	HANDLE h;
 	int r;
@@ -741,7 +741,7 @@ lazy_stat(struct archive_write_disk *a)
 	 * XXX At this point, symlinks should not be hit, otherwise
 	 * XXX a race occurred.  Do we want to check explicitly for that?
 	 */
-	if (file_information(a, a->name, &a->st, NULL, 1) == 0) {
+	if (file_information(a->name, &a->st, NULL, 1) == 0) {
 		a->pst = &a->st;
 		return (ARCHIVE_OK);
 	}
@@ -1516,7 +1516,7 @@ restore_entry(struct archive_write_disk *a)
 		 * such symlinks. We always need both source and target
 		 * information.
 		 */
-		r = file_information(a, a->name, &lst, &lst_mode, 1);
+		r = file_information(a->name, &lst, &lst_mode, 1);
 		if (r != 0) {
 			archive_set_error(&a->archive, errno,
 			    "Can't stat existing object");
@@ -1525,7 +1525,7 @@ restore_entry(struct archive_write_disk *a)
 			if (lst.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 				dirlnk = 1;
 			/* In case of a symlink we need target information */
-			r = file_information(a, a->name, &a->st, &st_mode, 0);
+			r = file_information(a->name, &a->st, &st_mode, 0);
 			if (r != 0) {
 				a->st = lst;
 				st_mode = lst_mode;
@@ -2104,7 +2104,7 @@ check_symlinks(struct archive_write_disk *a)
 		c = pn[0];
 		pn[0] = '\0';
 		/* Check that we haven't hit a symlink. */
-		r = file_information(a, a->name, &st, &st_mode, 1);
+		r = file_information(a->name, &st, &st_mode, 1);
 		if (r != 0) {
 			/* We've hit a dir that doesn't exist; stop now. */
 			if (errno == ENOENT)
@@ -2456,7 +2456,7 @@ create_dir(struct archive_write_disk *a, wchar_t *path)
 	 * here loses the ability to extract through symlinks.  Also note
 	 * that this should not use the a->st cache.
 	 */
-	if (file_information(a, path, &st, &st_mode, 0) == 0) {
+	if (file_information(path, &st, &st_mode, 0) == 0) {
 		if (S_ISDIR(st_mode))
 			return (ARCHIVE_OK);
 		if ((a->flags & ARCHIVE_EXTRACT_NO_OVERWRITE)) {
@@ -2523,7 +2523,7 @@ create_dir(struct archive_write_disk *a, wchar_t *path)
 	 * don't add it to the fixup list here, as it's already been
 	 * added.
 	 */
-	if (file_information(a, path, &st, &st_mode, 0) == 0 &&
+	if (file_information(path, &st, &st_mode, 0) == 0 &&
 	    S_ISDIR(st_mode))
 		return (ARCHIVE_OK);
 

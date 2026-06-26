@@ -282,10 +282,10 @@ file_information(struct archive_write_disk *a, wchar_t *path,
 	ZeroMemory(&createExParams, sizeof(createExParams));
 	createExParams.dwSize = sizeof(createExParams);
 	createExParams.dwFileFlags = flag;
-	h = CreateFile2(a->name, 0, 0,
+	h = CreateFile2(path, 0, 0,
 		OPEN_EXISTING, &createExParams);
 #else
-	h = CreateFileW(a->name, 0, 0, NULL,
+	h = CreateFileW(path, 0, 0, NULL,
 	    OPEN_EXISTING, flag, NULL);
 #endif
 	if (h == INVALID_HANDLE_VALUE &&

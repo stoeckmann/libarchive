@@ -258,7 +258,6 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 */
 	if (strcmp(filename, "//") == 0) {
 		archive_entry_copy_pathname(entry, filename);
-		archive_entry_set_filetype(entry, AE_IFREG);
 		/* Get the size of the filename table. */
 		number = ar_atol10(h + AR_size_offset, AR_size_size);
 		if (number > SIZE_MAX || number > 1024 * 1024 * 1024) {
@@ -387,8 +386,6 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 */
 	if (strcmp(filename, "/") == 0 || strcmp(filename, "/SYM64/") == 0) {
 		archive_entry_copy_pathname(entry, filename);
-		/* Force the file type to a regular file. */
-		archive_entry_set_filetype(entry, AE_IFREG);
 		return (ARCHIVE_OK);
 	}
 

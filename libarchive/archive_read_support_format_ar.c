@@ -91,7 +91,7 @@ static int	archive_read_format_ar_read_header(struct archive_read *a,
 static uint64_t	ar_atol8(const char *p, size_t char_cnt);
 static uint64_t	ar_atol10(const char *p, size_t char_cnt);
 static int	ar_parse_gnu_filename_table(struct archive_read *a);
-static int	ar_parse_common_header(struct ar *ar, struct archive_entry *,
+static void	ar_parse_common_header(struct ar *ar, struct archive_entry *,
 		    const char *h);
 
 int
@@ -172,7 +172,6 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	size_t bsd_name_length, entry_size;
 	char *p, *st;
 	const void *b;
-	int r;
 
 	/* Verify the magic signature on the file header. */
 	if (strncmp(h + AR_fmag_offset, "`\n", 2) != 0) {
@@ -248,12 +247,16 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	}
 
 	/*
+	 * Parse the time, owner, mode, size fields.
+	 * This must come before any call to _read_ahead.
+	 */
+	ar_parse_common_header(ar, entry, h);
+
+	/*
 	 * '//' is the GNU filename table.
 	 * Later entries can refer to names in this table.
 	 */
 	if (strcmp(filename, "//") == 0) {
-		/* This must come before any call to _read_ahead. */
-		ar_parse_common_header(ar, entry, h);
 		archive_entry_copy_pathname(entry, filename);
 		archive_entry_set_filetype(entry, AE_IFREG);
 		/* Get the size of the filename table. */
@@ -318,14 +321,11 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 			archive_set_error(&a->archive, EINVAL,
 			    "Can't find long filename for GNU/SVR4 archive entry");
 			archive_entry_copy_pathname(entry, filename);
-			/* Parse the time, owner, mode, size fields. */
-			ar_parse_common_header(ar, entry, h);
 			return (ARCHIVE_FATAL);
 		}
 
 		archive_entry_copy_pathname(entry, &ar->strtab[(size_t)number]);
-		/* Parse the time, owner, mode, size fields. */
-		return (ar_parse_common_header(ar, entry, h));
+		return (ARCHIVE_OK);
 	}
 
 	/*
@@ -334,10 +334,6 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * the filename to the file contents.
 	 */
 	if (strncmp(filename, "#1/", 3) == 0) {
-		/* Parse the time, owner, mode, size fields. */
-		/* This must occur before _read_ahead is called again. */
-		ar_parse_common_header(ar, entry, h);
-
 		/* Parse the size of the name, adjust the file size. */
 		number = ar_atol10(h + AR_name_offset + 3, AR_name_size - 3);
 		/* Sanity check the filename length:
@@ -391,11 +387,9 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 */
 	if (strcmp(filename, "/") == 0 || strcmp(filename, "/SYM64/") == 0) {
 		archive_entry_copy_pathname(entry, filename);
-		/* Parse the time, owner, mode, size fields. */
-		r = ar_parse_common_header(ar, entry, h);
 		/* Force the file type to a regular file. */
 		archive_entry_set_filetype(entry, AE_IFREG);
-		return (r);
+		return (ARCHIVE_OK);
 	}
 
 	/*
@@ -403,8 +397,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 */
 	if (strcmp(filename, "__.SYMDEF") == 0) {
 		archive_entry_copy_pathname(entry, filename);
-		/* Parse the time, owner, mode, size fields. */
-		return (ar_parse_common_header(ar, entry, h));
+		return (ARCHIVE_OK);
 	}
 
 	/*
@@ -413,7 +406,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * on our current knowledge of the format.
 	 */
 	archive_entry_copy_pathname(entry, filename);
-	return (ar_parse_common_header(ar, entry, h));
+	return (ARCHIVE_OK);
 }
 
 static int
@@ -452,7 +445,7 @@ archive_read_format_ar_read_header(struct archive_read *a,
 }
 
 
-static int
+static void
 ar_parse_common_header(struct ar *ar, struct archive_entry *entry,
     const char *h)
 {
@@ -474,7 +467,6 @@ ar_parse_common_header(struct ar *ar, struct archive_entry *entry,
 	ar->entry_padding = n % 2;
 	archive_entry_set_size(entry, n);
 	ar->entry_bytes_remaining = n;
-	return (ARCHIVE_OK);
 }
 
 static int

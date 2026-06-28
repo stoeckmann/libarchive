@@ -386,8 +386,6 @@ struct _7zip {
 	/* Filename character-set conversion data. */
 	struct archive_string_conv *sconv;
 
-	char			 format_name[64];
-
 	/* Custom value that is non-zero if this archive contains encrypted entries. */
 	int			 has_encrypted_entries;
 };
@@ -935,8 +933,7 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 	}
 
 	a->archive.archive_format = ARCHIVE_FORMAT_7ZIP;
-	if (a->archive.archive_format_name == NULL)
-		a->archive.archive_format_name = "7-Zip";
+	a->archive.archive_format_name = "7-Zip";
 
 	if (zip->entries == NULL) {
 		struct _7z_header_info header;
@@ -959,7 +956,7 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 
 	zip->entry_offset = 0;
 	zip->end_of_entry = 0;
-	zip->entry_crc32 = crc32(0, NULL, 0);
+	zip->entry_crc32 = 0;
 
 	/* Setup a string conversion for a filename. */
 	if (zip->sconv == NULL) {
@@ -1117,10 +1114,6 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 		free(symname);
 		archive_entry_set_size(entry, 0);
 	}
-
-	/* Set up a more descriptive format name. */
-	snprintf(zip->format_name, sizeof(zip->format_name), "7-Zip");
-	a->archive.archive_format_name = zip->format_name;
 
 	return (ret);
 }

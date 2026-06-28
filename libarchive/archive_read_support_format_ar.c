@@ -381,26 +381,15 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	}
 
 	/*
-	 * "/" is the SVR4/GNU archive symbol table.
-	 * "/SYM64/" is the SVR4/GNU 64-bit variant archive symbol table.
-	 */
-	if (strcmp(filename, "/") == 0 || strcmp(filename, "/SYM64/") == 0) {
-		archive_entry_copy_pathname(entry, filename);
-		return (ARCHIVE_OK);
-	}
-
-	/*
-	 * "__.SYMDEF" is a BSD archive symbol table.
-	 */
-	if (strcmp(filename, "__.SYMDEF") == 0) {
-		archive_entry_copy_pathname(entry, filename);
-		return (ARCHIVE_OK);
-	}
-
-	/*
 	 * Otherwise, this is a standard entry.  The filename
 	 * has already been trimmed as much as possible, based
 	 * on our current knowledge of the format.
+	 *
+	 * Note for future implementations:
+	 *
+	 * - "/" is the SVR4/GNU archive symbol table.
+	 * - "/SYM64/" is the SVR4/GNU 64-bit variant archive symbol table.
+	 * - "__.SYMDEF" is a BSD archive symbol table.
 	 */
 	archive_entry_copy_pathname(entry, filename);
 	return (ARCHIVE_OK);

@@ -55,7 +55,7 @@ struct ar {
 	 * but haven't yet marked as consumed.  Must be paired with
 	 * entry_bytes_remaining usage/modification.
 	 */
-	size_t   entry_bytes_unconsumed;
+	int64_t  entry_bytes_unconsumed;
 	int64_t	 entry_offset;
 	int64_t	 entry_padding;
 	char	*strtab;
@@ -88,8 +88,8 @@ static int	archive_read_format_ar_read_data(struct archive_read *a,
 static int	archive_read_format_ar_skip(struct archive_read *a);
 static int	archive_read_format_ar_read_header(struct archive_read *a,
 		    struct archive_entry *e);
-static uint64_t	ar_atol8(const char *p, unsigned char_cnt);
-static uint64_t	ar_atol10(const char *p, unsigned char_cnt);
+static uint64_t	ar_atol8(const char *p, size_t char_cnt);
+static uint64_t	ar_atol10(const char *p, size_t char_cnt);
 static int	ar_parse_gnu_filename_table(struct archive_read *a);
 static int	ar_parse_common_header(struct ar *ar, struct archive_entry *,
 		    const char *h);
@@ -165,7 +165,7 @@ archive_read_format_ar_bid(struct archive_read *a, int best_bid)
 
 static int
 _ar_read_header(struct archive_read *a, struct archive_entry *entry,
-	struct ar *ar, const char *h, size_t *unconsumed)
+	struct ar *ar, const char *h, int64_t *unconsumed)
 {
 	char filename[AR_name_size + 1];
 	uint64_t number; /* Used to hold parsed numbers before validation. */
@@ -421,7 +421,7 @@ archive_read_format_ar_read_header(struct archive_read *a,
     struct archive_entry *entry)
 {
 	struct ar *ar = (struct ar*)(a->format->data);
-	size_t unconsumed;
+	int64_t unconsumed;
 	const void *header_data;
 	int ret;
 
@@ -456,7 +456,7 @@ static int
 ar_parse_common_header(struct ar *ar, struct archive_entry *entry,
     const char *h)
 {
-	uint64_t n;
+	int64_t n;
 
 	/* Copy remaining header */
 	archive_entry_set_mtime(entry,
@@ -468,7 +468,7 @@ ar_parse_common_header(struct ar *ar, struct archive_entry *entry,
 	archive_entry_set_mode(entry,
 	    (mode_t)ar_atol8(h + AR_mode_offset, AR_mode_size));
 	archive_entry_set_filetype(entry, AE_IFREG);
-	n = ar_atol10(h + AR_size_offset, AR_size_size);
+	n = (int64_t)ar_atol10(h + AR_size_offset, AR_size_size);
 
 	ar->entry_offset = 0;
 	ar->entry_padding = n % 2;
@@ -587,7 +587,7 @@ bad_string_table:
 }
 
 static uint64_t
-ar_atol8(const char *p, unsigned char_cnt)
+ar_atol8(const char *p, size_t char_cnt)
 {
 	uint64_t l;
 	unsigned int digit, base;
@@ -611,7 +611,7 @@ ar_atol8(const char *p, unsigned char_cnt)
 }
 
 static uint64_t
-ar_atol10(const char *p, unsigned char_cnt)
+ar_atol10(const char *p, size_t char_cnt)
 {
 	uint64_t l;
 	unsigned int base, digit;

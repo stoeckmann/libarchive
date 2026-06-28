@@ -81,18 +81,18 @@ struct ar {
 #define AR_fmag_offset 58
 #define AR_fmag_size 2
 
-static int	archive_read_format_ar_bid(struct archive_read *a, int);
-static int	archive_read_format_ar_cleanup(struct archive_read *a);
-static int	archive_read_format_ar_read_data(struct archive_read *a,
-		    const void **buff, size_t *size, int64_t *offset);
-static int	archive_read_format_ar_skip(struct archive_read *a);
-static int	archive_read_format_ar_read_header(struct archive_read *a,
-		    struct archive_entry *e);
-static uint64_t	ar_atol8(const char *p, size_t char_cnt);
-static uint64_t	ar_atol10(const char *p, size_t char_cnt);
-static int	ar_parse_gnu_filename_table(struct archive_read *a);
-static void	ar_parse_common_header(struct ar *ar, struct archive_entry *,
-		    const char *h);
+static int	archive_read_format_ar_bid(struct archive_read *, int);
+static int	archive_read_format_ar_cleanup(struct archive_read *);
+static int	archive_read_format_ar_read_data(struct archive_read *,
+		    const void **, size_t *, int64_t *);
+static int	archive_read_format_ar_skip(struct archive_read *);
+static int	archive_read_format_ar_read_header(struct archive_read *,
+		    struct archive_entry *);
+static uint64_t	ar_atol8(const char *, size_t);
+static uint64_t	ar_atol10(const char *, size_t);
+static int	ar_parse_gnu_filename_table(struct archive_read *);
+static void	ar_parse_common_header(struct ar *, struct archive_entry *,
+		    const char *);
 
 int
 archive_read_support_format_ar(struct archive *_a)
@@ -135,12 +135,12 @@ archive_read_support_format_ar(struct archive *_a)
 static int
 archive_read_format_ar_cleanup(struct archive_read *a)
 {
-	struct ar *ar;
+	struct ar *ar = (struct ar *)(a->format->data);
 
-	ar = (struct ar *)(a->format->data);
 	free(ar->strtab);
 	free(ar);
-	(a->format->data) = NULL;
+	a->format->data = NULL;
+
 	return (ARCHIVE_OK);
 }
 
@@ -169,8 +169,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 {
 	char filename[AR_name_size + 1];
 	uint64_t number; /* Used to hold parsed numbers before validation. */
-	size_t bsd_name_length, entry_size;
-	char *p, *st;
+	char *p;
 	const void *b;
 
 	/* Verify the magic signature on the file header. */
@@ -257,6 +256,9 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * Later entries can refer to names in this table.
 	 */
 	if (strcmp(filename, "//") == 0) {
+		char *st;
+		size_t entry_size;
+
 		archive_entry_copy_pathname(entry, filename);
 		/* Get the size of the filename table. */
 		number = ar_atol10(h + AR_size_offset, AR_size_size);
@@ -329,6 +331,8 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * the filename to the file contents.
 	 */
 	if (strncmp(filename, "#1/", 3) == 0) {
+		size_t bsd_name_length;
+
 		/* Parse the size of the name, adjust the file size. */
 		number = ar_atol10(h + AR_name_offset + 3, AR_name_size - 3);
 		/* Sanity check the filename length:
@@ -338,7 +342,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 		 */
 		if (number > SIZE_MAX - 1
 		    || number > 1024 * 1024
-		    || (int64_t)number > ar->entry_bytes_remaining) {
+		    || number > (uint64_t)ar->entry_bytes_remaining) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Bad input file size");
 			return (ARCHIVE_FATAL);
@@ -395,15 +399,15 @@ static int
 archive_read_format_ar_read_header(struct archive_read *a,
     struct archive_entry *entry)
 {
-	struct ar *ar = (struct ar*)(a->format->data);
+	struct ar *ar = (struct ar *)(a->format->data);
 	int64_t unconsumed;
 	const void *header_data;
 	int ret;
 
 	if (!ar->read_global_header) {
 		/*
-		 * We are now at the beginning of the archive,
-		 * so we need first consume the ar global header.
+		 * We are at the beginning of the archive now,
+		 * so we have to consume the ar global header first.
 		 */
 		__archive_read_consume(a, 8);
 		ar->read_global_header = 1;
@@ -455,10 +459,8 @@ static int
 archive_read_format_ar_read_data(struct archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
+	struct ar *ar = (struct ar *)(a->format->data);
 	ssize_t bytes_read;
-	struct ar *ar;
-
-	ar = (struct ar *)(a->format->data);
 
 	if (ar->entry_bytes_unconsumed) {
 		__archive_read_consume(a, ar->entry_bytes_unconsumed);
@@ -496,7 +498,7 @@ archive_read_format_ar_read_data(struct archive_read *a,
 static int
 archive_read_format_ar_skip(struct archive_read *a)
 {
-	struct ar* ar = (struct ar *)(a->format->data);
+	struct ar *ar = (struct ar *)(a->format->data);
 
 	if (__archive_read_consume(a,
 	    ar->entry_bytes_remaining + ar->entry_padding +
@@ -513,11 +515,10 @@ archive_read_format_ar_skip(struct archive_read *a)
 static int
 ar_parse_gnu_filename_table(struct archive_read *a)
 {
-	struct ar *ar;
+	struct ar *ar = (struct ar *)(a->format->data);
 	char *p;
 	size_t size;
 
-	ar = (struct ar*)(a->format->data);
 	size = ar->strtab_size;
 
 	for (p = ar->strtab; p < ar->strtab + size - 1; ++p) {

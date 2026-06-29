@@ -329,7 +329,7 @@ static const void *cab_read_ahead_cfdata_deflate(struct archive_read *,
 		    ssize_t *);
 static const void *cab_read_ahead_cfdata_lzx(struct archive_read *,
 		    ssize_t *);
-static int64_t	cab_consume_cfdata(struct archive_read *, int64_t);
+static int	cab_consume_cfdata(struct archive_read *, int64_t);
 static int64_t	cab_minimum_consume_cfdata(struct archive_read *, int64_t);
 static int	lzx_decode_init(struct lzx_stream *, int);
 static int	lzx_read_blocks(struct lzx_stream *, int);
@@ -1049,10 +1049,9 @@ archive_read_format_cab_read_data(struct archive_read *a,
 	}
 	if (cab->entry_unconsumed) {
 		/* Consume as much as the compressor actually used. */
-		r = (int)cab_consume_cfdata(a, cab->entry_unconsumed);
+		if (cab_consume_cfdata(a, cab->entry_unconsumed) < 0)
+			return (ARCHIVE_FATAL);
 		cab->entry_unconsumed = 0;
-		if (r < 0)
-			return (r);
 	}
 	if (cab->end_of_archive || cab->end_of_entry) {
 		if (!cab->end_of_entry_cleanup) {
@@ -1787,7 +1786,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
  * iFoldCONTINUED_FROM_PREV, we won't decompress because a CFDATA for
  * the CFFILE is remaining bytes of previous Multivolume CAB file.
  */
-static int64_t
+static int
 cab_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
@@ -1986,11 +1985,7 @@ cab_read_data(struct archive_read *a, const void **buff,
 static int
 archive_read_format_cab_read_data_skip(struct archive_read *a)
 {
-	struct cab *cab;
-	int64_t bytes_skipped;
-	int r;
-
-	cab = (struct cab *)(a->format->data);
+	struct cab *cab = (struct cab *)(a->format->data);
 
 	if (cab->end_of_archive)
 		return (ARCHIVE_EOF);
@@ -2005,12 +2000,11 @@ archive_read_format_cab_read_data_skip(struct archive_read *a)
 
 	if (cab->entry_unconsumed) {
 		/* Consume as much as the compressor actually used. */
-		r = (int)cab_consume_cfdata(a, cab->entry_unconsumed);
+		if (cab_consume_cfdata(a, cab->entry_unconsumed) < 0)
+			return (ARCHIVE_FATAL);
 		cab->entry_unconsumed = 0;
-		if (r < 0)
-			return (r);
 	} else if (cab->entry_cfdata == NULL) {
-		r = cab_next_cfdata(a);
+		int r = cab_next_cfdata(a);
 		if (r < 0)
 			return (r);
 	}
@@ -2023,8 +2017,7 @@ archive_read_format_cab_read_data_skip(struct archive_read *a)
 	 * If the length is at the beginning, we can skip the
 	 * compressed data much more quickly.
 	 */
-	bytes_skipped = cab_consume_cfdata(a, cab->entry_bytes_remaining);
-	if (bytes_skipped < 0)
+	if (cab_consume_cfdata(a, cab->entry_bytes_remaining) < 0)
 		return (ARCHIVE_FATAL);
 
 	/* If the compression type is none(uncompressed), we've already

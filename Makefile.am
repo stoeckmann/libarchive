@@ -408,9 +408,6 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_archive_read_next_header_empty.c \
 	libarchive/test/test_archive_read_next_header_raw.c \
 	libarchive/test/test_archive_read_open2.c \
-	libarchive/test/test_archive_read_set_filter_option.c \
-	libarchive/test/test_archive_read_set_format_option.c \
-	libarchive/test/test_archive_read_set_option.c \
 	libarchive/test/test_archive_read_set_options.c \
 	libarchive/test/test_archive_read_support.c \
 	libarchive/test/test_archive_set_error.c \

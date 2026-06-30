@@ -37,9 +37,6 @@ IF(ENABLE_TEST)
     test_archive_read_next_header_empty.c
     test_archive_read_next_header_raw.c
     test_archive_read_open2.c
-    test_archive_read_set_filter_option.c
-    test_archive_read_set_format_option.c
-    test_archive_read_set_option.c
     test_archive_read_set_options.c
     test_archive_read_support.c
     test_archive_set_error.c

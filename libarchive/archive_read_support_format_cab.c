@@ -202,6 +202,10 @@ struct lzx_stream {
 #define CFDATA_cbData		4
 #define CFDATA_cbUncomp		6
 
+/* Limits */
+#define MAX_UNCOMPRESS_SIZE	0x8000
+#define MAX_FILE_SIZE		(UINT16_MAX * MAX_UNCOMPRESS_SIZE)
+
 static const char * const compression_name[] = {
 	"NONE",
 	"MSZIP",
@@ -847,10 +851,10 @@ cab_read_header(struct archive_read *a)
 		/*
 		 * Sanity check if each data is acceptable.
 		 */
-		if (file->uncompressed_size > 0x7FFF8000)
+		if (file->uncompressed_size > MAX_FILE_SIZE)
 			goto invalid;/* Too large */
 		if ((int64_t)file->offset + (int64_t)file->uncompressed_size
-		    > ARCHIVE_LITERAL_LL(0x7FFF8000))
+		    > (int64_t)MAX_FILE_SIZE)
 			goto invalid;/* Too large */
 		switch (file->folder) {
 		case iFoldCONTINUED_TO_NEXT:
@@ -1303,9 +1307,9 @@ cab_next_cfdata(struct archive_read *a)
 		 * Sanity check if data size is acceptable.
 		 */
 		if (cfdata->compressed_size == 0 ||
-		    cfdata->compressed_size > (0x8000+6144))
+		    cfdata->compressed_size > (MAX_UNCOMPRESS_SIZE + 6144))
 			goto invalid;
-		if (cfdata->uncompressed_size > 0x8000)
+		if (cfdata->uncompressed_size > MAX_UNCOMPRESS_SIZE)
 			goto invalid;
 		if (cfdata->uncompressed_size == 0) {
 			switch (cab->entry_cffile->folder) {
@@ -1321,7 +1325,7 @@ cab_next_cfdata(struct archive_read *a)
 		 * size must be 0x8000(32KBi) */
 		if ((cab->entry_cffolder->cfdata_index <
 		     cab->entry_cffolder->cfdata_count) &&
-		       cfdata->uncompressed_size != 0x8000)
+		       cfdata->uncompressed_size != MAX_UNCOMPRESS_SIZE)
 			goto invalid;
 
 		/* A compressed data size and an uncompressed data size must
@@ -1446,7 +1450,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 	cfdata = cab->entry_cfdata;
 	/* If the buffer hasn't been allocated, allocate it now. */
 	if (cab->uncompressed_buffer == NULL) {
-		cab->uncompressed_buffer_size = 0x8000;
+		cab->uncompressed_buffer_size = MAX_UNCOMPRESS_SIZE;
 		cab->uncompressed_buffer
 		    = malloc(cab->uncompressed_buffer_size);
 		if (cab->uncompressed_buffer == NULL) {
@@ -1673,7 +1677,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 	cfdata = cab->entry_cfdata;
 	/* If the buffer hasn't been allocated, allocate it now. */
 	if (cab->uncompressed_buffer == NULL) {
-		cab->uncompressed_buffer_size = 0x8000;
+		cab->uncompressed_buffer_size = MAX_UNCOMPRESS_SIZE;
 		cab->uncompressed_buffer
 		    = malloc(cab->uncompressed_buffer_size);
 		if (cab->uncompressed_buffer == NULL) {
@@ -1773,7 +1777,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 	 */
 	lzx_translation(&cab->xstrm, cab->uncompressed_buffer,
 	    cfdata->uncompressed_size,
-	    (cab->entry_cffolder->cfdata_index-1) * 0x8000);
+	    (cab->entry_cffolder->cfdata_index - 1) * MAX_UNCOMPRESS_SIZE);
 
 	d = cab->uncompressed_buffer + cfdata->read_offset;
 	*avail = uavail - cfdata->read_offset;

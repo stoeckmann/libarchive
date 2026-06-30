@@ -92,7 +92,7 @@ struct lzx_dec {
 	int     		 copy_len;
 	/* Translation reversal for x86 processor CALL byte sequence(E8).
 	 * This is used for LZX only. */
-	uint32_t		 translation_size;
+	int32_t			 translation_size;
 	char			 translation;
 	char			 block_type;
 #define VERBATIM_BLOCK		1
@@ -2236,7 +2236,7 @@ lzx_translation(struct lzx_stream *strm, void *p, size_t size, uint32_t offset)
 
 		cp = (int32_t)(offset + (uint32_t)i);
 		value = archive_le32dec(&b[1]);
-		if (value >= -cp && value < (int32_t)ds->translation_size) {
+		if (value >= -cp && value < ds->translation_size) {
 			if (value >= 0)
 				displacement = value - cp;
 			else
@@ -2447,16 +2447,21 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			/* FALL THROUGH */
 		case ST_RD_TRANSLATION_SIZE:
 			if (ds->translation) {
+				uint32_t v;
+
 				if (!lzx_br_read_ahead(strm, br, 32)) {
 					ds->state = ST_RD_TRANSLATION_SIZE;
 					if (last)
 						goto failed;
 					return (ARCHIVE_OK);
 				}
-				ds->translation_size = lzx_br_bits(br, 16);
+				v = lzx_br_bits(br, 16);
 				lzx_br_consume(br, 16);
-				ds->translation_size <<= 16;
-				ds->translation_size |= lzx_br_bits(br, 16);
+				v <<= 16;
+				v |= lzx_br_bits(br, 16);
+				if (v > MAX_FILE_SIZE)
+					goto failed;
+				ds->translation_size = (int32_t)v;
 				lzx_br_consume(br, 16);
 			}
 			/* FALL THROUGH */

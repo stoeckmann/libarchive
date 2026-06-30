@@ -52,6 +52,29 @@
 struct lzx_dec {
 	/* Decoding status. */
 	int     		 state;
+#define ST_RD_TRANSLATION	0
+#define ST_RD_TRANSLATION_SIZE	1
+#define ST_RD_BLOCK_TYPE	2
+#define ST_RD_BLOCK_SIZE	3
+#define ST_RD_ALIGNMENT		4
+#define ST_RD_R0		5
+#define ST_RD_R1		6
+#define ST_RD_R2		7
+#define ST_COPY_UNCOMP1		8
+#define ST_COPY_UNCOMP2		9
+#define ST_RD_ALIGNED_OFFSET	10
+#define ST_RD_VERBATIM		11
+#define ST_RD_PRE_MAIN_TREE_256	12
+#define ST_MAIN_TREE_256	13
+#define ST_RD_PRE_MAIN_TREE_REM	14
+#define ST_MAIN_TREE_REM	15
+#define ST_RD_PRE_LENGTH_TREE	16
+#define ST_LENGTH_TREE		17
+#define ST_MAIN			18
+#define ST_LENGTH		19
+#define ST_OFFSET		20
+#define ST_REAL_POS		21
+#define ST_COPY			22
 
 	/*
 	 * Window to see last decoded data, from 32KBi to 2MBi.
@@ -2144,7 +2167,7 @@ lzx_decode_init(struct lzx_stream *strm, int w_bits)
 	}
 
 	ds->w_pos = 0;
-	ds->state = 0;
+	ds->state = ST_RD_TRANSLATION;
 	ds->br.cache_buffer = 0;
 	ds->br.cache_avail = 0;
 	ds->r0 = ds->r1 = ds->r2 = 1;
@@ -2372,30 +2395,6 @@ lzx_cleanup_bitstream(struct lzx_stream *strm)
  * 3. Returns ARCHIVE_FAILED if an error occurred; compressed data
  *    is broken or you do not set 'last' flag properly.
  */
-#define ST_RD_TRANSLATION	0
-#define ST_RD_TRANSLATION_SIZE	1
-#define ST_RD_BLOCK_TYPE	2
-#define ST_RD_BLOCK_SIZE	3
-#define ST_RD_ALIGNMENT		4
-#define ST_RD_R0		5
-#define ST_RD_R1		6
-#define ST_RD_R2		7
-#define ST_COPY_UNCOMP1		8
-#define ST_COPY_UNCOMP2		9
-#define ST_RD_ALIGNED_OFFSET	10
-#define ST_RD_VERBATIM		11
-#define ST_RD_PRE_MAIN_TREE_256	12
-#define ST_MAIN_TREE_256	13
-#define ST_RD_PRE_MAIN_TREE_REM	14
-#define ST_MAIN_TREE_REM	15
-#define ST_RD_PRE_LENGTH_TREE	16
-#define ST_LENGTH_TREE		17
-#define ST_MAIN			18
-#define ST_LENGTH		19
-#define ST_OFFSET		20
-#define ST_REAL_POS		21
-#define ST_COPY			22
-
 static int
 lzx_decode(struct lzx_stream *strm, int last)
 {

@@ -519,16 +519,16 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_read_format_iso_joliet_utf16be_overflow.c \
 	libarchive/test/test_read_format_iso_multi_extent.c \
 	libarchive/test/test_read_format_iso_xorriso.c \
-	libarchive/test/test_read_format_isojoliet_bz2.c \
+	libarchive/test/test_read_format_isojoliet_compress.c \
 	libarchive/test/test_read_format_isojoliet_long.c \
 	libarchive/test/test_read_format_isojoliet_rr.c \
 	libarchive/test/test_read_format_isojoliet_versioned.c \
-	libarchive/test/test_read_format_isorr_bz2.c \
+	libarchive/test/test_read_format_isorr_compress.c \
 	libarchive/test/test_read_format_isorr_ce.c \
 	libarchive/test/test_read_format_isorr_ce_loop.c \
-	libarchive/test/test_read_format_isorr_new_bz2.c \
+	libarchive/test/test_read_format_isorr_new_compress.c \
 	libarchive/test/test_read_format_isorr_rr_moved.c \
-	libarchive/test/test_read_format_isozisofs_bz2.c \
+	libarchive/test/test_read_format_isozisofs_compress.c \
 	libarchive/test/test_read_format_iso_rockridge_zf_overflow.c \
 	libarchive/test/test_read_format_iso_zisofs_overflow.c \
 	libarchive/test/test_read_format_lha.c \

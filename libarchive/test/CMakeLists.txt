@@ -148,16 +148,16 @@ IF(ENABLE_TEST)
     test_read_format_iso_joliet_utf16be_overflow.c
     test_read_format_iso_multi_extent.c
     test_read_format_iso_xorriso.c
-    test_read_format_isojoliet_bz2.c
+    test_read_format_isojoliet_compress.c
     test_read_format_isojoliet_long.c
     test_read_format_isojoliet_rr.c
     test_read_format_isojoliet_versioned.c
-    test_read_format_isorr_bz2.c
+    test_read_format_isorr_compress.c
     test_read_format_isorr_ce.c
     test_read_format_isorr_ce_loop.c
-    test_read_format_isorr_new_bz2.c
+    test_read_format_isorr_new_compress.c
     test_read_format_isorr_rr_moved.c
-    test_read_format_isozisofs_bz2.c
+    test_read_format_isozisofs_compress.c
     test_read_format_iso_rockridge_zf_overflow.c
     test_read_format_iso_zisofs_overflow.c
     test_read_format_lha.c

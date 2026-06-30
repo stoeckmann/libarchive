@@ -2221,29 +2221,29 @@ lzx_decode_free(struct lzx_stream *strm)
  * E8 Call Translation reversal.
  */
 static void
-lzx_translation(struct lzx_stream *strm, void *p, size_t size, uint32_t offset)
+lzx_translation(struct lzx_stream *strm, void *buffer, size_t size, uint32_t offset)
 {
 	struct lzx_dec *ds = strm->ds;
-	unsigned char *b, *end;
+	unsigned char *p, *end;
 
 	if (!ds->translation || size <= 10)
 		return;
-	b = p;
-	end = b + size - 10;
-	while (b < end && (b = memchr(b, 0xE8, end - b)) != NULL) {
-		size_t i = b - (unsigned char *)p;
-		int32_t cp, displacement, value;
+	p = buffer;
+	end = p + size - 10;
+	while (p < end && (p = memchr(p, 0xE8, end - p)) != NULL) {
+		size_t i = p - (unsigned char *)buffer;
+		int32_t address, displacement, position;
 
-		cp = (int32_t)(offset + (uint32_t)i);
-		value = archive_le32dec(&b[1]);
-		if (value >= -cp && value < ds->translation_size) {
-			if (value >= 0)
-				displacement = value - cp;
+		position = (int32_t)(offset + (uint32_t)i);
+		address = archive_le32dec(&p[1]);
+		if (address >= -position && address < ds->translation_size) {
+			if (address >= 0)
+				displacement = address - position;
 			else
-				displacement = value + ds->translation_size;
-			archive_le32enc(&b[1], (uint32_t)displacement);
+				displacement = address + ds->translation_size;
+			archive_le32enc(&p[1], (uint32_t)displacement);
 		}
-		b += 5;
+		p += 5;
 	}
 }
 

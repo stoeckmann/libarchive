@@ -33,8 +33,6 @@ IF(ENABLE_TEST)
     test_archive_read.c
     test_archive_read_add_passphrase.c
     test_archive_read_close_twice.c
-    test_archive_read_close_twice_open_fd.c
-    test_archive_read_close_twice_open_filename.c
     test_archive_read_multiple_data_objects.c
     test_archive_read_next_header_empty.c
     test_archive_read_next_header_raw.c

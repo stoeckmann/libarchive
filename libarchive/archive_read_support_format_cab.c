@@ -141,7 +141,6 @@ struct lzx_dec {
 		 */
 		int		 max_bits;
 		int		 tbl_bits;
-		int		 tree_used;
 		/* Direct access table. */
 		uint16_t	*tbl;
 	}			 at, lt, mt, pt;
@@ -3208,7 +3207,6 @@ lzx_make_huffman_table(struct huffman *hf)
 	tbl = hf->tbl;
 	bitlen = hf->bitlen;
 	len_avail = hf->len_size;
-	hf->tree_used = 0;
 	/* Initialize table to invalid values */
 	for (i = 0; i < tbl_size; i++) {
 		tbl[i] = (uint16_t)hf->len_size;

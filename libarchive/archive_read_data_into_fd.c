@@ -119,23 +119,20 @@ archive_read_data_into_fd(struct archive *a, int fd)
 		const char *p = buff;
 		int overran = 0;
 
-		/*
-		 * Never write more than the entry declared, regardless of
-		 * what the format reader hands back: callers of this
-		 * function (e.g. "bsdtar -xO", bsdcat) write straight to an
-		 * fd and skip archive_write_disk's own truncation safeguard.
-		 * A block that ends exactly at declared_size is the normal,
-		 * expected shape of the entry's last block, not an overrun.
-		 */
-		if (declared_size >= 0 && target_offset + (int64_t)size >
-		    declared_size) {
-			overran = 1;
-			if (target_offset < declared_size)
-				size = (size_t)(declared_size - target_offset);
-			else
-				size = 0;
-			if (target_offset > declared_size)
+		if (declared_size >= 0) {
+			/* We know the expected size, let's enforce that we don't overrun. */
+			if (target_offset > declared_size) {
+				/* We're already beyond the end? Don't write any more. */
 				target_offset = declared_size;
+				size = 0;
+				overran = 1;
+			} else if ((int64_t)size > declared_size - target_offset) {
+				/* Above is safe because target_offset <= declared_size */
+				/* This block is bigger than the expected remainder */
+				size = (size_t)(declared_size - target_offset);
+				overran = 1;
+			}
+			/* Else size <= expected remainder of data and we're OK. */
 		}
 
 		if (target_offset > actual_offset) {

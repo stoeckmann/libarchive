@@ -36,7 +36,9 @@
 #endif
 
 #include "archive.h"
+#include "archive_entry.h"
 #include "archive_private.h"
+#include "archive_read_private.h"
 
 /* Maximum amount of data to write at one time. */
 #define	MAX_WRITE	(1024 * 1024)
@@ -97,11 +99,16 @@ archive_read_data_into_fd(struct archive *a, int fd)
 	int64_t fd_offset;
 	int64_t target_offset;
 	int64_t actual_offset = 0;
+	int64_t entry_size;
 	int can_lseek;
 	char *nulls = NULL;
+	struct archive_entry *ae;
 
 	archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
 	    "archive_read_data_into_fd");
+
+	ae = ((struct archive_read *)a)->entry;
+	entry_size = archive_entry_size_is_set(ae) ? archive_entry_size(ae) : -1;
 
 	can_lseek = (fstat(fd, &st) == 0) && S_ISREG(st.st_mode);
 	if (can_lseek) {
@@ -113,6 +120,27 @@ archive_read_data_into_fd(struct archive *a, int fd)
 	while ((r = archive_read_data_block(a, &buff, &size, &target_offset)) ==
 	    ARCHIVE_OK) {
 		const char *p = buff;
+		int overran = 0;
+
+		/*
+		 * Never write more than the entry declared, regardless of
+		 * what the format reader hands back: callers of this
+		 * function (e.g. "bsdtar -xO", bsdcat) write straight to an
+		 * fd and skip archive_write_disk's own truncation safeguard.
+		 * A block that ends exactly at declared_size is the normal,
+		 * expected shape of the entry's last block, not an overrun.
+		 */
+		if (entry_size >= 0) {
+			if (target_offset > entry_size) {
+				overran = 1;
+				target_offset = entry_size;
+			}
+			if (size > (uint64_t)(entry_size - target_offset)) {
+				overran = 1;
+				size = entry_size - target_offset;
+			}
+		}
+
 		if (target_offset > actual_offset) {
 			r = pad_to(a, fd, can_lseek, &nulls,
 			    target_offset, actual_offset);
@@ -134,15 +162,39 @@ archive_read_data_into_fd(struct archive *a, int fd)
 			p += bytes_written;
 			size -= bytes_written;
 		}
+		if (overran) {
+			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			    "Actual entry size exceeds the declared size "
+			    "(%jd); truncated output at the declared size",
+			    (intmax_t)entry_size);
+			r = ARCHIVE_FAILED;
+			goto cleanup;
+		}
 	}
 
 	if (r == ARCHIVE_EOF && target_offset > actual_offset) {
-		r2 = pad_to(a, fd, can_lseek, &nulls,
-		    target_offset, actual_offset);
-		if (r2 != ARCHIVE_OK)
-			r = r2;
-		else
-			actual_offset = target_offset;
+		int overran = 0;
+
+		if (target_offset > entry_size) {
+			overran = 1;
+			target_offset = entry_size;
+		}
+		if (target_offset > actual_offset) {
+			r2 = pad_to(a, fd, can_lseek, &nulls,
+			    target_offset, actual_offset);
+			if (r2 != ARCHIVE_OK)
+				r = r2;
+			else
+				actual_offset = target_offset;
+		}
+		if (overran) {
+			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			    "Actual entry size exceeds the declared size "
+			    "(%jd); truncated output at the declared size",
+			    (intmax_t)entry_size);
+			r = ARCHIVE_FAILED;
+			goto cleanup;
+		}
 	}
 
 cleanup:

@@ -126,7 +126,7 @@ archive_read_data_into_fd(struct archive *a, int fd)
 				target_offset = declared_size;
 				size = 0;
 				overran = 1;
-			} else if ((int64_t)size > declared_size - target_offset) {
+			} else if (size > (uint64_t)(declared_size - target_offset)) {
 				/* Above is safe because target_offset <= declared_size */
 				/* This block is bigger than the expected remainder */
 				size = (size_t)(declared_size - target_offset);

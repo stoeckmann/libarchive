@@ -21,31 +21,30 @@
  * "CCCCCCCCCCDDDDDDDDDD..." for _deflate), and "second" is a normal
  * 11-byte "hello world" file, extracted right after "first" fails to
  * confirm the mis-declared entry doesn't disrupt the rest of the
- * archive. This test is deliberately independent of the ZIP reader
- * itself enforcing this boundary: archive_read_data_into_fd() truncates
- * output at exactly the declared 10 bytes on its own, so stdout ends up
- * with "first"'s 10-byte prefix immediately followed by "second".
+ * archive.
+ *
+ * The ZIP reader itself also rejects "first" outright (a separate,
+ * format-level fix -- see test_read_format_zip_size_exceeds_declared),
+ * so archive_read_data_block() never hands this backstop any bytes for
+ * "first" to (partially) pass through: stdout ends up with none of
+ * "first"'s data at all, followed directly by "second".  That's still
+ * "never more than declared" -- just fewer bytes than the boundary
+ * allows, since the format reader was already more conservative here.
  */
 static void
-verify(const char *refname, const char *first10)
+verify(const char *refname)
 {
-	char expected[32];
-
 	extract_reference_file(refname);
 	failure("bsdtar -xO must report an error for the mis-declared entry");
 	assert(systemf("%s -xOf %s >test.out 2>test.err", testprog, refname)
 	    != 0);
 
-	strcpy(expected, first10);
-	strcat(expected, "hello world");
-	assertFileContents(expected, (int)strlen(expected), "test.out");
+	assertFileContents("hello world", 11, "test.out");
 	assertNonEmptyFile("test.err");
 }
 
 DEFINE_TEST(test_option_stdout_size_exceeds_declared)
 {
-	verify("test_option_stdout_size_exceeds_declared_stored.zip",
-	    "AAAAAAAAAA");
-	verify("test_option_stdout_size_exceeds_declared_deflate.zip",
-	    "CCCCCCCCCC");
+	verify("test_option_stdout_size_exceeds_declared_stored.zip");
+	verify("test_option_stdout_size_exceeds_declared_deflate.zip");
 }

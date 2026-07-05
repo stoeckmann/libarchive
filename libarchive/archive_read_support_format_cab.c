@@ -49,6 +49,44 @@
 #include "archive_endian.h"
 
 
+/*
+ * Huffman coding.
+ */
+struct huffman {
+	int		 len_size;
+	int		 freq[17];
+	unsigned char	*bitlen;
+
+	/*
+	 * Use an index table. It's faster than searching a huffman
+	 * coding tree, which is a binary tree. But usage of a large
+	 * index table causes L1 cache read miss many times.
+	 */
+	int		 max_bits;
+	int		 tbl_bits;
+	/* Direct access table. */
+	uint16_t	*tbl;
+};
+
+/*
+ * Bit stream reader.
+ */
+struct lzx_br {
+#define CACHE_TYPE		uint64_t
+#define CACHE_BITS		(8 * sizeof(CACHE_TYPE))
+	/* Cache buffer. */
+	CACHE_TYPE	 cache_buffer;
+	/* Indicates how many bits avail in cache_buffer. */
+	int		 cache_avail;
+	unsigned char	 odd;
+	char		 have_odd;
+};
+
+struct lzx_pos_tbl {
+	int		 base;
+	int		 footer_bits;
+};
+
 struct lzx_dec {
 	/* Decoding status. */
 	int     		 state;
@@ -108,42 +146,19 @@ struct lzx_dec {
 	int			 position_slot;
 	int			 offset_bits;
 
-	struct lzx_pos_tbl {
-		int		 base;
-		int		 footer_bits;
-	}			*pos_tbl;
+	struct lzx_pos_tbl 	*pos_tbl;
 	/*
 	 * Bit stream reader.
 	 */
-	struct lzx_br {
-#define CACHE_TYPE		uint64_t
-#define CACHE_BITS		(8 * sizeof(CACHE_TYPE))
-	 	/* Cache buffer. */
-		CACHE_TYPE	 cache_buffer;
-		/* Indicates how many bits avail in cache_buffer. */
-		int		 cache_avail;
-		unsigned char	 odd;
-		char		 have_odd;
-	} br;
+	struct lzx_br		 br;
 
 	/*
 	 * Huffman coding.
 	 */
-	struct huffman {
-		int		 len_size;
-		int		 freq[17];
-		unsigned char	*bitlen;
-
-		/*
-		 * Use an index table. It's faster than searching a huffman
-		 * coding tree, which is a binary tree. But usage of a large
-		 * index table causes L1 cache read miss many times.
-		 */
-		int		 max_bits;
-		int		 tbl_bits;
-		/* Direct access table. */
-		uint16_t	*tbl;
-	}			 at, lt, mt, pt;
+	struct huffman		 at;
+	struct huffman		 lt;
+	struct huffman		 mt;
+	struct huffman		 pt;
 
 	int			 loop;
 	int			 error;

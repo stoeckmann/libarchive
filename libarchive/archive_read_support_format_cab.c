@@ -3290,7 +3290,7 @@ lzx_make_huffman_table(struct huffman *hf)
 		}
 	}
 	/* Verify Kraft's inequality. */
-	if ((ptn & 0xffff) != 0 || maxbits > hf->tbl_bits)
+	if ((ptn != 0 && ptn != 0x10000) || maxbits > hf->tbl_bits)
 		return (0);/* Invalid */
 
 	hf->max_bits = maxbits;

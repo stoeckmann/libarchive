@@ -3210,20 +3210,23 @@ getdata:
 static int
 lzx_huffman_init(struct huffman *hf, size_t symbol_count, int tbl_bits)
 {
+	size_t tbl_size = (size_t)1 << tbl_bits;
+
 	if (hf->bitlen == NULL || hf->symbol_count != (int)symbol_count) {
 		free(hf->bitlen);
-		hf->bitlen = calloc(symbol_count,  sizeof(hf->bitlen[0]));
+		hf->bitlen = calloc(symbol_count, sizeof(hf->bitlen[0]));
 		if (hf->bitlen == NULL)
 			return (ARCHIVE_FATAL);
 		hf->symbol_count = (int)symbol_count;
 	} else
-		memset(hf->bitlen, 0, symbol_count *  sizeof(hf->bitlen[0]));
+		memset(hf->bitlen, 0, symbol_count * sizeof(hf->bitlen[0]));
 	if (hf->tbl == NULL) {
-		hf->tbl = malloc(((size_t)1 << tbl_bits) * sizeof(hf->tbl[0]));
+		hf->tbl = calloc(tbl_size, sizeof(hf->tbl[0]));
 		if (hf->tbl == NULL)
 			return (ARCHIVE_FATAL);
 		hf->tbl_bits = tbl_bits;
-	}
+	} else
+		memset(hf->tbl, 0, tbl_size * sizeof(hf->bitlen[0]));
 	return (ARCHIVE_OK);
 }
 
@@ -3351,10 +3354,6 @@ lzx_make_huffman_table(struct huffman *hf)
 	tbl = hf->tbl;
 	bitlen = hf->bitlen;
 	symbol_count = hf->symbol_count;
-	/* Initialize table to invalid values */
-	for (i = 0; i < tbl_size; i++) {
-		tbl[i] = (uint16_t)hf->symbol_count;
-	}
 	for (i = 0; i < symbol_count; i++) {
 		uint16_t *p;
 		int len, cnt;

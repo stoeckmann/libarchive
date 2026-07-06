@@ -2342,7 +2342,7 @@ lzx_translation(struct lzx_stream *strm, unsigned char *buffer, size_t size,
  *  False : we met that strm->next_in is empty, we have to get following
  *          bytes. */
 #define lzx_br_read_ahead_0(strm, br, n)	\
-	(lzx_br_has((br), (n)) || lzx_br_fillup(strm, br))
+	(lzx_br_has((br), (n)) || lzx_br_fillup(strm, br) == ARCHIVE_OK)
 /*  True  : the cache buffer has some bits as much as we need.
  *  False : there are no enough bits in the cache buffer to be used,
  *          we have to get following bytes if we could. */
@@ -2371,8 +2371,8 @@ static const uint32_t cache_masks[] = {
  * Shift away used bits in the cache data and fill it up with following bits.
  * Call this when cache buffer does not have enough bits you need.
  *
- * Returns 1 if the cache buffer is full.
- * Returns 0 if the cache buffer is not full; input buffer is empty.
+ * Returns ARCHIVE_OK if the cache buffer is full.
+ * Returns ARCHIVE_EOF if the cache buffer is not full; input buffer is empty.
  */
 static int
 lzx_br_fillup(struct lzx_stream *strm, struct lzx_br *br)
@@ -2398,7 +2398,7 @@ lzx_br_fillup(struct lzx_stream *strm, struct lzx_br *br)
 				strm->next_in += 8;
 				strm->avail_in -= 8;
 				br->cache_avail += 8 * 8;
-				return (1);
+				return (ARCHIVE_OK);
 			}
 			break;
 		case 3:
@@ -2414,13 +2414,13 @@ lzx_br_fillup(struct lzx_stream *strm, struct lzx_br *br)
 				strm->next_in += 6;
 				strm->avail_in -= 6;
 				br->cache_avail += 6 * 8;
-				return (1);
+				return (ARCHIVE_OK);
 			}
 			break;
 		case 0:
 			/* We have enough compressed data in
 			 * the cache buffer.*/
-			return (1);
+			return (ARCHIVE_EOF);
 		default:
 			break;
 		}
@@ -2432,7 +2432,7 @@ lzx_br_fillup(struct lzx_stream *strm, struct lzx_br *br)
 				strm->avail_in--;
 				br->have_odd = 1;
 			}
-			return (0);
+			return (ARCHIVE_EOF);
 		}
 		br->cache_buffer =
 		   (br->cache_buffer << 16) |
@@ -2730,7 +2730,7 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 				ds->at.freq[ds->at.bitlen[i]]++;
 				lzx_br_consume(br, 3);
 			}
-			if (!lzx_make_huffman_table(&ds->at))
+			if (lzx_make_huffman_table(&ds->at) < 0)
 				goto failed;
 			/* FALL THROUGH */
 		case ST_RD_VERBATIM:
@@ -2740,13 +2740,13 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			/*
 			 * Read Pre-tree for first 256 elements of main tree.
 			 */
-			if (!lzx_read_pre_tree(strm)) {
+			if (lzx_read_pre_tree(strm) < 0) {
 				ds->state = ST_RD_PRE_MAIN_TREE_256;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
 			}
-			if (!lzx_make_huffman_table(&ds->pt))
+			if (lzx_make_huffman_table(&ds->pt) < 0)
 				goto failed;
 			ds->loop = 0;
 			/* FALL THROUGH */
@@ -2755,27 +2755,26 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			 * Get path lengths of first 256 elements of main tree.
 			 */
 			r = lzx_read_bitlen(strm, &ds->mt, 256);
-			if (r < 0)
-				goto failed;
-			else if (!r) {
+			if (r == ARCHIVE_EOF) {
 				ds->state = ST_MAIN_TREE_256;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
-			}
+			} else if (r < 0)
+				goto failed;
 			ds->loop = 0;
 			/* FALL THROUGH */
 		case ST_RD_PRE_MAIN_TREE_REM:
 			/*
 			 * Read Pre-tree for remaining elements of main tree.
 			 */
-			if (!lzx_read_pre_tree(strm)) {
+			if (lzx_read_pre_tree(strm) < 0) {
 				ds->state = ST_RD_PRE_MAIN_TREE_REM;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
 			}
-			if (!lzx_make_huffman_table(&ds->pt))
+			if (lzx_make_huffman_table(&ds->pt) < 0)
 				goto failed;
 			ds->loop = 256;
 			/* FALL THROUGH */
@@ -2784,15 +2783,14 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			 * Get path lengths of remaining elements of main tree.
 			 */
 			r = lzx_read_bitlen(strm, &ds->mt, -1);
-			if (r < 0)
-				goto failed;
-			else if (!r) {
+			if (r == ARCHIVE_EOF) {
 				ds->state = ST_MAIN_TREE_REM;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
-			}
-			if (!lzx_make_huffman_table(&ds->mt))
+			} else if (r < 0)
+				goto failed;
+			if (lzx_make_huffman_table(&ds->mt) < 0)
 				goto failed;
 			ds->loop = 0;
 			/* FALL THROUGH */
@@ -2800,13 +2798,13 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			/*
 			 * Read Pre-tree for remaining elements of main tree.
 			 */
-			if (!lzx_read_pre_tree(strm)) {
+			if (lzx_read_pre_tree(strm) < 0) {
 				ds->state = ST_RD_PRE_LENGTH_TREE;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
 			}
-			if (!lzx_make_huffman_table(&ds->pt))
+			if (lzx_make_huffman_table(&ds->pt) < 0)
 				goto failed;
 			ds->loop = 0;
 			/* FALL THROUGH */
@@ -2815,15 +2813,14 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			 * Get path lengths of remaining elements of main tree.
 			 */
 			r = lzx_read_bitlen(strm, &ds->lt, -1);
-			if (r < 0)
-				goto failed;
-			else if (!r) {
+			if (r == ARCHIVE_EOF) {
 				ds->state = ST_LENGTH_TREE;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
-			}
-			if (!lzx_make_huffman_table(&ds->lt))
+			} else if (r < 0)
+				goto failed;
+			if (lzx_make_huffman_table(&ds->lt) < 0)
 				goto failed;
 			ds->state = ST_MAIN;
 			return (100);
@@ -3119,14 +3116,14 @@ lzx_read_pre_tree(struct lzx_stream *strm)
 	for (i = ds->loop; i < ds->pt.len_size; i++) {
 		if (!lzx_br_read_ahead(strm, br, 4)) {
 			ds->loop = i;
-			return (0);
+			return (ARCHIVE_EOF);
 		}
 		ds->pt.bitlen[i] = lzx_br_bits(br, 4);
 		ds->pt.freq[ds->pt.bitlen[i]]++;
 		lzx_br_consume(br, 4);
 	}
 	ds->loop = i;
-	return (1);
+	return (ARCHIVE_OK);
 }
 
 /*
@@ -3143,7 +3140,7 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 	i = ds->loop;
 	if (i == 0)
 		memset(d->freq, 0, sizeof(d->freq));
-	ret = 0;
+	ret = ARCHIVE_EOF;
 	if (end < 0)
 		end = d->len_size;
 	while (i < end) {
@@ -3159,7 +3156,7 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			same = lzx_br_bits(br, 4) + 4;
 			if (i + same > end)
-				return (-1);/* Invalid */
+				return (ARCHIVE_FATAL);
 			lzx_br_consume(br, 4);
 			for (j = 0; j < same; j++)
 				d->bitlen[i++] = 0;
@@ -3170,7 +3167,7 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			same = lzx_br_bits(br, 5) + 20;
 			if (i + same > end)
-				return (-1);/* Invalid */
+				return (ARCHIVE_FATAL);
 			lzx_br_consume(br, 5);
 			memset(d->bitlen + i, 0, same);
 			i += same;
@@ -3182,14 +3179,14 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			same = lzx_br_bits(br, 1) + 4;
 			if (i + same > end)
-				return (-1);
+				return (ARCHIVE_FATAL);
 			lzx_br_consume(br, 1);
 			rbits = lzx_br_bits(br, ds->pt.max_bits);
 			c = lzx_decode_huffman(&(ds->pt), rbits);
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			c = (d->bitlen[i] - c + 17) % 17;
 			if (c < 0)
-				return (-1);/* Invalid */
+				return (ARCHIVE_FATAL);
 			for (j = 0; j < same; j++)
 				d->bitlen[i++] = c;
 			d->freq[c] += same;
@@ -3198,13 +3195,13 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			c = (d->bitlen[i] - c + 17) % 17;
 			if (c < 0)
-				return (-1);/* Invalid */
+				return (ARCHIVE_FATAL);
 			d->freq[c]++;
 			d->bitlen[i++] = c;
 			break;
 		}
 	}
-	ret = 1;
+	ret = ARCHIVE_OK;
 getdata:
 	ds->loop = i;
 	return (ret);
@@ -3291,7 +3288,7 @@ lzx_make_huffman_table(struct huffman *hf)
 	}
 	/* Verify Kraft's inequality. */
 	if ((ptn != 0 && ptn != 0x10000) || maxbits > hf->tbl_bits)
-		return (0);/* Invalid */
+		return (ARCHIVE_FATAL);
 
 	hf->max_bits = maxbits;
 
@@ -3368,18 +3365,18 @@ lzx_make_huffman_table(struct huffman *hf)
 		/* Get a bit pattern */
 		len = bitlen[i];
 		if (len > tbl_size)
-			return (0);
+			return (ARCHIVE_FATAL);
 		ptn = bitptn[len];
 		cnt = weight[len];
 		/* Calculate next bit pattern */
 		if ((bitptn[len] = ptn + cnt) > tbl_size)
-			return (0);/* Invalid */
+			return (ARCHIVE_FATAL);
 		/* Update the table */
 		p = &(tbl[ptn]);
 		while (--cnt >= 0)
 			p[cnt] = (uint16_t)i;
 	}
-	return (1);
+	return (ARCHIVE_OK);
 }
 
 static uint16_t

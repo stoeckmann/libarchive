@@ -56,12 +56,12 @@
  * Lookups are performed through a direct, expanded lookup table.
  *
  * An expanded table has as many elements as needed to cover all possible
- * indices formable with bit patterns of given max_bits length.
+ * indices formable with bit patterns of given lookup_bits length.
  *
  * If less codes exist, these span multiple entries for all possible
  * combinations of following bits.
  *
- * Example of a Huffman tree with len_size = 3, max_bits = 2:
+ * Example of a Huffman tree with len_size = 3, lookup_bits = 2:
  *
  * Symbol | Code
  * -------+-----
@@ -80,7 +80,7 @@
  * 0b10 |        B
  * 0b11 |        C
  *
- * By using max_bits bits as a lookup, it becomes apparent that 0b00 and
+ * By using lookup_bits bits as a lookup, it becomes apparent that 0b00 and
  * 0b01 point to a symbol which actually has the code 0b0. A user of this
  * data structure must check the code bit length of a retrieved symbol after
  * the lookup to properly advance the bit stream:
@@ -93,7 +93,7 @@
  *
  * Thus, a proper code sequence would be:
  *
- * symbol = tbl[read_bits(max_bits)]
+ * symbol = tbl[read_bits(lookup_bits)]
  * consume_bits(bitlen[symbol])
  */
 struct huffman {
@@ -120,10 +120,10 @@ struct huffman {
 	uint16_t	 freq[17];
 	/* Map of symbols to their code bit lengths. */
 	uint8_t		*bitlen;
-	/* Longest used code bit length (<= tbl_bits). */
-	uint8_t		 max_bits;
+	/* Amount of bits to use for lookup (<= tbl_bits). */
+	uint8_t		 lookup_bits;
 	/*
-	 * Maximum allowed code bit length (<= 16).
+	 * Code bit length used for allocation (<= 16).
 	 *
 	 * Used to construct tbl.
 	 */
@@ -2849,9 +2849,9 @@ lzx_decode_blocks(struct lzx_stream *strm, int last)
 	uint8_t *lt_bitlen = lt->bitlen;
 	uint8_t *mt_bitlen = mt->bitlen;
 	size_t block_bytes_avail = ds->block_bytes_avail;
-	uint8_t at_max_bits = at->max_bits;
-	uint8_t lt_max_bits = lt->max_bits;
-	uint8_t mt_max_bits = mt->max_bits;
+	uint8_t at_lookup_bits = at->lookup_bits;
+	uint8_t lt_lookup_bits = lt->lookup_bits;
+	uint8_t mt_lookup_bits = mt->lookup_bits;
 	size_t copy_len = ds->copy_len, copy_pos = ds->copy_pos;
 	size_t w_pos = ds->w_pos, w_mask = ds->w_mask, w_size = ds->w_size;
 	uint8_t length_header = ds->length_header;
@@ -2886,23 +2886,23 @@ lzx_decode_blocks(struct lzx_stream *strm, int last)
 					goto next_data;
 
 				if (!lzx_br_read_ahead(strm, &bre,
-				    mt_max_bits)) {
+				    mt_lookup_bits)) {
 					if (!last)
 						goto next_data;
 					/* Remaining bits are less than
-					 * maximum bits(mt.max_bits) but maybe
-					 * it still remains as much as we need,
-					 * so we should try to use it with
-					 * dummy bits. */
+					 * maximum bits (mt.lookup_bits) but
+					 * maybe it still remains as much as we
+					 * need, so we should try to use it
+					 * with dummy bits. */
 					c = lzx_decode_huffman(mt,
 					      lzx_br_bits_forced(
-				 	        &bre, mt_max_bits));
+					        &bre, mt_lookup_bits));
 					if (!lzx_br_has(&bre, mt_bitlen[c]))
 						goto failed;/* Over read. */
 					lzx_br_consume(&bre, mt_bitlen[c]);
 				} else {
 					c = lzx_decode_huffman(mt,
-					      lzx_br_bits(&bre, mt_max_bits));
+					      lzx_br_bits(&bre, mt_lookup_bits));
 					lzx_br_consume(&bre, mt_bitlen[c]);
 				}
 				if (c > UCHAR_MAX)
@@ -2931,20 +2931,20 @@ lzx_decode_blocks(struct lzx_stream *strm, int last)
 			 */
 			if (length_header == 7) {
 				if (!lzx_br_read_ahead(strm, &bre,
-				    lt_max_bits)) {
+				    lt_lookup_bits)) {
 					if (!last) {
 						state = ST_LENGTH;
 						goto next_data;
 					}
 					c = lzx_decode_huffman(lt,
 					      lzx_br_bits_forced(
-					        &bre, lt_max_bits));
+					        &bre, lt_lookup_bits));
 					if (!lzx_br_has(&bre, lt_bitlen[c]))
 						goto failed;/* Over read. */
 					lzx_br_consume(&bre, lt_bitlen[c]);
 				} else {
 					c = lzx_decode_huffman(lt,
-					    lzx_br_bits(&bre, lt_max_bits));
+					    lzx_br_bits(&bre, lt_lookup_bits));
 					lzx_br_consume(&bre, lt_bitlen[c]);
 				}
 				copy_len = c + 7 + 2;
@@ -2999,7 +2999,7 @@ lzx_decode_blocks(struct lzx_stream *strm, int last)
 
 				/* Get an aligned number. */
 				if (!lzx_br_read_ahead(strm, &bre,
-				    offbits + at_max_bits)) {
+				    offbits + at_lookup_bits)) {
 					if (!last) {
 						state = ST_OFFSET;
 						goto next_data;
@@ -3007,14 +3007,14 @@ lzx_decode_blocks(struct lzx_stream *strm, int last)
 					lzx_br_consume(&bre, offbits);
 					c = lzx_decode_huffman(at,
 					      lzx_br_bits_forced(&bre,
-					        at_max_bits));
+					        at_lookup_bits));
 					if (!lzx_br_has(&bre, at_bitlen[c]))
 						goto failed;/* Over read. */
 					lzx_br_consume(&bre, at_bitlen[c]);
 				} else {
 					lzx_br_consume(&bre, offbits);
 					c = lzx_decode_huffman(at,
-					      lzx_br_bits(&bre, at_max_bits));
+					      lzx_br_bits(&bre, at_lookup_bits));
 					lzx_br_consume(&bre, at_bitlen[c]);
 				}
 				/* Add an aligned number. */
@@ -3151,9 +3151,9 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, uint16_t end)
 		end = d->symbol_count;
 	while (i < end) {
 		ds->loop = i;
-		if (!lzx_br_read_ahead(strm, br, (unsigned)ds->pt.max_bits))
+		if (!lzx_br_read_ahead(strm, br, (unsigned)ds->pt.lookup_bits))
 			goto getdata;
-		rbits = lzx_br_bits(br, ds->pt.max_bits);
+		rbits = lzx_br_bits(br, ds->pt.lookup_bits);
 		c = lzx_decode_huffman(&(ds->pt), rbits);
 		switch (c) {
 		case 17:/* several zero lengths, from 4 to 19. */
@@ -3180,14 +3180,14 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, uint16_t end)
 			break;
 		case 19:/* a few same lengths. */
 			if (!lzx_br_read_ahead(strm, br,
-			    ds->pt.bitlen[c] + 1U + ds->pt.max_bits))
+			    ds->pt.bitlen[c] + 1U + ds->pt.lookup_bits))
 				goto getdata;
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			same = lzx_br_bits(br, 1) + 4;
 			if (same > end - i)
 				return (ARCHIVE_FATAL);
 			lzx_br_consume(br, 1);
-			rbits = lzx_br_bits(br, ds->pt.max_bits);
+			rbits = lzx_br_bits(br, ds->pt.lookup_bits);
 			c = lzx_decode_huffman(&(ds->pt), rbits);
 			lzx_br_consume(br, ds->pt.bitlen[c]);
 			if (c > d->bitlen[i] + 17)
@@ -3296,10 +3296,8 @@ lzx_make_huffman_table(struct huffman *hf)
 		}
 	}
 	/* Verify Kraft's inequality. */
-	if ((ptn != 0 && ptn != 0x10000) || maxbits > hf->tbl_bits)
+	if (ptn != 0 && ptn != 0x10000)
 		return (ARCHIVE_FATAL);
-
-	hf->max_bits = maxbits;
 
 	/*
 	 * Shrink codes to smallest size by removing extra bits after
@@ -3330,6 +3328,20 @@ lzx_make_huffman_table(struct huffman *hf)
 			weight[i] >>= ebits;
 		}
 	}
+
+	/* Grow table if necessary. */
+	if (maxbits > hf->tbl_bits) {
+		size_t tbl_size;
+
+		hf->tbl_bits = 16;
+		tbl_size = (size_t)1 << hf->tbl_bits;
+
+		free(hf->tbl);
+		hf->tbl = calloc(tbl_size, sizeof(hf->tbl[0]));
+		if (hf->tbl == NULL)
+			return (ARCHIVE_FATAL);
+	}
+	hf->lookup_bits = maxbits;
 
 	/*
 	 * Construct the direct, expanded lookup table.

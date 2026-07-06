@@ -2782,7 +2782,7 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			/*
 			 * Get path lengths of remaining elements of main tree.
 			 */
-			r = lzx_read_bitlen(strm, &ds->mt, -1);
+			r = lzx_read_bitlen(strm, &ds->mt, 0);
 			if (r == ARCHIVE_EOF) {
 				ds->state = ST_MAIN_TREE_REM;
 				if (last)
@@ -2812,7 +2812,7 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			/*
 			 * Get path lengths of remaining elements of main tree.
 			 */
-			r = lzx_read_bitlen(strm, &ds->lt, -1);
+			r = lzx_read_bitlen(strm, &ds->lt, 0);
 			if (r == ARCHIVE_EOF) {
 				ds->state = ST_LENGTH_TREE;
 				if (last)
@@ -3141,7 +3141,7 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 	if (i == 0)
 		memset(d->freq, 0, sizeof(d->freq));
 	ret = ARCHIVE_EOF;
-	if (end < 0)
+	if (end == 0)
 		end = d->symbol_count;
 	while (i < end) {
 		ds->loop = i;

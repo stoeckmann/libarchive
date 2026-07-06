@@ -3362,7 +3362,7 @@ lzx_make_huffman_table(struct huffman *hf)
 			continue;
 		/* Get a bit pattern */
 		len = bitlen[i];
-		if (len > tbl_size)
+		if (len > maxbits)
 			return (ARCHIVE_FATAL);
 		ptn = bitptn[len];
 		cnt = weight[len];

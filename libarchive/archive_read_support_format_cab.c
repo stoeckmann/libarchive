@@ -3247,8 +3247,8 @@ lzx_make_huffman_table(struct huffman *hf)
 	uint16_t *tbl;
 	const unsigned char *bitlen;
 	int bitptn[17], weight[17];
-	int i, maxbits = 0, ptn, tbl_size, w;
-	int symbol_count;
+	int maxbits = 0, ptn, w;
+	uint16_t i, symbol_count;
 
 	/*
 	 * Initialize bit patterns.
@@ -3350,7 +3350,6 @@ lzx_make_huffman_table(struct huffman *hf)
 	 *  2 (0b10) |        3
 	 *  3 (0b11) |        4
 	 */
-	tbl_size = 1 << hf->tbl_bits;
 	tbl = hf->tbl;
 	bitlen = hf->bitlen;
 	symbol_count = hf->symbol_count;
@@ -3367,8 +3366,7 @@ lzx_make_huffman_table(struct huffman *hf)
 		ptn = bitptn[len];
 		cnt = weight[len];
 		/* Calculate next bit pattern */
-		if ((bitptn[len] = ptn + cnt) > tbl_size)
-			return (ARCHIVE_FATAL);
+		bitptn[len] = ptn + cnt;
 		/* Update the table */
 		p = &(tbl[ptn]);
 		while (--cnt >= 0)

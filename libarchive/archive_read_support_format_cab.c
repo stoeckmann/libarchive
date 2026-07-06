@@ -444,7 +444,7 @@ static int	lzx_read_bitlen(struct lzx_stream *, struct huffman *, int);
 static int	lzx_huffman_init(struct huffman *, size_t, int);
 static void	lzx_huffman_free(struct huffman *);
 static int	lzx_make_huffman_table(struct huffman *);
-static uint16_t	lzx_decode_huffman(struct huffman *, unsigned);
+static uint16_t	lzx_decode_huffman(struct huffman *, uint16_t);
 
 
 int
@@ -3135,7 +3135,7 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 	struct lzx_dec *ds = strm->ds;
 	struct lzx_br *br = &(ds->br);
 	int c, i, j, ret, same;
-	unsigned rbits;
+	uint16_t rbits;
 
 	i = ds->loop;
 	if (i == 0)
@@ -3378,7 +3378,7 @@ lzx_make_huffman_table(struct huffman *hf)
 }
 
 static uint16_t
-lzx_decode_huffman(struct huffman *hf, unsigned rbits)
+lzx_decode_huffman(struct huffman *hf, uint16_t rbits)
 {
 	return hf->tbl[rbits];
 }

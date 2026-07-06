@@ -101,14 +101,14 @@ struct huffman {
 	 * Amount of symbols.
 	 *
 	 * This implementation keeps track of unused symbols as well,
-	 * thus symbols start with 0x0000 up to given maximum amount
-	 * of symbols: [0..len_size]
+	 * thus symbols start with 0x0000 up to given symbol amount:
+	 * [0..symbol_count)
 	 *
 	 * Used to construct tbl.
 	 */
-	int		 len_size;
+	int		 symbol_count;
 	/*
-	 * Frequency (aka weight) of code bit lengths.
+	 * Frequency of code bit lengths.
 	 *
 	 * Represents the amount of occurrences of given bit lengths.
 	 * Index 0 is used for "empty" codes (aka unused symbols),
@@ -2718,14 +2718,14 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 			/*
 			 * Read Aligned offset tree.
 			 */
-			if (!lzx_br_read_ahead(strm, br, 3 * ds->at.len_size)) {
+			if (!lzx_br_read_ahead(strm, br, 3 * ds->at.symbol_count)) {
 				ds->state = ST_RD_ALIGNED_OFFSET;
 				if (last)
 					goto failed;
 				return (ARCHIVE_OK);
 			}
 			memset(ds->at.freq, 0, sizeof(ds->at.freq));
-			for (i = 0; i < ds->at.len_size; i++) {
+			for (i = 0; i < ds->at.symbol_count; i++) {
 				ds->at.bitlen[i] = lzx_br_bits(br, 3);
 				ds->at.freq[ds->at.bitlen[i]]++;
 				lzx_br_consume(br, 3);
@@ -3113,7 +3113,7 @@ lzx_read_pre_tree(struct lzx_stream *strm)
 
 	if (ds->loop == 0)
 		memset(ds->pt.freq, 0, sizeof(ds->pt.freq));
-	for (i = ds->loop; i < ds->pt.len_size; i++) {
+	for (i = ds->loop; i < ds->pt.symbol_count; i++) {
 		if (!lzx_br_read_ahead(strm, br, 4)) {
 			ds->loop = i;
 			return (ARCHIVE_EOF);
@@ -3142,7 +3142,7 @@ lzx_read_bitlen(struct lzx_stream *strm, struct huffman *d, int end)
 		memset(d->freq, 0, sizeof(d->freq));
 	ret = ARCHIVE_EOF;
 	if (end < 0)
-		end = d->len_size;
+		end = d->symbol_count;
 	while (i < end) {
 		ds->loop = i;
 		if (!lzx_br_read_ahead(strm, br, ds->pt.max_bits))
@@ -3208,17 +3208,16 @@ getdata:
 }
 
 static int
-lzx_huffman_init(struct huffman *hf, size_t len_size, int tbl_bits)
+lzx_huffman_init(struct huffman *hf, size_t symbol_count, int tbl_bits)
 {
-
-	if (hf->bitlen == NULL || hf->len_size != (int)len_size) {
+	if (hf->bitlen == NULL || hf->symbol_count != (int)symbol_count) {
 		free(hf->bitlen);
-		hf->bitlen = calloc(len_size,  sizeof(hf->bitlen[0]));
+		hf->bitlen = calloc(symbol_count,  sizeof(hf->bitlen[0]));
 		if (hf->bitlen == NULL)
 			return (ARCHIVE_FATAL);
-		hf->len_size = (int)len_size;
+		hf->symbol_count = (int)symbol_count;
 	} else
-		memset(hf->bitlen, 0, len_size *  sizeof(hf->bitlen[0]));
+		memset(hf->bitlen, 0, symbol_count *  sizeof(hf->bitlen[0]));
 	if (hf->tbl == NULL) {
 		hf->tbl = malloc(((size_t)1 << tbl_bits) * sizeof(hf->tbl[0]));
 		if (hf->tbl == NULL)
@@ -3246,7 +3245,7 @@ lzx_make_huffman_table(struct huffman *hf)
 	const unsigned char *bitlen;
 	int bitptn[17], weight[17];
 	int i, maxbits = 0, ptn, tbl_size, w;
-	int len_avail;
+	int symbol_count;
 
 	/*
 	 * Initialize bit patterns.
@@ -3351,12 +3350,12 @@ lzx_make_huffman_table(struct huffman *hf)
 	tbl_size = 1 << hf->tbl_bits;
 	tbl = hf->tbl;
 	bitlen = hf->bitlen;
-	len_avail = hf->len_size;
+	symbol_count = hf->symbol_count;
 	/* Initialize table to invalid values */
 	for (i = 0; i < tbl_size; i++) {
-		tbl[i] = (uint16_t)hf->len_size;
+		tbl[i] = (uint16_t)hf->symbol_count;
 	}
-	for (i = 0; i < len_avail; i++) {
+	for (i = 0; i < symbol_count; i++) {
 		uint16_t *p;
 		int len, cnt;
 

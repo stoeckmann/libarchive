@@ -130,14 +130,14 @@ static int	archive_read_format_warc_read_header(struct archive_read *,
 		    struct archive_entry *);
 
 /* Private routines */
-static unsigned int _warc_rdver(const char *buf, size_t bsz);
-static unsigned int _warc_rdtyp(const char *buf, size_t bsz);
-static warc_string_t _warc_rduri(const char *buf, size_t bsz);
-static int64_t _warc_rdlen(const char *buf, size_t bsz);
-static time_t _warc_rdrtm(const char *buf, size_t bsz);
-static time_t _warc_rdmtm(const char *buf, size_t bsz);
-static const char *_warc_find_eoh(const char *buf, size_t bsz);
-static const char *_warc_find_eol(const char *buf, size_t bsz);
+static unsigned int	warc_read_version(const char *, size_t);
+static unsigned int	warc_read_type(const char *, size_t);
+static warc_string_t	warc_read_uri(const char *, size_t);
+static int64_t		warc_read_length(const char *, size_t);
+static time_t		warc_read_date(const char *, size_t);
+static time_t		warc_read_last_modified(const char *, size_t);
+static const char	*warc_find_eoh(const char *, size_t);
+static const char	*warc_find_eol(const char *, size_t);
 
 int
 archive_read_support_format_warc(struct archive *_a)
@@ -208,7 +208,7 @@ archive_read_format_warc_bid(struct archive_read *a, int best_bid)
 	}
 
 	/* Parse the record version number. */
-	ver = _warc_rdver(hdr, nrd);
+	ver = warc_read_version(hdr, nrd);
 	if (ver < 1200U || ver > 10000U) {
 		/* Only WARC 0.12 through WARC 1.0 are supported. */
 		return -1;
@@ -257,7 +257,7 @@ start_over:
 		return (ARCHIVE_EOF);
 	}
 	/* Locate the end of the record header. */
-	eoh = _warc_find_eoh(buf, nrd);
+	eoh = warc_find_eoh(buf, nrd);
 	if (eoh == NULL) {
 		/* The header terminator was not found in the probed data. */
 		archive_set_error(
@@ -265,7 +265,7 @@ start_over:
 			"Bad record header");
 		return (ARCHIVE_FATAL);
 	}
-	ver = _warc_rdver(buf, eoh - buf);
+	ver = warc_read_version(buf, eoh - buf);
 	/* Only WARC 0.12 through WARC 1.0 are supported. */
 	if (ver == 0U) {
 		archive_set_error(
@@ -279,7 +279,7 @@ start_over:
 			ver / 10000, (ver % 10000) / 100);
 		return (ARCHIVE_FATAL);
 	}
-	cntlen = _warc_rdlen(buf, eoh - buf);
+	cntlen = warc_read_length(buf, eoh - buf);
 	if (cntlen < 0) {
 		/* This reader requires Content-Length before processing a record. */
 		archive_set_error(
@@ -287,7 +287,7 @@ start_over:
 			"Bad content length");
 		return (ARCHIVE_FATAL);
 	}
-	rtime = _warc_rdrtm(buf, eoh - buf);
+	rtime = warc_read_date(buf, eoh - buf);
 	if (rtime == (time_t)-1) {
 		/* This reader requires WARC-Date before processing a record. */
 		archive_set_error(
@@ -306,7 +306,7 @@ start_over:
 		w->pver = ver;
 	}
 	/* Parse the record type. */
-	ftyp = _warc_rdtyp(buf, eoh - buf);
+	ftyp = warc_read_type(buf, eoh - buf);
 	/* Save content state for subsequent read calls. */
 	w->cntlen = cntlen;
 	w->cntoff = 0;
@@ -317,7 +317,7 @@ start_over:
 	case WT_RSP:
 		/* Read the filename only for record types that are expected to
 		 * have a target URI. */
-		fnam = _warc_rduri(buf, eoh - buf);
+		fnam = warc_read_uri(buf, eoh - buf);
 		/* Avoid creating directory endpoints as files. */
 		if (fnam.len == 0 || fnam.str[fnam.len - 1] == '/') {
 			/* Skip this record. */
@@ -345,7 +345,7 @@ start_over:
 
 		/* Use a Last-Modified record header when present; otherwise fall back
 		 * to WARC-Date. */
-		if ((mtime = _warc_rdmtm(buf, eoh - buf)) == (time_t)-1) {
+		if ((mtime = warc_read_last_modified(buf, eoh - buf)) == (time_t)-1) {
 			mtime = rtime;
 		}
 		break;
@@ -625,7 +625,7 @@ out:
 }
 
 static unsigned int
-_warc_rdver(const char *buf, size_t bsz)
+warc_read_version(const char *buf, size_t bsz)
 {
 	static const char magic[] = "WARC/";
 	const char *c;
@@ -670,7 +670,7 @@ _warc_rdver(const char *buf, size_t bsz)
 }
 
 static unsigned int
-_warc_rdtyp(const char *buf, size_t bsz)
+warc_read_type(const char *buf, size_t bsz)
 {
 	static const char _key[] = "\r\nWARC-Type:";
 	const char *val, *eol;
@@ -680,7 +680,7 @@ _warc_rdtyp(const char *buf, size_t bsz)
 		return WT_NONE;
 	}
 	val += sizeof(_key) - 1U;
-	if ((eol = _warc_find_eol(val, buf + bsz - val)) == NULL) {
+	if ((eol = warc_find_eol(val, buf + bsz - val)) == NULL) {
 		/* Header field has no end of line. */
 		return WT_NONE;
 	}
@@ -699,7 +699,7 @@ _warc_rdtyp(const char *buf, size_t bsz)
 }
 
 static warc_string_t
-_warc_rduri(const char *buf, size_t bsz)
+warc_read_uri(const char *buf, size_t bsz)
 {
 	static const char _key[] = "\r\nWARC-Target-URI:";
 	const char *val, *uri, *eol, *p;
@@ -711,7 +711,7 @@ _warc_rduri(const char *buf, size_t bsz)
 	}
 	/* Skip leading whitespace. */
 	val += sizeof(_key) - 1U;
-	if ((eol = _warc_find_eol(val, buf + bsz - val)) == NULL) {
+	if ((eol = warc_find_eol(val, buf + bsz - val)) == NULL) {
 		/* Header field has no end of line. */
 		return res;
 	}
@@ -756,7 +756,7 @@ _warc_rduri(const char *buf, size_t bsz)
 }
 
 static int64_t
-_warc_rdlen(const char *buf, size_t bsz)
+warc_read_length(const char *buf, size_t bsz)
 {
 	static const char _key[] = "\r\nContent-Length:";
 	const char *val, *eol, *p;
@@ -768,7 +768,7 @@ _warc_rdlen(const char *buf, size_t bsz)
 	}
 	val += sizeof(_key) - 1U;
 
-	if ((eol = _warc_find_eol(val, buf + bsz - val)) == NULL) {
+	if ((eol = warc_find_eol(val, buf + bsz - val)) == NULL) {
 		/* Malformed field with no end of line. */
 		return -1;
 	}
@@ -797,7 +797,7 @@ _warc_rdlen(const char *buf, size_t bsz)
 }
 
 static time_t
-_warc_rdrtm(const char *buf, size_t bsz)
+warc_read_date(const char *buf, size_t bsz)
 {
 	static const char _key[] = "\r\nWARC-Date:";
 	const char *val, *eol;
@@ -809,7 +809,7 @@ _warc_rdrtm(const char *buf, size_t bsz)
 		return (time_t)-1;
 	}
 	val += sizeof(_key) - 1U;
-	if ((eol = _warc_find_eol(val, buf + bsz - val)) == NULL ) {
+	if ((eol = warc_find_eol(val, buf + bsz - val)) == NULL ) {
 		/* Header field has no end of line. */
 		return -1;
 	}
@@ -824,7 +824,7 @@ _warc_rdrtm(const char *buf, size_t bsz)
 }
 
 static time_t
-_warc_rdmtm(const char *buf, size_t bsz)
+warc_read_last_modified(const char *buf, size_t bsz)
 {
 	static const char _key[] = "\r\nLast-Modified:";
 	const char *val, *eol;
@@ -836,7 +836,7 @@ _warc_rdmtm(const char *buf, size_t bsz)
 		return (time_t)-1;
 	}
 	val += sizeof(_key) - 1U;
-	if ((eol = _warc_find_eol(val, buf + bsz - val)) == NULL ) {
+	if ((eol = warc_find_eol(val, buf + bsz - val)) == NULL ) {
 		/* Header field has no end of line. */
 		return -1;
 	}
@@ -850,8 +850,8 @@ _warc_rdmtm(const char *buf, size_t bsz)
 	return res;
 }
 
-static const char*
-_warc_find_eoh(const char *buf, size_t bsz)
+static const char *
+warc_find_eoh(const char *buf, size_t bsz)
 {
 	static const char _marker[] = "\r\n\r\n";
 	const char *hit = xmemmem(buf, bsz, _marker, sizeof(_marker) - 1U);
@@ -862,8 +862,8 @@ _warc_find_eoh(const char *buf, size_t bsz)
 	return hit;
 }
 
-static const char*
-_warc_find_eol(const char *buf, size_t bsz)
+static const char *
+warc_find_eol(const char *buf, size_t bsz)
 {
 	static const char _marker[] = "\r\n";
 	const char *hit = xmemmem(buf, bsz, _marker, sizeof(_marker) - 1U);

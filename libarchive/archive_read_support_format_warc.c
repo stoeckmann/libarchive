@@ -114,7 +114,7 @@ struct warc_s {
 	/* Bytes processed from the current record */
 	int64_t cntoff;
 	/* Bytes to consume before the next read */
-	size_t unconsumed;
+	int64_t unconsumed;
 
 	/* String pool */
 	warc_strbuf_t pool;
@@ -399,7 +399,7 @@ _warc_read(struct archive_read *a, const void **buf, size_t *bsz, int64_t *off)
 
 	if (w->unconsumed) {
 		__archive_read_consume(a, w->unconsumed);
-		w->unconsumed = 0U;
+		w->unconsumed = 0;
 	}
 
 	if (w->cntoff >= w->cntlen) {
@@ -427,7 +427,7 @@ _warc_read(struct archive_read *a, const void **buf, size_t *bsz, int64_t *off)
 	*buf = rab;
 
 	w->cntoff += nrd;
-	w->unconsumed = (size_t)nrd;
+	w->unconsumed = nrd;
 	return (ARCHIVE_OK);
 }
 
@@ -440,7 +440,7 @@ _warc_skip(struct archive_read *a)
 		return (ARCHIVE_FATAL);
 	if (w->unconsumed) {
 		__archive_read_consume(a, w->unconsumed);
-		w->unconsumed = 0U;
+		w->unconsumed = 0;
 	}
 	if (__archive_read_consume(a, w->cntlen - w->cntoff) < 0 ||
 	    __archive_read_consume(a, 4U/*\r\n\r\n separator*/) < 0)

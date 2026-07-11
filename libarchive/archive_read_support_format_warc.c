@@ -60,9 +60,6 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
 #ifdef HAVE_CTYPE_H
 #include <ctype.h>
 #endif
@@ -124,11 +121,13 @@ struct warc_s {
 	struct archive_string sver;
 };
 
-static int _warc_bid(struct archive_read *a, int);
-static int _warc_cleanup(struct archive_read *a);
-static int _warc_read(struct archive_read*, const void**, size_t*, int64_t*);
-static int _warc_skip(struct archive_read *a);
-static int _warc_rdhdr(struct archive_read *a, struct archive_entry *e);
+static int	archive_read_format_warc_bid(struct archive_read *, int);
+static int	archive_read_format_warc_cleanup(struct archive_read *);
+static int	archive_read_format_warc_read_data(struct archive_read *,
+		    const void **, size_t *, int64_t *);
+static int	archive_read_format_warc_skip(struct archive_read *);
+static int	archive_read_format_warc_read_header(struct archive_read *,
+		    struct archive_entry *);
 
 /* Private routines */
 static unsigned int _warc_rdver(const char *buf, size_t bsz);
@@ -156,10 +155,18 @@ archive_read_support_format_warc(struct archive *_a)
 		return (ARCHIVE_FATAL);
 	}
 
-	r = __archive_read_register_format(
-		a, w, "warc",
-		_warc_bid, NULL, _warc_rdhdr, _warc_read,
-		_warc_skip, NULL, _warc_cleanup, NULL, NULL);
+	r = __archive_read_register_format(a,
+	    w,
+	    "warc",
+	    archive_read_format_warc_bid,
+	    NULL,
+	    archive_read_format_warc_read_header,
+	    archive_read_format_warc_read_data,
+	    archive_read_format_warc_skip,
+	    NULL,
+	    archive_read_format_warc_cleanup,
+	    NULL,
+	    NULL);
 
 	if (r != ARCHIVE_OK) {
 		free(w);
@@ -169,7 +176,7 @@ archive_read_support_format_warc(struct archive *_a)
 }
 
 static int
-_warc_cleanup(struct archive_read *a)
+archive_read_format_warc_cleanup(struct archive_read *a)
 {
 	struct warc_s *w = a->format->data;
 
@@ -183,7 +190,7 @@ _warc_cleanup(struct archive_read *a)
 }
 
 static int
-_warc_bid(struct archive_read *a, int best_bid)
+archive_read_format_warc_bid(struct archive_read *a, int best_bid)
 {
 	const char *hdr;
 	ssize_t nrd;
@@ -212,7 +219,8 @@ _warc_bid(struct archive_read *a, int best_bid)
 }
 
 static int
-_warc_rdhdr(struct archive_read *a, struct archive_entry *entry)
+archive_read_format_warc_read_header(struct archive_read *a,
+    struct archive_entry *entry)
 {
 #define HDR_PROBE_LEN		(12U)
 	struct warc_s *w = a->format->data;
@@ -383,7 +391,7 @@ start_over:
 	case LAST_WT:
 	default:
 		/* Skip this record body and look for the next one. */
-		if (_warc_skip(a) < 0)
+		if (archive_read_format_warc_skip(a) < 0)
 			return (ARCHIVE_FATAL);
 		goto start_over;
 	}
@@ -391,7 +399,8 @@ start_over:
 }
 
 static int
-_warc_read(struct archive_read *a, const void **buf, size_t *bsz, int64_t *off)
+archive_read_format_warc_read_data(struct archive_read *a, const void **buf,
+    size_t *bsz, int64_t *off)
 {
 	struct warc_s *w = a->format->data;
 	const char *rab;
@@ -432,7 +441,7 @@ _warc_read(struct archive_read *a, const void **buf, size_t *bsz, int64_t *off)
 }
 
 static int
-_warc_skip(struct archive_read *a)
+archive_read_format_warc_skip(struct archive_read *a)
 {
 	struct warc_s *w = a->format->data;
 

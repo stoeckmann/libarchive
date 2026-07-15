@@ -3266,6 +3266,10 @@ save_xattrs(struct archive_write *a, struct file *file)
 		 */
 		r = xar_compression_init_encoder(a);
 		if (r != ARCHIVE_OK) {
+			struct chksumval sumval;
+
+			checksum_final(&(xar->a_sumwrk), &sumval);
+			xar->a_sumwrk.alg = CKSUM_NONE;
 			free(heap);
 			return (ARCHIVE_FATAL);
 		}

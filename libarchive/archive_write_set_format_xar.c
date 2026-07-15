@@ -674,9 +674,15 @@ xar_write_header(struct archive_write *a, struct archive_entry *entry)
 	checksum_init(&(xar->e_sumwrk), xar->opt_sumalg);
 	r = xar_compression_init_encoder(a);
 
-	if (r != ARCHIVE_OK)
+	if (r != ARCHIVE_OK) {
+		struct chksumval sumval;
+
+		checksum_final(&(xar->a_sumwrk), &sumval);
+		checksum_final(&(xar->e_sumwrk), &sumval);
+		xar->a_sumwrk.alg = CKSUM_NONE;
+		xar->e_sumwrk.alg = CKSUM_NONE;
 		return (r);
-	else
+	} else
 		return (r2);
 }
 

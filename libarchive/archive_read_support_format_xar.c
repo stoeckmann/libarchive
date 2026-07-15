@@ -729,6 +729,7 @@ xar_read_header(struct archive_read *a, struct archive_entry *entry)
 		if (errno == ENOMEM) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Gname");
+			file_free(file);
 			return (ARCHIVE_FATAL);
 		}
 		archive_set_error(&a->archive,
@@ -744,6 +745,7 @@ xar_read_header(struct archive_read *a, struct archive_entry *entry)
 		if (errno == ENOMEM) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Uname");
+			file_free(file);
 			return (ARCHIVE_FATAL);
 		}
 		archive_set_error(&a->archive,
@@ -758,6 +760,7 @@ xar_read_header(struct archive_read *a, struct archive_entry *entry)
 		if (errno == ENOMEM) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathname");
+			file_free(file);
 			return (ARCHIVE_FATAL);
 		}
 		archive_set_error(&a->archive,
@@ -774,6 +777,7 @@ xar_read_header(struct archive_read *a, struct archive_entry *entry)
 		if (errno == ENOMEM) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Linkname");
+			file_free(file);
 			return (ARCHIVE_FATAL);
 		}
 		archive_set_error(&a->archive,

@@ -582,8 +582,10 @@ xar_write_header(struct archive_write *a, struct archive_entry *entry)
 		return (ARCHIVE_FATAL);
 	}
 	r2 = file_gen_utility_names(a, file);
-	if (r2 < ARCHIVE_WARN)
+	if (r2 < ARCHIVE_WARN) {
+		file_free(file);
 		return (r2);
+	}
 
 	/*
 	 * Ignore a path which looks like the top of directory name

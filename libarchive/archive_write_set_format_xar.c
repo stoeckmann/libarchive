@@ -2422,8 +2422,12 @@ file_tree(struct archive_write *a, struct file **filepp)
 				return (ARCHIVE_FATAL);
 			}
 			archive_string_free(&as);
-			if (file_gen_utility_names(a, vp) <= ARCHIVE_FAILED)
+			if (file_gen_utility_names(a, vp) <= ARCHIVE_FAILED) {
+				file_free(vp);
+				file_free(file);
+				*filepp = NULL;
 				return (ARCHIVE_FATAL);
+			}
 			file_add_child_tail(dent, vp);
 			file_register(xar, vp);
 			np = vp;

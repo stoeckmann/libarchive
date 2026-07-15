@@ -3223,6 +3223,12 @@ save_xattrs(struct archive_write *a, struct file *file)
 
 		heap = calloc(1, sizeof(*heap));
 		if (heap == NULL) {
+			struct chksumval sumval;
+
+			checksum_final(&(xar->a_sumwrk), &sumval);
+			checksum_final(&(xar->e_sumwrk), &sumval);
+			xar->a_sumwrk.alg = CKSUM_NONE;
+			xar->e_sumwrk.alg = CKSUM_NONE;
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for xattr");
 			return (ARCHIVE_FATAL);

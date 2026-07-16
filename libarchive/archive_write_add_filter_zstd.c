@@ -114,8 +114,10 @@ int
 archive_write_add_filter_zstd(struct archive *_a)
 {
 	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f;
 	struct private_data *data;
+	int r;
+
 	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_zstd");
 
@@ -124,14 +126,6 @@ archive_write_add_filter_zstd(struct archive *_a)
 		archive_set_error(&a->archive, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
-	f->data = data;
-	f->open = &archive_compressor_zstd_open;
-	f->options = &archive_compressor_zstd_options;
-	f->flush = &archive_compressor_zstd_flush;
-	f->close = &archive_compressor_zstd_close;
-	f->free = &archive_compressor_zstd_free;
-	f->code = ARCHIVE_FILTER_ZSTD;
-	f->name = "zstd";
 	data->compression_level = CLEVEL_DEFAULT;
 	data->threads = 0;
 	data->long_distance = 0;
@@ -150,8 +144,7 @@ archive_write_add_filter_zstd(struct archive *_a)
 		    "Failed to allocate zstd compressor object");
 		return (ARCHIVE_FATAL);
 	}
-
-	return (ARCHIVE_OK);
+	r = ARCHIVE_OK;
 #else
 	data->pdata = __archive_write_program_allocate("zstd");
 	if (data->pdata == NULL) {
@@ -161,8 +154,28 @@ archive_write_add_filter_zstd(struct archive *_a)
 	}
 	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 	    "Using external zstd program");
-	return (ARCHIVE_WARN);
+	r = ARCHIVE_WARN;
 #endif
+
+	f = __archive_write_allocate_filter(_a);
+	if (f == NULL) {
+		ZSTD_freeCStream(data->cstream);
+		free(data);
+		archive_set_error(&a->archive, ENOMEM,
+		    "Failed to allocate zstd compressor object");
+		return (ARCHIVE_FATAL);
+	}
+	f->name = "zstd";
+	f->code = ARCHIVE_FILTER_ZSTD;
+	f->data = data;
+	f->options = archive_compressor_zstd_options;
+	f->open = archive_compressor_zstd_open;
+	f->write = archive_compressor_zstd_write;
+	f->flush = archive_compressor_zstd_flush;
+	f->close = archive_compressor_zstd_close;
+	f->free = archive_compressor_zstd_free;
+
+	return (r);
 }
 
 static int
@@ -403,8 +416,6 @@ archive_compressor_zstd_open(struct archive_write_filter *f)
 		}
 	}
 
-	f->write = archive_compressor_zstd_write;
-
 	if (ZSTD_isError(ZSTD_initCStream(data->cstream,
 	    data->compression_level))) {
 		archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
@@ -560,7 +571,6 @@ archive_compressor_zstd_open(struct archive_write_filter *f)
 		archive_string_sprintf(&as, " --long=%d", data->long_distance);
 	}
 
-	f->write = archive_compressor_zstd_write;
 	r = __archive_write_program_open(f, data->pdata, as.s);
 	archive_string_free(&as);
 	return (r);

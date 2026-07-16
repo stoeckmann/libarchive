@@ -98,8 +98,10 @@ int
 archive_write_add_filter_gzip(struct archive *_a)
 {
 	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f;
 	struct private_data *data;
+	int r;
+
 	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_gzip");
 
@@ -108,18 +110,10 @@ archive_write_add_filter_gzip(struct archive *_a)
 		archive_set_error(&a->archive, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
-	f->data = data;
-	f->open = &archive_compressor_gzip_open;
-	f->options = &archive_compressor_gzip_options;
-	f->close = &archive_compressor_gzip_close;
-	f->free = &archive_compressor_gzip_free;
-	f->code = ARCHIVE_FILTER_GZIP;
-	f->name = "gzip";
-
 	data->original_filename = NULL;
 #ifdef HAVE_ZLIB_H
 	data->compression_level = Z_DEFAULT_COMPRESSION;
-	return (ARCHIVE_OK);
+	r = ARCHIVE_OK;
 #else
 	data->pdata = __archive_write_program_allocate("gzip");
 	if (data->pdata == NULL) {
@@ -130,8 +124,28 @@ archive_write_add_filter_gzip(struct archive *_a)
 	data->compression_level = 0;
 	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 	    "Using external gzip program");
-	return (ARCHIVE_WARN);
+	r = ARCHIVE_WARN;
 #endif
+
+	f = __archive_write_allocate_filter(_a);
+	if (f == NULL) {
+#ifndef HAVE_ZLIB_H
+		__archive_write_program_free(data->pdata);
+#endif
+		free(data);
+		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+		return (ARCHIVE_FATAL);
+	}
+	f->name = "gzip";
+	f->code = ARCHIVE_FILTER_GZIP;
+	f->data = data;
+	f->options = archive_compressor_gzip_options;
+	f->open = archive_compressor_gzip_open;
+	f->write = archive_compressor_gzip_write;
+	f->close = archive_compressor_gzip_close;
+	f->free = archive_compressor_gzip_free;
+
+	return (r);
 }
 
 static int
@@ -272,8 +286,6 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 			ret = ARCHIVE_WARN;
 		}
 	}
-
-	f->write = archive_compressor_gzip_write;
 
 	/* Initialize compression library. */
 	init_success = deflateInit2(&(data->stream),
@@ -451,7 +463,6 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 		/* Save timestamp. */
 		archive_strcat(&as, " -N");
 
-	f->write = archive_compressor_gzip_write;
 	r = __archive_write_program_open(f, data->pdata, as.s);
 	archive_string_free(&as);
 	return (r);

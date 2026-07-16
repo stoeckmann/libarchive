@@ -72,7 +72,7 @@ int
 archive_write_add_filter_uuencode(struct archive *_a)
 {
 	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f;
 	struct private_uuencode *state;
 
 	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
@@ -80,18 +80,26 @@ archive_write_add_filter_uuencode(struct archive *_a)
 
 	state = calloc(1, sizeof(*state));
 	if (state == NULL) {
-		archive_set_error(f->archive, ENOMEM,
+		archive_set_error(_a, ENOMEM,
 		    "Can't allocate data for uuencode filter");
 		return (ARCHIVE_FATAL);
 	}
 	archive_strcpy(&state->name, "-");
 	state->mode = 0644;
 
-	f->data = state;
+	f = __archive_write_allocate_filter(_a);
+	if (f == NULL) {
+		archive_string_free(&state->name);
+		free(state);
+		archive_set_error(f->archive, ENOMEM,
+		    "Can't allocate data for uuencode filter");
+		return (ARCHIVE_FATAL);
+	}
 	f->name = "uuencode";
 	f->code = ARCHIVE_FILTER_UU;
-	f->open = archive_filter_uuencode_open;
+	f->data = state;
 	f->options = archive_filter_uuencode_options;
+	f->open = archive_filter_uuencode_open;
 	f->write = archive_filter_uuencode_write;
 	f->close = archive_filter_uuencode_close;
 	f->free = archive_filter_uuencode_free;

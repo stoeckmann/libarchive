@@ -50,7 +50,7 @@ static int archive_write_grzip_free(struct archive_write_filter *);
 int
 archive_write_add_filter_grzip(struct archive *_a)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f;
 	struct write_grzip *data;
 
 	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
@@ -68,11 +68,18 @@ archive_write_add_filter_grzip(struct archive *_a)
 		return (ARCHIVE_FATAL);
 	}
 
+	f = __archive_write_allocate_filter(_a);
+	if (f == NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data);
+		archive_set_error(_a, ENOMEM, "Can't allocate memory");
+		return (ARCHIVE_FATAL);
+	}
 	f->name = "grzip";
 	f->code = ARCHIVE_FILTER_GRZIP;
 	f->data = data;
-	f->open = archive_write_grzip_open;
 	f->options = archive_write_grzip_options;
+	f->open = archive_write_grzip_open;
 	f->write = archive_write_grzip_write;
 	f->close = archive_write_grzip_close;
 	f->free = archive_write_grzip_free;

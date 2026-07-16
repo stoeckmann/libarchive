@@ -142,22 +142,35 @@ static const struct option_value option_values[] = {
 };
 
 static int
-common_setup(struct archive_write_filter *f)
+common_setup(struct archive *_a, int code, const char *name)
 {
+	struct archive_write *a = (struct archive_write *)_a;
+	struct archive_write_filter *f;
 	struct private_data *data;
-	struct archive_write *a = (struct archive_write *)f->archive;
+
 	data = calloc(1, sizeof(*data));
 	if (data == NULL) {
 		archive_set_error(&a->archive, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
-	f->data = data;
 	data->compression_level = LZMA_PRESET_DEFAULT;
 	data->threads = 1;
-	f->open = &archive_compressor_xz_open;
+
+	f = __archive_write_allocate_filter(_a);
+	if (f == NULL) {
+		free(data);
+		archive_set_error(f->archive, ENOMEM,
+		    "Can't allocate data for uuencode filter");
+		return (ARCHIVE_FATAL);
+	}
+	f->name = name;
+	f->code = code;
+	f->data = data;
+	f->options = archive_compressor_xz_options;
+	f->open = archive_compressor_xz_open;
 	f->close = archive_compressor_xz_close;
 	f->free = archive_compressor_xz_free;
-	f->options = &archive_compressor_xz_options;
+
 	return (ARCHIVE_OK);
 }
 
@@ -167,18 +180,10 @@ common_setup(struct archive_write_filter *f)
 int
 archive_write_add_filter_xz(struct archive *_a)
 {
-	struct archive_write_filter *f;
-	int r;
-
 	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_xz");
-	f = __archive_write_allocate_filter(_a);
-	r = common_setup(f);
-	if (r == ARCHIVE_OK) {
-		f->code = ARCHIVE_FILTER_XZ;
-		f->name = "xz";
-	}
-	return (r);
+
+	return common_setup(_a, ARCHIVE_FILTER_XZ, "xz");
 }
 
 /* LZMA is handled identically, we just need a different compression
@@ -187,35 +192,19 @@ archive_write_add_filter_xz(struct archive *_a)
 int
 archive_write_add_filter_lzma(struct archive *_a)
 {
-	struct archive_write_filter *f;
-	int r;
-
 	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_lzma");
-	f = __archive_write_allocate_filter(_a);
-	r = common_setup(f);
-	if (r == ARCHIVE_OK) {
-		f->code = ARCHIVE_FILTER_LZMA;
-		f->name = "lzma";
-	}
-	return (r);
+
+	return common_setup(_a, ARCHIVE_FILTER_LZMA, "lzma");
 }
 
 int
 archive_write_add_filter_lzip(struct archive *_a)
 {
-	struct archive_write_filter *f;
-	int r;
-
 	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_lzip");
-	f = __archive_write_allocate_filter(_a);
-	r = common_setup(f);
-	if (r == ARCHIVE_OK) {
-		f->code = ARCHIVE_FILTER_LZIP;
-		f->name = "lzip";
-	}
-	return (r);
+
+	return common_setup(_a, ARCHIVE_FILTER_LZIP, "lzip");
 }
 
 static int

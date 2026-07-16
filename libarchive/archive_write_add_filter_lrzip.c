@@ -56,7 +56,7 @@ static int archive_write_lrzip_free(struct archive_write_filter *);
 int
 archive_write_add_filter_lrzip(struct archive *_a)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f;
 	struct write_lrzip *data;
 
 	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
@@ -74,11 +74,18 @@ archive_write_add_filter_lrzip(struct archive *_a)
 		return (ARCHIVE_FATAL);
 	}
 
+	f = __archive_write_allocate_filter(_a);
+	if (f == NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data);
+		archive_set_error(_a, ENOMEM, "Can't allocate memory");
+		return (ARCHIVE_FATAL);
+	}
 	f->name = "lrzip";
 	f->code = ARCHIVE_FILTER_LRZIP;
 	f->data = data;
-	f->open = archive_write_lrzip_open;
 	f->options = archive_write_lrzip_options;
+	f->open = archive_write_lrzip_open;
 	f->write = archive_write_lrzip_write;
 	f->close = archive_write_lrzip_close;
 	f->free = archive_write_lrzip_free;

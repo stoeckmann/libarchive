@@ -160,11 +160,12 @@ common_setup(struct archive *a, const char *name, int code)
 	f->name = name;
 	f->code = code;
 	f->data = data;
-	f->open = &archive_compressor_xz_open;
+	f->options = archive_compressor_xz_options;
+	f->open = archive_compressor_xz_open;
 	f->write = archive_compressor_xz_write;
 	f->close = archive_compressor_xz_close;
 	f->free = archive_compressor_xz_free;
-	f->options = &archive_compressor_xz_options;
+
 	return (ARCHIVE_OK);
 memerr:
 	free_data(data);

@@ -123,6 +123,7 @@ archive_write_add_filter_program(struct archive *a, const char *cmd)
 	f->write = archive_compressor_program_write;
 	f->close = archive_compressor_program_close;
 	f->free = archive_compressor_program_free;
+
 	return (ARCHIVE_OK);
 memerr:
 	free_data(data);

@@ -91,12 +91,14 @@ archive_write_add_filter_bzip2(struct archive *a)
 		goto memerr;
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
 	data->compression_level = 9;
+
 	r = ARCHIVE_OK;
 #else
 	data->pdata = __archive_write_program_allocate("bzip2");
 	if (data->pdata == NULL)
 		goto memerr;
 	data->compression_level = 0;
+
 	archive_set_error(a, ARCHIVE_ERRNO_MISC,
 	    "Using external bzip2 program");
 	r = ARCHIVE_WARN;
@@ -105,14 +107,15 @@ archive_write_add_filter_bzip2(struct archive *a)
 	f = __archive_write_allocate_filter(a);
 	if (f == NULL)
 		goto memerr;
-	f->data = data;
-	f->options = &archive_compressor_bzip2_options;
-	f->close = &archive_compressor_bzip2_close;
-	f->free = &archive_compressor_bzip2_free;
-	f->open = &archive_compressor_bzip2_open;
-	f->write = archive_compressor_bzip2_write;
-	f->code = ARCHIVE_FILTER_BZIP2;
 	f->name = "bzip2";
+	f->code = ARCHIVE_FILTER_BZIP2;
+	f->data = data;
+	f->options = archive_compressor_bzip2_options;
+	f->open = archive_compressor_bzip2_open;
+	f->write = archive_compressor_bzip2_write;
+	f->close = archive_compressor_bzip2_close;
+	f->free = archive_compressor_bzip2_free;
+
 	return (r);
 memerr:
 	free_data(data);

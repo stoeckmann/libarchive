@@ -161,12 +161,14 @@ archive_write_add_filter_lzop(struct archive *a)
 		return (ARCHIVE_FATAL);
 	}
 	data->compression_level = 5;
+
 	r = ARCHIVE_OK;
 #else
 	data->pdata = __archive_write_program_allocate("lzop");
 	if (data->pdata == NULL)
 		goto memerr;
 	data->compression_level = 0;
+
 	/* Note: We return "warn" to inform of using an external lzop
 	 * program. */
 	archive_set_error(a, ARCHIVE_ERRNO_MISC,
@@ -180,11 +182,12 @@ archive_write_add_filter_lzop(struct archive *a)
 	f->name = "lzop";
 	f->code = ARCHIVE_FILTER_LZOP;
 	f->data = data;
-	f->open = archive_write_lzop_open;
 	f->options = archive_write_lzop_options;
+	f->open = archive_write_lzop_open;
 	f->write = archive_write_lzop_write;
 	f->close = archive_write_lzop_close;
 	f->free = archive_write_lzop_free;
+
 	return (r);
 memerr:
 	free_data(data);

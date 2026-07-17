@@ -144,6 +144,7 @@ archive_write_add_filter_zstd(struct archive *a)
 	data->pdata = __archive_write_program_allocate("zstd");
 	if (data->pdata == NULL)
 		goto memerr;
+
 	archive_set_error(a, ARCHIVE_ERRNO_MISC,
 	    "Using external zstd program");
 	r = ARCHIVE_WARN;
@@ -152,15 +153,16 @@ archive_write_add_filter_zstd(struct archive *a)
 	f = __archive_write_allocate_filter(a);
 	if (f == NULL)
 		goto memerr;
-	f->data = data;
-	f->open = &archive_compressor_zstd_open;
-	f->write = archive_compressor_zstd_write;
-	f->options = &archive_compressor_zstd_options;
-	f->flush = &archive_compressor_zstd_flush;
-	f->close = &archive_compressor_zstd_close;
-	f->free = &archive_compressor_zstd_free;
-	f->code = ARCHIVE_FILTER_ZSTD;
 	f->name = "zstd";
+	f->code = ARCHIVE_FILTER_ZSTD;
+	f->data = data;
+	f->options = archive_compressor_zstd_options;
+	f->open = archive_compressor_zstd_open;
+	f->write = archive_compressor_zstd_write;
+	f->flush = archive_compressor_zstd_flush;
+	f->close = archive_compressor_zstd_close;
+	f->free = archive_compressor_zstd_free;
+
 	return (r);
 memerr:
 	free_data(data);

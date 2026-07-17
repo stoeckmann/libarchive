@@ -87,11 +87,11 @@ archive_write_add_filter_uuencode(struct archive *a)
 	f = __archive_write_allocate_filter(a);
 	if (f == NULL)
 		goto memerr;
-	f->data = state;
 	f->name = "uuencode";
 	f->code = ARCHIVE_FILTER_UU;
-	f->open = archive_filter_uuencode_open;
+	f->data = state;
 	f->options = archive_filter_uuencode_options;
+	f->open = archive_filter_uuencode_open;
 	f->write = archive_filter_uuencode_write;
 	f->close = archive_filter_uuencode_close;
 	f->free = archive_filter_uuencode_free;

@@ -98,11 +98,11 @@ archive_write_add_filter_b64encode(struct archive *a)
 	f = __archive_write_allocate_filter(a);
 	if (f == NULL)
 		goto memerr;
-	f->data = state;
 	f->name = "b64encode";
 	f->code = ARCHIVE_FILTER_UU;
-	f->open = archive_filter_b64encode_open;
+	f->data = state;
 	f->options = archive_filter_b64encode_options;
+	f->open = archive_filter_b64encode_open;
 	f->write = archive_filter_b64encode_write;
 	f->close = archive_filter_b64encode_close;
 	f->free = archive_filter_b64encode_free;

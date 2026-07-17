@@ -115,6 +115,7 @@ archive_write_add_filter_lz4(struct archive *a)
 	data->block_maximum_size = 7;
 #if defined(HAVE_LIBLZ4) && LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 2
 	data->compression_level = 1;
+
 	r = ARCHIVE_OK;
 #else
 	/*
@@ -125,6 +126,7 @@ archive_write_add_filter_lz4(struct archive *a)
 	if (data->pdata == NULL)
 		goto memerr;
 	data->compression_level = 0;
+
 	archive_set_error(a, ARCHIVE_ERRNO_MISC,
 	    "Using external lz4 program");
 	r = ARCHIVE_WARN;
@@ -136,14 +138,15 @@ archive_write_add_filter_lz4(struct archive *a)
 	f = __archive_write_allocate_filter(a);
 	if (f == NULL)
 		goto memerr;
-	f->data = data;
-	f->options = &archive_filter_lz4_options;
-	f->close = &archive_filter_lz4_close;
-	f->free = &archive_filter_lz4_free;
-	f->open = &archive_filter_lz4_open;
-	f->write = archive_filter_lz4_write;
-	f->code = ARCHIVE_FILTER_LZ4;
 	f->name = "lz4";
+	f->code = ARCHIVE_FILTER_LZ4;
+	f->data = data;
+	f->options = archive_filter_lz4_options;
+	f->open = archive_filter_lz4_open;
+	f->write = archive_filter_lz4_write;
+	f->close = archive_filter_lz4_close;
+	f->free = archive_filter_lz4_free;
+
 	return (r);
 memerr:
 	free_data(data);

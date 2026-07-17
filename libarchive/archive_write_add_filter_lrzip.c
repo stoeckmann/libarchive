@@ -76,8 +76,8 @@ archive_write_add_filter_lrzip(struct archive *a)
 	f->name = "lrzip";
 	f->code = ARCHIVE_FILTER_LRZIP;
 	f->data = data;
-	f->open = archive_write_lrzip_open;
 	f->options = archive_write_lrzip_options;
+	f->open = archive_write_lrzip_open;
 	f->write = archive_write_lrzip_write;
 	f->close = archive_write_lrzip_close;
 	f->free = archive_write_lrzip_free;

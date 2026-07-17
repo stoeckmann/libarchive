@@ -111,12 +111,14 @@ archive_write_add_filter_gzip(struct archive *a)
 	data->original_filename = NULL;
 #ifdef HAVE_ZLIB_H
 	data->compression_level = Z_DEFAULT_COMPRESSION;
+
 	r = ARCHIVE_OK;
 #else
 	data->pdata = __archive_write_program_allocate("gzip");
 	if (data->pdata == NULL)
 		goto memerr;
 	data->compression_level = 0;
+
 	archive_set_error(a, ARCHIVE_ERRNO_MISC,
 	    "Using external gzip program");
 	r = ARCHIVE_WARN;
@@ -125,14 +127,14 @@ archive_write_add_filter_gzip(struct archive *a)
 	f = __archive_write_allocate_filter(a);
 	if (f == NULL)
 		goto memerr;
-	f->data = data;
-	f->open = &archive_compressor_gzip_open;
-	f->write = archive_compressor_gzip_write;
-	f->options = &archive_compressor_gzip_options;
-	f->close = &archive_compressor_gzip_close;
-	f->free = &archive_compressor_gzip_free;
-	f->code = ARCHIVE_FILTER_GZIP;
 	f->name = "gzip";
+	f->code = ARCHIVE_FILTER_GZIP;
+	f->data = data;
+	f->options = archive_compressor_gzip_options;
+	f->open = archive_compressor_gzip_open;
+	f->write = archive_compressor_gzip_write;
+	f->close = archive_compressor_gzip_close;
+	f->free = archive_compressor_gzip_free;
 
 	return (r);
 memerr:

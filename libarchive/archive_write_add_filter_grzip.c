@@ -70,8 +70,8 @@ archive_write_add_filter_grzip(struct archive *a)
 	f->name = "grzip";
 	f->code = ARCHIVE_FILTER_GRZIP;
 	f->data = data;
-	f->open = archive_write_grzip_open;
 	f->options = archive_write_grzip_options;
+	f->open = archive_write_grzip_open;
 	f->write = archive_write_grzip_write;
 	f->close = archive_write_grzip_close;
 	f->free = archive_write_grzip_free;

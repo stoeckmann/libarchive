@@ -98,6 +98,7 @@ archive_write_add_filter_bzip2(struct archive *_a)
 	f->close = &archive_compressor_bzip2_close;
 	f->free = &archive_compressor_bzip2_free;
 	f->open = &archive_compressor_bzip2_open;
+	f->write = archive_compressor_bzip2_write;
 	f->code = ARCHIVE_FILTER_BZIP2;
 	f->name = "bzip2";
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
@@ -199,7 +200,6 @@ archive_compressor_bzip2_open(struct archive_write_filter *f)
 	memset(&data->stream, 0, sizeof(data->stream));
 	data->stream.next_out = data->compressed;
 	data->stream.avail_out = (uint32_t)data->compressed_buffer_size;
-	f->write = archive_compressor_bzip2_write;
 
 	/* Initialize compression library */
 	ret = BZ2_bzCompressInit(&(data->stream),
@@ -370,7 +370,6 @@ archive_compressor_bzip2_open(struct archive_write_filter *f)
 		archive_strcat(&as, " -");
 		archive_strappend_char(&as, '0' + data->compression_level);
 	}
-	f->write = archive_compressor_bzip2_write;
 
 	r = __archive_write_program_open(f, data->pdata, as.s);
 	archive_string_free(&as);

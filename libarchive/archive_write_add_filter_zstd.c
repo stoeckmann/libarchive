@@ -127,6 +127,7 @@ archive_write_add_filter_zstd(struct archive *_a)
 	}
 	f->data = data;
 	f->open = &archive_compressor_zstd_open;
+	f->write = archive_compressor_zstd_write;
 	f->options = &archive_compressor_zstd_options;
 	f->flush = &archive_compressor_zstd_flush;
 	f->close = &archive_compressor_zstd_close;
@@ -397,8 +398,6 @@ archive_compressor_zstd_open(struct archive_write_filter *f)
 		}
 	}
 
-	f->write = archive_compressor_zstd_write;
-
 	if (ZSTD_isError(ZSTD_initCStream(data->cstream,
 	    data->compression_level))) {
 		archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
@@ -564,7 +563,6 @@ archive_compressor_zstd_open(struct archive_write_filter *f)
 		archive_string_sprintf(&as, " --long=%d", data->long_distance);
 	}
 
-	f->write = archive_compressor_zstd_write;
 	r = __archive_write_program_open(f, data->pdata, as.s);
 	archive_string_free(&as);
 	return (r);

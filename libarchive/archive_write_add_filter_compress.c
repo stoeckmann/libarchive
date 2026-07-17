@@ -134,6 +134,9 @@ archive_write_add_filter_compress(struct archive *_a)
 	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_compress");
 	f->open = &archive_compressor_compress_open;
+	f->write = archive_compressor_compress_write;
+	f->close = archive_compressor_compress_close;
+	f->free = archive_compressor_compress_free;
 	f->code = ARCHIVE_FILTER_COMPRESS;
 	f->name = "compress";
 	return (ARCHIVE_OK);
@@ -173,10 +176,6 @@ archive_compressor_compress_open(struct archive_write_filter *f)
 		free(state);
 		return (ARCHIVE_FATAL);
 	}
-
-	f->write = archive_compressor_compress_write;
-	f->close = archive_compressor_compress_close;
-	f->free = archive_compressor_compress_free;
 
 	state->max_maxcode = 0x10000;	/* Should NEVER generate this code. */
 	state->in_count = 0;		/* Length of input. */

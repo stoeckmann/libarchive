@@ -126,6 +126,7 @@ archive_write_add_filter_lz4(struct archive *_a)
 	f->close = &archive_filter_lz4_close;
 	f->free = &archive_filter_lz4_free;
 	f->open = &archive_filter_lz4_open;
+	f->write = archive_filter_lz4_write;
 	f->code = ARCHIVE_FILTER_LZ4;
 	f->name = "lz4";
 #if defined(HAVE_LIBLZ4) && LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 2
@@ -285,8 +286,6 @@ archive_filter_lz4_open(struct archive_write_filter *f)
 		    "Can't allocate data for compression buffer");
 		return (ARCHIVE_FATAL);
 	}
-
-	f->write = archive_filter_lz4_write;
 
 	return (ARCHIVE_OK);
 }
@@ -671,8 +670,6 @@ archive_filter_lz4_open(struct archive_write_filter *f)
 		archive_strcat(&as, " --no-frame-crc");
 	if (data->block_independence == 0)
 		archive_strcat(&as, " -BD");
-
-	f->write = archive_filter_lz4_write;
 
 	r = __archive_write_program_open(f, data->pdata, as.s);
 	archive_string_free(&as);

@@ -156,6 +156,7 @@ common_setup(struct archive_write_filter *f)
 	data->compression_level = LZMA_PRESET_DEFAULT;
 	data->threads = 1;
 	f->open = &archive_compressor_xz_open;
+	f->write = archive_compressor_xz_write;
 	f->close = archive_compressor_xz_close;
 	f->free = archive_compressor_xz_free;
 	f->options = &archive_compressor_xz_options;
@@ -330,8 +331,6 @@ archive_compressor_xz_open(struct archive_write_filter *f)
 			return (ARCHIVE_FATAL);
 		}
 	}
-
-	f->write = archive_compressor_xz_write;
 
 	/* Initialize compression library. */
 	if (f->code == ARCHIVE_FILTER_LZIP) {

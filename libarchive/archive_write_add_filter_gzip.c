@@ -111,6 +111,7 @@ archive_write_add_filter_gzip(struct archive *_a)
 	}
 	f->data = data;
 	f->open = &archive_compressor_gzip_open;
+	f->write = archive_compressor_gzip_write;
 	f->options = &archive_compressor_gzip_options;
 	f->close = &archive_compressor_gzip_close;
 	f->free = &archive_compressor_gzip_free;
@@ -265,8 +266,6 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 			ret = ARCHIVE_WARN;
 		}
 	}
-
-	f->write = archive_compressor_gzip_write;
 
 	/* Initialize compression library. */
 	init_success = deflateInit2(&(data->stream),
@@ -453,7 +452,6 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 		/* Save timestamp. */
 		archive_strcat(&as, " -N");
 
-	f->write = archive_compressor_gzip_write;
 	r = __archive_write_program_open(f, data->pdata, as.s);
 	archive_string_free(&as);
 	return (r);

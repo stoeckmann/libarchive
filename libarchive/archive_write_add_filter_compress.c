@@ -128,19 +128,19 @@ archive_write_set_compression_compress(struct archive *a)
 int
 archive_write_add_filter_compress(struct archive *a)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(a);
+	struct archive_write_filter *f;
 	struct private_data *state;
 
 	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_compress");
 
 	state = calloc(1, sizeof(*state));
-	if (state == NULL) {
-		archive_set_error(a, ENOMEM,
-		    "Can't allocate data for compression");
-		return (ARCHIVE_FATAL);
-	}
+	if (state == NULL)
+		goto memerr;
 
+	f = __archive_write_allocate_filter(a);
+	if (f == NULL)
+		goto memerr;
 	f->data = state;
 	f->open = &archive_compressor_compress_open;
 	f->write = archive_compressor_compress_write;
@@ -149,6 +149,11 @@ archive_write_add_filter_compress(struct archive *a)
 	f->code = ARCHIVE_FILTER_COMPRESS;
 	f->name = "compress";
 	return (ARCHIVE_OK);
+memerr:
+	free_data(state);
+	archive_set_error(a, ENOMEM,
+	    "Can't allocate data for compression");
+	return (ARCHIVE_FATAL);
 }
 
 /*

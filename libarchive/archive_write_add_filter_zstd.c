@@ -114,26 +114,16 @@ static void free_data(struct private_data *);
 int
 archive_write_add_filter_zstd(struct archive *a)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(a);
+	struct archive_write_filter *f;
 	struct private_data *data;
+	int r;
 
 	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_zstd");
 
 	data = calloc(1, sizeof(*data));
-	if (data == NULL) {
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
-	f->data = data;
-	f->open = &archive_compressor_zstd_open;
-	f->write = archive_compressor_zstd_write;
-	f->options = &archive_compressor_zstd_options;
-	f->flush = &archive_compressor_zstd_flush;
-	f->close = &archive_compressor_zstd_close;
-	f->free = &archive_compressor_zstd_free;
-	f->code = ARCHIVE_FILTER_ZSTD;
-	f->name = "zstd";
+	if (data == NULL)
+		goto memerr;
 	data->compression_level = CLEVEL_DEFAULT;
 	data->threads = 0;
 	data->long_distance = 0;
@@ -146,25 +136,36 @@ archive_write_add_filter_zstd(struct archive *a)
 	data->cur_frame_in = 0;
 	data->cur_frame_out = 0;
 	data->cstream = ZSTD_createCStream();
-	if (data->cstream == NULL) {
-		free(data);
-		archive_set_error(a, ENOMEM,
-		    "Failed to allocate zstd compressor object");
-		return (ARCHIVE_FATAL);
-	}
+	if (data->cstream == NULL)
+		goto memerr;
 
-	return (ARCHIVE_OK);
+	r = ARCHIVE_OK;
 #else
 	data->pdata = __archive_write_program_allocate("zstd");
-	if (data->pdata == NULL) {
-		free(data);
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
+	if (data->pdata == NULL)
+		goto memerr;
 	archive_set_error(a, ARCHIVE_ERRNO_MISC,
 	    "Using external zstd program");
-	return (ARCHIVE_WARN);
+	r = ARCHIVE_WARN;
 #endif
+
+	f = __archive_write_allocate_filter(a);
+	if (f == NULL)
+		goto memerr;
+	f->data = data;
+	f->open = &archive_compressor_zstd_open;
+	f->write = archive_compressor_zstd_write;
+	f->options = &archive_compressor_zstd_options;
+	f->flush = &archive_compressor_zstd_flush;
+	f->close = &archive_compressor_zstd_close;
+	f->free = &archive_compressor_zstd_free;
+	f->code = ARCHIVE_FILTER_ZSTD;
+	f->name = "zstd";
+	return (r);
+memerr:
+	free_data(data);
+	archive_set_error(a, ENOMEM, "Out of memory");
+	return (ARCHIVE_FATAL);
 }
 
 static int

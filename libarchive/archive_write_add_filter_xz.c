@@ -146,24 +146,30 @@ static int
 common_setup(struct archive *a, const char *name, int code)
 {
 	struct private_data *data;
-	struct archive_write_filter *f = __archive_write_allocate_filter(a);
+	struct archive_write_filter *f;
 
 	data = calloc(1, sizeof(*data));
-	if (data == NULL) {
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
+	if (data == NULL)
+		goto memerr;
+	data->compression_level = LZMA_PRESET_DEFAULT;
+	data->threads = 1;
+
+	f = __archive_write_allocate_filter(a);
+	if (f == NULL)
+		goto memerr;
 	f->name = name;
 	f->code = code;
 	f->data = data;
-	data->compression_level = LZMA_PRESET_DEFAULT;
-	data->threads = 1;
 	f->open = &archive_compressor_xz_open;
 	f->write = archive_compressor_xz_write;
 	f->close = archive_compressor_xz_close;
 	f->free = archive_compressor_xz_free;
 	f->options = &archive_compressor_xz_options;
 	return (ARCHIVE_OK);
+memerr:
+	free_data(data);
+	archive_set_error(a, ENOMEM, "Out of memory");
+	return (ARCHIVE_FATAL);
 }
 
 /*

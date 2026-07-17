@@ -79,19 +79,32 @@ static void free_data(struct private_data *);
 int
 archive_write_add_filter_bzip2(struct archive *a)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(a);
+	struct archive_write_filter *f;
 	struct private_data *data;
+	int r;
 
 	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_bzip2");
 
 	data = calloc(1, sizeof(*data));
-	if (data == NULL) {
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
-	data->compression_level = 9; /* default */
+	if (data == NULL)
+		goto memerr;
+#if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
+	data->compression_level = 9;
+	r = ARCHIVE_OK;
+#else
+	data->pdata = __archive_write_program_allocate("bzip2");
+	if (data->pdata == NULL)
+		goto memerr;
+	data->compression_level = 0;
+	archive_set_error(a, ARCHIVE_ERRNO_MISC,
+	    "Using external bzip2 program");
+	r = ARCHIVE_WARN;
+#endif
 
+	f = __archive_write_allocate_filter(a);
+	if (f == NULL)
+		goto memerr;
 	f->data = data;
 	f->options = &archive_compressor_bzip2_options;
 	f->close = &archive_compressor_bzip2_close;
@@ -100,20 +113,11 @@ archive_write_add_filter_bzip2(struct archive *a)
 	f->write = archive_compressor_bzip2_write;
 	f->code = ARCHIVE_FILTER_BZIP2;
 	f->name = "bzip2";
-#if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
-	return (ARCHIVE_OK);
-#else
-	data->pdata = __archive_write_program_allocate("bzip2");
-	if (data->pdata == NULL) {
-		free(data);
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
-	data->compression_level = 0;
-	archive_set_error(a, ARCHIVE_ERRNO_MISC,
-	    "Using external bzip2 program");
-	return (ARCHIVE_WARN);
-#endif
+	return (r);
+memerr:
+	free_data(data);
+	archive_set_error(a, ENOMEM, "Out of memory");
+	return (ARCHIVE_FATAL);
 }
 
 static int

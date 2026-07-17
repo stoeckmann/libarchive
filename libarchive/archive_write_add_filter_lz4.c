@@ -93,22 +93,19 @@ static void free_data(struct private_data *);
 int
 archive_write_add_filter_lz4(struct archive *a)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(a);
+	struct archive_write_filter *f;
 	struct private_data *data;
+	int r;
 
 	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_lz4");
 
 	data = calloc(1, sizeof(*data));
-	if (data == NULL) {
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
-
+	if (data == NULL)
+		goto memerr;
 	/*
 	 * Setup default settings.
 	 */
-	data->compression_level = 1;
 	data->version_number = 0x01;
 	data->block_independence = 1;
 	data->block_checksum = 0;
@@ -116,10 +113,29 @@ archive_write_add_filter_lz4(struct archive *a)
 	data->stream_checksum = 1;
 	data->preset_dictionary = 0;
 	data->block_maximum_size = 7;
+#if defined(HAVE_LIBLZ4) && LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 2
+	data->compression_level = 1;
+	r = ARCHIVE_OK;
+#else
+	/*
+	 * We don't have lz4 library, and execute external lz4 program
+	 * instead.
+	 */
+	data->pdata = __archive_write_program_allocate("lz4");
+	if (data->pdata == NULL)
+		goto memerr;
+	data->compression_level = 0;
+	archive_set_error(a, ARCHIVE_ERRNO_MISC,
+	    "Using external lz4 program");
+	r = ARCHIVE_WARN;
+#endif
 
 	/*
 	 * Setup a filter setting.
 	 */
+	f = __archive_write_allocate_filter(a);
+	if (f == NULL)
+		goto memerr;
 	f->data = data;
 	f->options = &archive_filter_lz4_options;
 	f->close = &archive_filter_lz4_close;
@@ -128,24 +144,11 @@ archive_write_add_filter_lz4(struct archive *a)
 	f->write = archive_filter_lz4_write;
 	f->code = ARCHIVE_FILTER_LZ4;
 	f->name = "lz4";
-#if defined(HAVE_LIBLZ4) && LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 2
-	return (ARCHIVE_OK);
-#else
-	/*
-	 * We don't have lz4 library, and execute external lz4 program
-	 * instead.
-	 */
-	data->pdata = __archive_write_program_allocate("lz4");
-	if (data->pdata == NULL) {
-		free(data);
-		archive_set_error(a, ENOMEM, "Out of memory");
-		return (ARCHIVE_FATAL);
-	}
-	data->compression_level = 0;
-	archive_set_error(a, ARCHIVE_ERRNO_MISC,
-	    "Using external lz4 program");
-	return (ARCHIVE_WARN);
-#endif
+	return (r);
+memerr:
+	free_data(data);
+	archive_set_error(a, ENOMEM, "Out of memory");
+	return (ARCHIVE_FATAL);
 }
 
 static int

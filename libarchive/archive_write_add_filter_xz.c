@@ -122,6 +122,7 @@ static int	archive_compressor_xz_close(struct archive_write_filter *);
 static int	archive_compressor_xz_free(struct archive_write_filter *);
 static int	drive_compressor(struct archive_write_filter *,
 		    struct private_data *, int finishing);
+static void	free_data(struct private_data *);
 
 struct option_value {
 	uint32_t dict_size;
@@ -477,9 +478,7 @@ archive_compressor_xz_close(struct archive_write_filter *f)
 static int
 archive_compressor_xz_free(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
-	free(data->compressed);
-	free(data);
+	free_data(f->data);
 	f->data = NULL;
 	return (ARCHIVE_OK);
 }
@@ -548,6 +547,15 @@ drive_compressor(struct archive_write_filter *f,
 			    ret);
 			return (ARCHIVE_FATAL);
 		}
+	}
+}
+
+static void
+free_data(struct private_data *data)
+{
+	if (data != NULL) {
+		free(data->compressed);
+		free(data);
 	}
 }
 

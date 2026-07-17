@@ -46,6 +46,7 @@ static int archive_write_grzip_write(struct archive_write_filter *,
 		    const void *, size_t);
 static int archive_write_grzip_close(struct archive_write_filter *);
 static int archive_write_grzip_free(struct archive_write_filter *);
+static void free_data(struct write_grzip *);
 
 int
 archive_write_add_filter_grzip(struct archive *_a)
@@ -125,9 +126,16 @@ archive_write_grzip_close(struct archive_write_filter *f)
 static int
 archive_write_grzip_free(struct archive_write_filter *f)
 {
-	struct write_grzip *data = (struct write_grzip *)f->data;
-
-	__archive_write_program_free(data->pdata);
-	free(data);
+	free_data(f->data);
+	f->data = NULL;
 	return (ARCHIVE_OK);
+}
+
+static void
+free_data(struct write_grzip *data)
+{
+	if (data != NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data);
+	}
 }

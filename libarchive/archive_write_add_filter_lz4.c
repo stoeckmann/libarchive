@@ -85,6 +85,7 @@ static int archive_filter_lz4_options(struct archive_write_filter *,
 		    const char *, const char *);
 static int archive_filter_lz4_write(struct archive_write_filter *,
 		    const void *, size_t);
+static void free_data(struct private_data *);
 
 /*
  * Add an lz4 compression filter to this write handle.
@@ -145,6 +146,14 @@ archive_write_add_filter_lz4(struct archive *_a)
 	    "Using external lz4 program");
 	return (ARCHIVE_WARN);
 #endif
+}
+
+static int
+archive_filter_lz4_free(struct archive_write_filter *f)
+{
+	free_data(f->data);
+	f->data = NULL;
+	return (ARCHIVE_OK);
 }
 
 /*
@@ -362,35 +371,6 @@ archive_filter_lz4_close(struct archive_write_filter *f)
 			    data->out_buffer, data->out - data->out_buffer);
 	}
 	return ret;
-}
-
-static int
-archive_filter_lz4_free(struct archive_write_filter *f)
-{
-	struct private_data *data = (struct private_data *)f->data;
-
-	if (data->lz4_stream != NULL) {
-#ifdef HAVE_LZ4HC_H
-		if (data->compression_level >= 3)
-#if LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 7
-			LZ4_freeStreamHC(data->lz4_stream);
-#else
-			LZ4_freeHC(data->lz4_stream);
-#endif
-		else
-#endif
-#if LZ4_VERSION_MINOR >= 3
-			LZ4_freeStream(data->lz4_stream);
-#else
-			LZ4_free(data->lz4_stream);
-#endif
-	}
-	free(data->out_buffer);
-	free(data->in_buffer_allocated);
-	free(data->xxh32_state);
-	free(data);
-	f->data = NULL;
-	return (ARCHIVE_OK);
 }
 
 static int
@@ -637,6 +617,33 @@ drive_compressor_dependence(struct archive_write_filter *f, const char *p,
 	return (ARCHIVE_OK);
 }
 
+static void
+free_data(struct private_data *data)
+{
+	if (data != NULL) {
+		if (data->lz4_stream != NULL) {
+#ifdef HAVE_LZ4HC_H
+			if (data->compression_level >= 3)
+#if LZ4_VERSION_MAJOR >= 1 && LZ4_VERSION_MINOR >= 7
+				LZ4_freeStreamHC(data->lz4_stream);
+#else
+				LZ4_freeHC(data->lz4_stream);
+#endif
+			else
+#endif
+#if LZ4_VERSION_MINOR >= 3
+				LZ4_freeStream(data->lz4_stream);
+#else
+				LZ4_free(data->lz4_stream);
+#endif
+		}
+		free(data->out_buffer);
+		free(data->in_buffer_allocated);
+		free(data->xxh32_state);
+		free(data);
+	}
+}
+
 #else /* HAVE_LIBLZ4 */
 
 static int
@@ -689,14 +696,13 @@ archive_filter_lz4_close(struct archive_write_filter *f)
 	return __archive_write_program_close(f, data->pdata);
 }
 
-static int
-archive_filter_lz4_free(struct archive_write_filter *f)
+static void
+free_data(struct private_data *data)
 {
-	struct private_data *data = (struct private_data *)f->data;
-
-	__archive_write_program_free(data->pdata);
-	free(data);
-	return (ARCHIVE_OK);
+	if (data != NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data);
+	}
 }
 
 #endif /* HAVE_LIBLZ4 */

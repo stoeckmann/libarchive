@@ -64,6 +64,7 @@ static int archive_filter_uuencode_close(struct archive_write_filter *);
 static int archive_filter_uuencode_free(struct archive_write_filter *);
 static void uu_encode(struct archive_string *, const unsigned char *, size_t);
 static int64_t atol8(const char *, size_t);
+static void free_data(struct private_uuencode *);
 
 /*
  * Add a compress filter to this write handle.
@@ -275,11 +276,8 @@ archive_filter_uuencode_close(struct archive_write_filter *f)
 static int
 archive_filter_uuencode_free(struct archive_write_filter *f)
 {
-	struct private_uuencode *state = (struct private_uuencode *)f->data;
-
-	archive_string_free(&state->name);
-	archive_string_free(&state->encoded_buff);
-	free(state);
+	free_data(f->data);
+	f->data = NULL;
 	return (ARCHIVE_OK);
 }
 
@@ -306,3 +304,12 @@ atol8(const char *p, size_t char_cnt)
 	return (l);
 }
 
+static void
+free_data(struct private_uuencode *data)
+{
+	if (data != NULL) {
+		archive_string_free(&data->name);
+		archive_string_free(&data->encoded_buff);
+		free(data);
+	}
+}

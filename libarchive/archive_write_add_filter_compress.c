@@ -111,6 +111,7 @@ static int archive_compressor_compress_write(struct archive_write_filter *,
 		    const void *, size_t);
 static int archive_compressor_compress_close(struct archive_write_filter *);
 static int archive_compressor_compress_free(struct archive_write_filter *);
+static void free_data(struct private_data *);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 int
@@ -434,9 +435,16 @@ archive_compressor_compress_close(struct archive_write_filter *f)
 static int
 archive_compressor_compress_free(struct archive_write_filter *f)
 {
-	struct private_data *state = (struct private_data *)f->data;
-
-	free(state->compressed);
-	free(state);
+	free_data(f->data);
+	f->data = NULL;
 	return (ARCHIVE_OK);
+}
+
+static void
+free_data(struct private_data *data)
+{
+	if (data != NULL) {
+		free(data->compressed);
+		free(data);
+	}
 }

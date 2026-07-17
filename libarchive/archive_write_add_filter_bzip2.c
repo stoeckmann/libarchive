@@ -71,6 +71,7 @@ static int archive_compressor_bzip2_options(struct archive_write_filter *,
 		    const char *, const char *);
 static int archive_compressor_bzip2_write(struct archive_write_filter *,
 		    const void *, size_t);
+static void free_data(struct private_data *);
 
 /*
  * Add a bzip2 compression filter to this write handle.
@@ -113,6 +114,14 @@ archive_write_add_filter_bzip2(struct archive *_a)
 	    "Using external bzip2 program");
 	return (ARCHIVE_WARN);
 #endif
+}
+
+static int
+archive_compressor_bzip2_free(struct archive_write_filter *f)
+{
+	free_data(f->data);
+	f->data = NULL;
+	return (ARCHIVE_OK);
 }
 
 /*
@@ -275,20 +284,6 @@ archive_compressor_bzip2_close(struct archive_write_filter *f)
 	return ret;
 }
 
-static int
-archive_compressor_bzip2_free(struct archive_write_filter *f)
-{
-	struct private_data *data = (struct private_data *)f->data;
-
-	/* May already have been called, but not necessarily. */
-	(void)BZ2_bzCompressEnd(&(data->stream));
-
-	free(data->compressed);
-	free(data);
-	f->data = NULL;
-	return (ARCHIVE_OK);
-}
-
 /*
  * Utility function to push input data through compressor, writing
  * full output blocks as necessary.
@@ -346,6 +341,18 @@ drive_compressor(struct archive_write_filter *f,
 	}
 }
 
+static void
+free_data(struct private_data *data)
+{
+	if (data != NULL) {
+		/* May already have been called, but not necessarily. */
+		(void)BZ2_bzCompressEnd(&(data->stream));
+
+		free(data->compressed);
+		free(data);
+	}
+}
+
 #else /* HAVE_BZLIB_H && BZ_CONFIG_ERROR */
 
 static int
@@ -387,14 +394,13 @@ archive_compressor_bzip2_close(struct archive_write_filter *f)
 	return __archive_write_program_close(f, data->pdata);
 }
 
-static int
-archive_compressor_bzip2_free(struct archive_write_filter *f)
+static void
+free_data(struct private_data *data)
 {
-	struct private_data *data = (struct private_data *)f->data;
-
-	__archive_write_program_free(data->pdata);
-	free(data);
-	return (ARCHIVE_OK);
+	if (data != NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data);
+	}
 }
 
 #endif /* HAVE_BZLIB_H && BZ_CONFIG_ERROR */

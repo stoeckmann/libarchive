@@ -89,6 +89,7 @@ static int archive_compressor_gzip_free(struct archive_write_filter *);
 static int drive_compressor(struct archive_write_filter *,
 		    struct private_data *, int finishing);
 #endif
+static void free_data(struct private_data *);
 
 
 /*
@@ -137,15 +138,7 @@ archive_write_add_filter_gzip(struct archive *_a)
 static int
 archive_compressor_gzip_free(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
-
-#ifdef HAVE_ZLIB_H
-	free(data->compressed);
-#else
-	__archive_write_program_free(data->pdata);
-#endif
-	free((void*)data->original_filename);
-	free(data);
+	free_data(f->data);
 	f->data = NULL;
 	return (ARCHIVE_OK);
 }
@@ -426,6 +419,16 @@ drive_compressor(struct archive_write_filter *f,
 	}
 }
 
+static void
+free_data(struct private_data *data)
+{
+	if (data != NULL) {
+		free(data->compressed);
+		free(data->original_filename);
+		free(data);
+	}
+}
+
 #else /* HAVE_ZLIB_H */
 
 static int
@@ -473,4 +476,13 @@ archive_compressor_gzip_close(struct archive_write_filter *f)
 	return __archive_write_program_close(f, data->pdata);
 }
 
+static void
+free_data(struct private_data *data)
+{
+	if (data != NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data->original_filename);
+		free(data);
+	}
+}
 #endif /* HAVE_ZLIB_H */

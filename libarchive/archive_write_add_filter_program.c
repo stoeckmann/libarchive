@@ -81,6 +81,7 @@ static int archive_compressor_program_write(struct archive_write_filter *,
 		    const void *, size_t);
 static int archive_compressor_program_close(struct archive_write_filter *);
 static int archive_compressor_program_free(struct archive_write_filter *);
+static void free_data(struct private_data *);
 
 /*
  * Add a filter to this write handle that passes all data through an
@@ -158,15 +159,8 @@ archive_compressor_program_close(struct archive_write_filter *f)
 static int
 archive_compressor_program_free(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
-
-	if (data) {
-		free(data->cmd);
-		archive_string_free(&data->description);
-		__archive_write_program_free(data->pdata);
-		free(data);
-		f->data = NULL;
-	}
+	free_data(f->data);
+	f->data = NULL;
 	return (ARCHIVE_OK);
 }
 
@@ -391,3 +385,13 @@ cleanup:
 	return ret;
 }
 
+static void
+free_data(struct private_data *data)
+{
+	if (data) {
+		free(data->cmd);
+		archive_string_free(&data->description);
+		__archive_write_program_free(data->pdata);
+		free(data);
+	}
+}

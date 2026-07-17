@@ -80,6 +80,7 @@ static int archive_write_lzop_write(struct archive_write_filter *,
 		    const void *, size_t);
 static int archive_write_lzop_close(struct archive_write_filter *);
 static int archive_write_lzop_free(struct archive_write_filter *);
+static void free_data(struct write_lzop *);
 
 #if defined(HAVE_LZO_LZOCONF_H) && defined(HAVE_LZO_LZO1X_H)
 /* Maximum block size. */
@@ -190,16 +191,8 @@ archive_write_add_filter_lzop(struct archive *_a)
 static int
 archive_write_lzop_free(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
-
-#if defined(HAVE_LZO_LZOCONF_H) && defined(HAVE_LZO_LZO1X_H)
-	free(data->uncompressed);
-	free(data->compressed);
-	free(data->work_buffer);
-#else
-	__archive_write_program_free(data->pdata);
-#endif
-	free(data);
+	free_data(f->data);
+	f->data = NULL;
 	return (ARCHIVE_OK);
 }
 
@@ -439,6 +432,17 @@ archive_write_lzop_close(struct archive_write_filter *f)
 	return __archive_write_filter(f->next_filter, &endmark, sizeof(endmark));
 }
 
+static void
+free_data(struct write_lzop *data)
+{
+	if (data != NULL) {
+		free(data->uncompressed);
+		free(data->compressed);
+		free(data->work_buffer);
+		free(data);
+	}
+}
+
 #else
 static int
 archive_write_lzop_open(struct archive_write_filter *f)
@@ -476,5 +480,14 @@ archive_write_lzop_close(struct archive_write_filter *f)
 	struct write_lzop *data = (struct write_lzop *)f->data;
 
 	return __archive_write_program_close(f, data->pdata);
+}
+
+static void
+free_data(struct write_lzop *data)
+{
+	if (data != NULL) {
+		__archive_write_program_free(data->pdata);
+		free(data);
+	}
 }
 #endif

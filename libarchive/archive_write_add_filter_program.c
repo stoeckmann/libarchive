@@ -88,13 +88,13 @@ static void free_data(struct private_data *);
  * external program.
  */
 int
-archive_write_add_filter_program(struct archive *_a, const char *cmd)
+archive_write_add_filter_program(struct archive *a, const char *cmd)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f = __archive_write_allocate_filter(a);
 	struct private_data *data;
 	static const char prefix[] = "Program: ";
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_program");
 
 	f->data = calloc(1, sizeof(*data));
@@ -126,7 +126,7 @@ archive_write_add_filter_program(struct archive *_a, const char *cmd)
 	return (ARCHIVE_OK);
 memerr:
 	archive_compressor_program_free(f);
-	archive_set_error(_a, ENOMEM,
+	archive_set_error(a, ENOMEM,
 	    "Can't allocate memory for filter program");
 	return (ARCHIVE_FATAL);
 }

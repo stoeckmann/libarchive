@@ -70,18 +70,17 @@ static void free_data(struct private_uuencode *);
  * Add a compress filter to this write handle.
  */
 int
-archive_write_add_filter_uuencode(struct archive *_a)
+archive_write_add_filter_uuencode(struct archive *a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f = __archive_write_allocate_filter(a);
 	struct private_uuencode *state;
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_uu");
 
 	state = calloc(1, sizeof(*state));
 	if (state == NULL) {
-		archive_set_error(f->archive, ENOMEM,
+		archive_set_error(a, ENOMEM,
 		    "Can't allocate data for uuencode filter");
 		return (ARCHIVE_FATAL);
 	}

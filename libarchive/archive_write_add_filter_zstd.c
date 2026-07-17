@@ -112,17 +112,17 @@ static void free_data(struct private_data *);
  * Add a zstd compression filter to this write handle.
  */
 int
-archive_write_add_filter_zstd(struct archive *_a)
+archive_write_add_filter_zstd(struct archive *a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct archive_write_filter *f = __archive_write_allocate_filter(a);
 	struct private_data *data;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_add_filter_zstd");
 
 	data = calloc(1, sizeof(*data));
 	if (data == NULL) {
-		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+		archive_set_error(a, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
 	f->data = data;
@@ -148,7 +148,7 @@ archive_write_add_filter_zstd(struct archive *_a)
 	data->cstream = ZSTD_createCStream();
 	if (data->cstream == NULL) {
 		free(data);
-		archive_set_error(&a->archive, ENOMEM,
+		archive_set_error(a, ENOMEM,
 		    "Failed to allocate zstd compressor object");
 		return (ARCHIVE_FATAL);
 	}
@@ -158,10 +158,10 @@ archive_write_add_filter_zstd(struct archive *_a)
 	data->pdata = __archive_write_program_allocate("zstd");
 	if (data->pdata == NULL) {
 		free(data);
-		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+		archive_set_error(a, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	archive_set_error(a, ARCHIVE_ERRNO_MISC,
 	    "Using external zstd program");
 	return (ARCHIVE_WARN);
 #endif

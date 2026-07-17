@@ -169,7 +169,6 @@ archive_filter_uuencode_open(struct archive_write_filter *f)
 	archive_string_sprintf(&state->encoded_buff, "begin %o %s\n",
 	    (unsigned int)state->mode, state->name.s);
 
-	f->data = state;
 	return (ARCHIVE_OK);
 }
 

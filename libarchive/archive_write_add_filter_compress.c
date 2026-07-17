@@ -147,9 +147,6 @@ archive_compressor_compress_open(struct archive_write_filter *f)
 	struct private_data *state;
 	size_t bs = 65536, bpb;
 
-	f->code = ARCHIVE_FILTER_COMPRESS;
-	f->name = "compress";
-
 	state = calloc(1, sizeof(*state));
 	if (state == NULL) {
 		archive_set_error(f->archive, ENOMEM,

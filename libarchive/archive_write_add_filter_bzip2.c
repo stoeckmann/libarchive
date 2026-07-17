@@ -196,7 +196,6 @@ archive_compressor_bzip2_open(struct archive_write_filter *f)
 	ret = BZ2_bzCompressInit(&(data->stream),
 	    data->compression_level, 0, 30);
 	if (ret == BZ_OK) {
-		f->data = data;
 		return (ARCHIVE_OK);
 	}
 

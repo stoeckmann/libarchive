@@ -284,7 +284,6 @@ archive_compressor_gzip_open(struct archive_write_filter *f)
 	    Z_DEFAULT_STRATEGY);
 
 	if (init_success == Z_OK) {
-		f->data = data;
 		return (ret);
 	}
 

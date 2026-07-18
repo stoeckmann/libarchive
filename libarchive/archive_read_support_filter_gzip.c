@@ -51,7 +51,7 @@
 #include "archive_read_private.h"
 
 #ifdef HAVE_ZLIB_H
-struct private_data {
+struct gzip {
 	z_stream	 stream;
 	char		 in_stream;
 	unsigned char	*out_block;
@@ -122,7 +122,7 @@ archive_read_support_filter_gzip(struct archive *_a)
 static ssize_t
 peek_at_header(struct archive_read_filter *filter, int *pbits,
 #ifdef HAVE_ZLIB_H
-	       struct private_data *state
+	       struct gzip *gzip
 #else
 	       void *state
 #endif
@@ -152,8 +152,8 @@ peek_at_header(struct archive_read_filter *filter, int *pbits,
 	header_flags = p[3];
 	/* Bytes 4-7 are mod time in little endian. */
 #ifdef HAVE_ZLIB_H
-	if (state)
-		state->mtime = archive_le32dec(p + 4);
+	if (gzip)
+		gzip->mtime = archive_le32dec(p + 4);
 #endif
 	/* Byte 8 is deflate flags. */
 	/* XXXX TODO: return deflate flags back to consume_header for use
@@ -188,10 +188,10 @@ peek_at_header(struct archive_read_filter *filter, int *pbits,
 		} while (p[len - 1] != 0);
 
 #ifdef HAVE_ZLIB_H
-		if (state) {
+		if (gzip) {
 			/* Reset the name in case of repeat header reads. */
-			free(state->name);
-			state->name = strdup((const char *)&p[file_start]);
+			free(gzip->name);
+			gzip->name = strdup((const char *)&p[file_start]);
 		}
 #endif
 	}
@@ -274,15 +274,15 @@ gzip_bidder_init(struct archive_read_filter *self)
 static int
 gzip_read_header(struct archive_read_filter *self, struct archive_entry *entry)
 {
-	struct private_data *state = self->data;
+	struct gzip *gzip = self->data;
 
 	/* An mtime of 0 is considered invalid/missing. */
-	if (state->mtime != 0)
-		archive_entry_set_mtime(entry, state->mtime, 0);
+	if (gzip->mtime != 0)
+		archive_entry_set_mtime(entry, gzip->mtime, 0);
 
 	/* If the name is available, extract it. */
-	if (state->name)
-		archive_entry_set_pathname(entry, state->name);
+	if (gzip->name)
+		archive_entry_set_pathname(entry, gzip->name);
 
 	return (ARCHIVE_OK);
 }
@@ -302,29 +302,29 @@ gzip_reader_vtable = {
 static int
 gzip_bidder_init(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct gzip *gzip;
 	static const size_t out_block_size = 64 * 1024;
 	void *out_block;
 
 	self->code = ARCHIVE_FILTER_GZIP;
 	self->name = "gzip";
 
-	state = calloc(1, sizeof(*state));
+	gzip = calloc(1, sizeof(*gzip));
 	out_block = malloc(out_block_size);
-	if (state == NULL || out_block == NULL) {
+	if (gzip == NULL || out_block == NULL) {
 		free(out_block);
-		free(state);
+		free(gzip);
 		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for gzip decompression");
 		return (ARCHIVE_FATAL);
 	}
 
-	self->data = state;
-	state->out_block_size = out_block_size;
-	state->out_block = out_block;
+	self->data = gzip;
+	gzip->out_block_size = out_block_size;
+	gzip->out_block = out_block;
 	self->vtable = &gzip_reader_vtable;
 
-	state->in_stream = 0; /* We're not actually within a stream yet. */
+	gzip->in_stream = 0; /* We're not actually within a stream yet. */
 
 	return (ARCHIVE_OK);
 }
@@ -332,22 +332,22 @@ gzip_bidder_init(struct archive_read_filter *self)
 static int
 consume_header(struct archive_read_filter *self)
 {
-	struct private_data *state = self->data;
+	struct gzip *gzip = self->data;
 	ssize_t avail, max_in;
 	size_t len;
 	int ret;
 
 	/* If this is a real header, consume it. */
-	len = peek_at_header(self->upstream, NULL, state);
+	len = peek_at_header(self->upstream, NULL, gzip);
 	if (len == 0)
 		return (ARCHIVE_EOF);
 	__archive_read_filter_consume(self->upstream, len);
 
 	/* Initialize CRC accumulator. */
-	state->crc = crc32(0L, NULL, 0);
+	gzip->crc = crc32(0L, NULL, 0);
 
 	/* Initialize compression library. */
-	state->stream.next_in = (unsigned char *)(uintptr_t)
+	gzip->stream.next_in = (unsigned char *)(uintptr_t)
 	    __archive_read_filter_ahead(self->upstream, 1, &avail);
 	if (avail < 0) {
 		archive_set_error(&self->archive->archive,
@@ -361,14 +361,14 @@ consume_header(struct archive_read_filter *self)
 		max_in = UINT_MAX;
 	if (avail > max_in)
 		avail = max_in;
-	state->stream.avail_in = (uInt)avail;
-	ret = inflateInit2(&(state->stream),
+	gzip->stream.avail_in = (uInt)avail;
+	ret = inflateInit2(&(gzip->stream),
 	    -15 /* Don't check for zlib header */);
 
 	/* Decipher the error code. */
 	switch (ret) {
 	case Z_OK:
-		state->in_stream = 1;
+		gzip->in_stream = 1;
 		return (ARCHIVE_OK);
 	case Z_STREAM_ERROR:
 		archive_set_error(&self->archive->archive,
@@ -400,11 +400,11 @@ consume_header(struct archive_read_filter *self)
 static int
 consume_trailer(struct archive_read_filter *self)
 {
-	struct private_data *state = self->data;
+	struct gzip *gzip = self->data;
 	const unsigned char *p;
 
-	state->in_stream = 0;
-	switch (inflateEnd(&(state->stream))) {
+	gzip->in_stream = 0;
+	switch (inflateEnd(&(gzip->stream))) {
 	case Z_OK:
 		break;
 	default:
@@ -430,23 +430,23 @@ consume_trailer(struct archive_read_filter *self)
 static ssize_t
 gzip_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state = self->data;
+	struct gzip *gzip = self->data;
 	size_t decompressed;
 	ssize_t avail_in, max_in;
 	int ret;
 
 	/* Empty our output buffer. */
-	state->stream.next_out = state->out_block;
-	state->stream.avail_out = (uInt)state->out_block_size;
+	gzip->stream.next_out = gzip->out_block;
+	gzip->stream.avail_out = (uInt)gzip->out_block_size;
 
 	/* Try to fill the output buffer. */
-	while (state->stream.avail_out > 0 && !state->eof) {
+	while (gzip->stream.avail_out > 0 && !gzip->eof) {
 		/* If we're not in a stream, read a header
 		 * and initialize the decompression library. */
-		if (!state->in_stream) {
+		if (!gzip->in_stream) {
 			ret = consume_header(self);
 			if (ret == ARCHIVE_EOF) {
-				state->eof = 1;
+				gzip->eof = 1;
 				break;
 			}
 			if (ret < ARCHIVE_OK)
@@ -456,9 +456,9 @@ gzip_filter_read(struct archive_read_filter *self, const void **p)
 		/* Peek at the next available data. */
 		/* ZLib treats stream.next_in as const but doesn't declare
 		 * it so, hence this ugly cast. */
-		state->stream.next_in = (unsigned char *)(uintptr_t)
+		gzip->stream.next_in = (unsigned char *)(uintptr_t)
 		    __archive_read_filter_ahead(self->upstream, 1, &avail_in);
-		if (state->stream.next_in == NULL) {
+		if (gzip->stream.next_in == NULL) {
 			archive_set_error(&self->archive->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "truncated gzip input");
@@ -470,18 +470,18 @@ gzip_filter_read(struct archive_read_filter *self, const void **p)
 			max_in = UINT_MAX;
 		if (avail_in > max_in)
 			avail_in = max_in;
-		state->stream.avail_in = (uInt)avail_in;
+		gzip->stream.avail_in = (uInt)avail_in;
 
 		/* Decompress and consume some of that data. */
-		ret = inflate(&(state->stream), 0);
+		ret = inflate(&(gzip->stream), 0);
 		switch (ret) {
 		case Z_OK: /* Decompressor made some progress. */
 			__archive_read_filter_consume(self->upstream,
-			    avail_in - state->stream.avail_in);
+			    avail_in - gzip->stream.avail_in);
 			break;
 		case Z_STREAM_END: /* Found end of stream. */
 			__archive_read_filter_consume(self->upstream,
-			    avail_in - state->stream.avail_in);
+			    avail_in - gzip->stream.avail_in);
 			/* Consume the stream trailer; release the
 			 * decompression library. */
 			ret = consume_trailer(self);
@@ -498,11 +498,11 @@ gzip_filter_read(struct archive_read_filter *self, const void **p)
 	}
 
 	/* We've read as much as we can. */
-	decompressed = state->stream.next_out - state->out_block;
+	decompressed = gzip->stream.next_out - gzip->out_block;
 	if (decompressed == 0)
 		*p = NULL;
 	else
-		*p = state->out_block;
+		*p = gzip->out_block;
 	return (decompressed);
 }
 
@@ -512,13 +512,13 @@ gzip_filter_read(struct archive_read_filter *self, const void **p)
 static int
 gzip_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state = self->data;
+	struct gzip *gzip = self->data;
 	int ret;
 
 	ret = ARCHIVE_OK;
 
-	if (state->in_stream) {
-		switch (inflateEnd(&(state->stream))) {
+	if (gzip->in_stream) {
+		switch (inflateEnd(&(gzip->stream))) {
 		case Z_OK:
 			break;
 		default:
@@ -529,9 +529,9 @@ gzip_filter_close(struct archive_read_filter *self)
 		}
 	}
 
-	free(state->name);
-	free(state->out_block);
-	free(state);
+	free(gzip->name);
+	free(gzip->out_block);
+	free(gzip);
 	return (ret);
 }
 

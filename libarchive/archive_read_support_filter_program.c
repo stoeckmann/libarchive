@@ -102,7 +102,7 @@ static void	program_bidder_free(struct archive_read_filter_bidder *);
 /*
  * The actual filter needs to track input and output data.
  */
-struct program_filter {
+struct program {
 	struct archive_string description;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	HANDLE		 child;
@@ -226,28 +226,28 @@ program_bidder_bid(struct archive_read_filter_bidder *self,
  * (including error message if the child came to a bad end).
  */
 static int
-child_stop(struct archive_read_filter *self, struct program_filter *state)
+child_stop(struct archive_read_filter *self, struct program *program)
 {
 	/* Close our side of the I/O with the child. */
-	if (state->child_stdin != -1) {
-		close(state->child_stdin);
-		state->child_stdin = -1;
+	if (program->child_stdin != -1) {
+		close(program->child_stdin);
+		program->child_stdin = -1;
 	}
-	if (state->child_stdout != -1) {
-		close(state->child_stdout);
-		state->child_stdout = -1;
+	if (program->child_stdout != -1) {
+		close(program->child_stdout);
+		program->child_stdout = -1;
 	}
 
-	if (state->child != 0) {
+	if (program->child != 0) {
 		/* Reap the child. */
 		do {
-			state->waitpid_return
-			    = waitpid(state->child, &state->exit_status, 0);
-		} while (state->waitpid_return == -1 && errno == EINTR);
-		state->child = 0;
+			program->waitpid_return
+			    = waitpid(program->child, &program->exit_status, 0);
+		} while (program->waitpid_return == -1 && errno == EINTR);
+		program->child = 0;
 	}
 
-	if (state->waitpid_return < 0) {
+	if (program->waitpid_return < 0) {
 		/* waitpid() failed?  This is ugly. */
 		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
 		    "Error closing child process");
@@ -255,7 +255,7 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
 	}
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-	if (WIFSIGNALED(state->exit_status)) {
+	if (WIFSIGNALED(program->exit_status)) {
 #ifdef SIGPIPE
 		/* If the child died because we stopped reading before
 		 * it was done, that's okay.  Some archive formats
@@ -263,24 +263,24 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
 		/* The alternative to this would be to add a step
 		 * before close(child_stdout) above to read from the
 		 * child until the child has no more to write. */
-		if (WTERMSIG(state->exit_status) == SIGPIPE)
+		if (WTERMSIG(program->exit_status) == SIGPIPE)
 			return (ARCHIVE_OK);
 #endif
 		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
 		    "Child process exited with signal %d",
-		    WTERMSIG(state->exit_status));
+		    WTERMSIG(program->exit_status));
 		return (ARCHIVE_WARN);
 	}
 #endif /* !_WIN32 || __CYGWIN__ */
 
-	if (WIFEXITED(state->exit_status)) {
-		if (WEXITSTATUS(state->exit_status) == 0)
+	if (WIFEXITED(program->exit_status)) {
+		if (WEXITSTATUS(program->exit_status) == 0)
 			return (ARCHIVE_OK);
 
 		archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Child process exited with status %d",
-		    WEXITSTATUS(state->exit_status));
+		    WEXITSTATUS(program->exit_status));
 		return (ARCHIVE_WARN);
 	}
 
@@ -293,11 +293,11 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
 static ssize_t
 child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 {
-	struct program_filter *state = self->data;
+	struct program *program = self->data;
 	ssize_t ret, requested, avail;
 	const char *p;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	HANDLE handle = (HANDLE)_get_osfhandle(state->child_stdout);
+	HANDLE handle = (HANDLE)_get_osfhandle(program->child_stdout);
 #endif
 
 	requested = buf_len > SSIZE_MAX ? SSIZE_MAX : buf_len;
@@ -325,7 +325,7 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 				break;
 			}
 #endif
-			ret = read(state->child_stdout, buf, requested);
+			ret = read(program->child_stdout, buf, requested);
 		} while (ret == -1 && errno == EINTR);
 
 		if (ret > 0)
@@ -333,30 +333,30 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 		if (ret == 0 || (ret == -1 && errno == EPIPE))
 			/* Child has closed its output; reap the child
 			 * and return the status. */
-			return (child_stop(self, state));
+			return (child_stop(self, program));
 		if (ret == -1 && errno != EAGAIN)
 			return (-1);
 
-		if (state->child_stdin == -1) {
+		if (program->child_stdin == -1) {
 			/* Block until child has some I/O ready. */
-			__archive_check_child(state->child_stdin,
-			    state->child_stdout);
+			__archive_check_child(program->child_stdin,
+			    program->child_stdout);
 			continue;
 		}
 
 		/* Get some more data from upstream. */
 		p = __archive_read_filter_ahead(self->upstream, 1, &avail);
 		if (p == NULL) {
-			close(state->child_stdin);
-			state->child_stdin = -1;
-			fcntl(state->child_stdout, F_SETFL, 0);
+			close(program->child_stdin);
+			program->child_stdin = -1;
+			fcntl(program->child_stdout, F_SETFL, 0);
 			if (avail < 0)
 				return (avail);
 			continue;
 		}
 
 		do {
-			ret = write(state->child_stdin, p, avail);
+			ret = write(program->child_stdin, p, avail);
 		} while (ret == -1 && errno == EINTR);
 
 		if (ret > 0) {
@@ -364,13 +364,13 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 			__archive_read_filter_consume(self->upstream, ret);
 		} else if (ret == -1 && errno == EAGAIN) {
 			/* Block until child has some I/O ready. */
-			__archive_check_child(state->child_stdin,
-			    state->child_stdout);
+			__archive_check_child(program->child_stdin,
+			    program->child_stdout);
 		} else {
 			/* Write failed. */
-			close(state->child_stdin);
-			state->child_stdin = -1;
-			fcntl(state->child_stdout, F_SETFL, 0);
+			close(program->child_stdin);
+			program->child_stdin = -1;
+			fcntl(program->child_stdout, F_SETFL, 0);
 			/* If it was a bad error, we're done; otherwise
 			 * it was EPIPE or EOF, and we can still read
 			 * from the child. */
@@ -389,7 +389,7 @@ program_reader_vtable = {
 int
 __archive_read_program(struct archive_read_filter *self, const char *cmd)
 {
-	struct program_filter	*state;
+	struct program *program;
 	static const size_t out_buf_len = 65536;
 	char *out_buf;
 	const char *prefix = "Program: ";
@@ -397,41 +397,41 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 	size_t l;
 
 	l = strlen(prefix) + strlen(cmd) + 1;
-	state = calloc(1, sizeof(*state));
+	program = calloc(1, sizeof(*program));
 	out_buf = malloc(out_buf_len);
-	if (state == NULL || out_buf == NULL ||
-	    archive_string_ensure(&state->description, l) == NULL) {
+	if (program == NULL || out_buf == NULL ||
+	    archive_string_ensure(&program->description, l) == NULL) {
 		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate input data");
-		if (state != NULL) {
-			archive_string_free(&state->description);
-			free(state);
+		if (program != NULL) {
+			archive_string_free(&program->description);
+			free(program);
 		}
 		free(out_buf);
 		return (ARCHIVE_FATAL);
 	}
-	archive_strcpy(&state->description, prefix);
-	archive_strcat(&state->description, cmd);
+	archive_strcpy(&program->description, prefix);
+	archive_strcat(&program->description, cmd);
 
 	self->code = ARCHIVE_FILTER_PROGRAM;
-	self->name = state->description.s;
+	self->name = program->description.s;
 
-	state->out_buf = out_buf;
-	state->out_buf_len = out_buf_len;
+	program->out_buf = out_buf;
+	program->out_buf_len = out_buf_len;
 
-	ret = __archive_create_child(cmd, &state->child_stdin,
-	    &state->child_stdout, &state->child);
+	ret = __archive_create_child(cmd, &program->child_stdin,
+	    &program->child_stdout, &program->child);
 	if (ret != ARCHIVE_OK) {
-		free(state->out_buf);
-		archive_string_free(&state->description);
-		free(state);
+		free(program->out_buf);
+		archive_string_free(&program->description);
+		free(program);
 		archive_set_error(&self->archive->archive, EINVAL,
 		    "Can't initialize filter; unable to run program \"%s\"",
 		    cmd);
 		return (ARCHIVE_FATAL);
 	}
 
-	self->data = state;
+	self->data = program;
 	self->vtable = &program_reader_vtable;
 
 	/* XXX Check that we can read at least one byte? */
@@ -450,15 +450,15 @@ program_bidder_init(struct archive_read_filter *self)
 static ssize_t
 program_filter_read(struct archive_read_filter *self, const void **buff)
 {
-	struct program_filter *state = self->data;
+	struct program *program = self->data;
 	ssize_t bytes;
 	size_t total;
 	char *p;
 
 	total = 0;
-	p = state->out_buf;
-	while (state->child_stdout != -1 && total < state->out_buf_len) {
-		bytes = child_read(self, p, state->out_buf_len - total);
+	p = program->out_buf;
+	while (program->child_stdout != -1 && total < program->out_buf_len) {
+		bytes = child_read(self, p, program->out_buf_len - total);
 		if (bytes < 0)
 			/* No recovery is possible if we can no longer
 			 * read from the child. */
@@ -470,22 +470,22 @@ program_filter_read(struct archive_read_filter *self, const void **buff)
 		p += bytes;
 	}
 
-	*buff = state->out_buf;
+	*buff = program->out_buf;
 	return (total);
 }
 
 static int
 program_filter_close(struct archive_read_filter *self)
 {
-	struct program_filter *state = self->data;
+	struct program *program = self->data;
 	int e;
 
-	e = child_stop(self, state);
+	e = child_stop(self, program);
 
 	/* Release our private data. */
-	free(state->out_buf);
-	archive_string_free(&state->description);
-	free(state);
+	free(program->out_buf);
+	archive_string_free(&program->description);
+	free(program);
 
 	return (e);
 }

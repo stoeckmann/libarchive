@@ -68,7 +68,7 @@
 #define LZOP_HEADER_MAGIC_LEN 9
 
 #if defined(HAVE_LZO_LZOCONF_H) && defined(HAVE_LZO_LZO1X_H)
-struct read_lzop {
+struct lzop {
 	unsigned char	*out_block;
 	size_t		 out_block_size;
 	int		 flags;
@@ -177,19 +177,19 @@ lzop_reader_vtable = {
 static int
 lzop_bidder_init(struct archive_read_filter *self)
 {
-	struct read_lzop *state;
+	struct lzop *lzop;
 
 	self->code = ARCHIVE_FILTER_LZOP;
 	self->name = "lzop";
 
-	state = calloc(1, sizeof(*state));
-	if (state == NULL) {
+	lzop = calloc(1, sizeof(*lzop));
+	if (lzop == NULL) {
 		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for lzop decompression");
 		return (ARCHIVE_FATAL);
 	}
 
-	self->data = state;
+	self->data = lzop;
 	self->vtable = &lzop_reader_vtable;
 
 	return (ARCHIVE_OK);
@@ -198,7 +198,7 @@ lzop_bidder_init(struct archive_read_filter *self)
 static int
 consume_header(struct archive_read_filter *self)
 {
-	struct read_lzop *state = self->data;
+	struct lzop *lzop = self->data;
 	const unsigned char *p, *_p;
 	unsigned checksum, flags, len, method, version;
 
@@ -291,8 +291,8 @@ consume_header(struct archive_read_filter *self)
 		__archive_read_filter_consume(self->upstream,
 		    (int64_t)len + 4 + 4);
 	}
-	state->flags = flags;
-	state->in_stream = 1;
+	lzop->flags = flags;
+	lzop->in_stream = 1;
 	return (ARCHIVE_OK);
 truncated:
 	archive_set_error(&self->archive->archive,
@@ -307,42 +307,42 @@ corrupted:
 static int
 consume_block_info(struct archive_read_filter *self)
 {
-	struct read_lzop *state = self->data;
+	struct lzop *lzop = self->data;
 	const unsigned char *p;
-	unsigned flags = state->flags;
+	unsigned flags = lzop->flags;
 
 	p = __archive_read_filter_ahead(self->upstream, 4, NULL);
 	if (p == NULL)
 		goto truncated;
-	state->uncompressed_size = archive_be32dec(p);
+	lzop->uncompressed_size = archive_be32dec(p);
 	__archive_read_filter_consume(self->upstream, 4);
-	if (state->uncompressed_size == 0)
+	if (lzop->uncompressed_size == 0)
 		return (ARCHIVE_EOF);
-	if (state->uncompressed_size > MAX_BLOCK_SIZE)
+	if (lzop->uncompressed_size > MAX_BLOCK_SIZE)
 		goto corrupted;
 
 	p = __archive_read_filter_ahead(self->upstream, 4, NULL);
 	if (p == NULL)
 		goto truncated;
-	state->compressed_size = archive_be32dec(p);
+	lzop->compressed_size = archive_be32dec(p);
 	__archive_read_filter_consume(self->upstream, 4);
-	if (state->compressed_size > state->uncompressed_size)
+	if (lzop->compressed_size > lzop->uncompressed_size)
 		goto corrupted;
 
 	if (flags & (CRC32_UNCOMPRESSED | ADLER32_UNCOMPRESSED)) {
 		p = __archive_read_filter_ahead(self->upstream, 4, NULL);
 		if (p == NULL)
 			goto truncated;
-		state->compressed_cksum = state->uncompressed_cksum =
+		lzop->compressed_cksum = lzop->uncompressed_cksum =
 		    archive_be32dec(p);
 		__archive_read_filter_consume(self->upstream, 4);
 	}
 	if ((flags & (CRC32_COMPRESSED | ADLER32_COMPRESSED)) &&
-	    state->compressed_size < state->uncompressed_size) {
+	    lzop->compressed_size < lzop->uncompressed_size) {
 		p = __archive_read_filter_ahead(self->upstream, 4, NULL);
 		if (p == NULL)
 			goto truncated;
-		state->compressed_cksum = archive_be32dec(p);
+		lzop->compressed_cksum = archive_be32dec(p);
 		__archive_read_filter_consume(self->upstream, 4);
 	}
 	return (ARCHIVE_OK);
@@ -359,27 +359,27 @@ corrupted:
 static ssize_t
 lzop_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct read_lzop *state = self->data;
+	struct lzop *lzop = self->data;
 	const void *b;
 	lzo_uint out_size;
 	uint32_t cksum;
 	int ret, r;
 
-	if (state->unconsumed_bytes) {
+	if (lzop->unconsumed_bytes) {
 		__archive_read_filter_consume(self->upstream,
-		    state->unconsumed_bytes);
-		state->unconsumed_bytes = 0;
+		    lzop->unconsumed_bytes);
+		lzop->unconsumed_bytes = 0;
 	}
-	if (state->eof)
+	if (lzop->eof)
 		return (0);
 
 	for (;;) {
-		if (!state->in_stream) {
+		if (!lzop->in_stream) {
 			ret = consume_header(self);
 			if (ret < ARCHIVE_OK)
 				return (ret);
 			if (ret == ARCHIVE_EOF) {
-				state->eof = 1;
+				lzop->eof = 1;
 				return (0);
 			}
 		}
@@ -387,39 +387,39 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 		if (ret < ARCHIVE_OK)
 			return (ret);
 		if (ret == ARCHIVE_EOF)
-			state->in_stream = 0;
+			lzop->in_stream = 0;
 		else
 			break;
 	}
 
-	if (state->out_block == NULL ||
-	    state->out_block_size < state->uncompressed_size) {
+	if (lzop->out_block == NULL ||
+	    lzop->out_block_size < lzop->uncompressed_size) {
 		void *new_block;
 
-		new_block = realloc(state->out_block, state->uncompressed_size);
+		new_block = realloc(lzop->out_block, lzop->uncompressed_size);
 		if (new_block == NULL) {
 			archive_set_error(&self->archive->archive, ENOMEM,
 			    "Can't allocate data for lzop decompression");
 			return (ARCHIVE_FATAL);
 		}
-		state->out_block = new_block;
-		state->out_block_size = state->uncompressed_size;
+		lzop->out_block = new_block;
+		lzop->out_block_size = lzop->uncompressed_size;
 	}
 
 	b = __archive_read_filter_ahead(self->upstream,
-		state->compressed_size, NULL);
+		lzop->compressed_size, NULL);
 	if (b == NULL) {
 		archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT, "Truncated lzop data");
 		return (ARCHIVE_FATAL);
 	}
-	if (state->flags & CRC32_COMPRESSED)
-		cksum = crc32(crc32(0, NULL, 0), b, state->compressed_size);
-	else if (state->flags & ADLER32_COMPRESSED)
-		cksum = adler32(adler32(0, NULL, 0), b, state->compressed_size);
+	if (lzop->flags & CRC32_COMPRESSED)
+		cksum = crc32(crc32(0, NULL, 0), b, lzop->compressed_size);
+	else if (lzop->flags & ADLER32_COMPRESSED)
+		cksum = adler32(adler32(0, NULL, 0), b, lzop->compressed_size);
 	else
-		cksum = state->compressed_cksum;
-	if (cksum != state->compressed_cksum) {
+		cksum = lzop->compressed_cksum;
+	if (cksum != lzop->compressed_cksum) {
 		archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Corrupted data");
 		return (ARCHIVE_FATAL);
@@ -429,21 +429,21 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 	 * If both uncompressed size and compressed size are the same,
 	 * we do not decompress this block.
 	 */
-	if (state->uncompressed_size == state->compressed_size) {
+	if (lzop->uncompressed_size == lzop->compressed_size) {
 		*p = b;
-		state->unconsumed_bytes = state->compressed_size;
-		return ((ssize_t)state->uncompressed_size);
+		lzop->unconsumed_bytes = lzop->compressed_size;
+		return ((ssize_t)lzop->uncompressed_size);
 	}
 
 	/*
 	 * Drive lzo uncompression.
 	 */
-	out_size = (lzo_uint)state->uncompressed_size;
-	r = lzo1x_decompress_safe(b, (lzo_uint)state->compressed_size,
-		state->out_block, &out_size, NULL);
+	out_size = (lzo_uint)lzop->uncompressed_size;
+	r = lzo1x_decompress_safe(b, (lzo_uint)lzop->compressed_size,
+		lzop->out_block, &out_size, NULL);
 	switch (r) {
 	case LZO_E_OK:
-		if (out_size == state->uncompressed_size)
+		if (out_size == lzop->uncompressed_size)
 			break;
 		archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Corrupted data");
@@ -458,22 +458,22 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 		return (ARCHIVE_FATAL);
 	}
 
-	if (state->flags & CRC32_UNCOMPRESSED)
-		cksum = crc32(crc32(0, NULL, 0), state->out_block,
-		    state->uncompressed_size);
-	else if (state->flags & ADLER32_UNCOMPRESSED)
-		cksum = adler32(adler32(0, NULL, 0), state->out_block,
-		    state->uncompressed_size);
+	if (lzop->flags & CRC32_UNCOMPRESSED)
+		cksum = crc32(crc32(0, NULL, 0), lzop->out_block,
+		    lzop->uncompressed_size);
+	else if (lzop->flags & ADLER32_UNCOMPRESSED)
+		cksum = adler32(adler32(0, NULL, 0), lzop->out_block,
+		    lzop->uncompressed_size);
 	else
-		cksum = state->uncompressed_cksum;
-	if (cksum != state->uncompressed_cksum) {
+		cksum = lzop->uncompressed_cksum;
+	if (cksum != lzop->uncompressed_cksum) {
 		archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Corrupted data");
 		return (ARCHIVE_FATAL);
 	}
 
-	__archive_read_filter_consume(self->upstream, state->compressed_size);
-	*p = state->out_block;
+	__archive_read_filter_consume(self->upstream, lzop->compressed_size);
+	*p = lzop->out_block;
 	return ((ssize_t)out_size);
 }
 
@@ -483,10 +483,10 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 static int
 lzop_filter_close(struct archive_read_filter *self)
 {
-	struct read_lzop *state = self->data;
+	struct lzop *lzop = self->data;
 
-	free(state->out_block);
-	free(state);
+	free(lzop->out_block);
+	free(lzop);
 	return (ARCHIVE_OK);
 }
 

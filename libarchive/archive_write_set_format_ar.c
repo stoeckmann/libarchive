@@ -44,7 +44,7 @@
 #include "archive_write_private.h"
 #include "archive_write_set_format_private.h"
 
-struct ar_w {
+struct ar {
 	uint64_t	 entry_bytes_remaining;
 	uint64_t	 entry_padding;
 	int		 is_strtab;
@@ -120,7 +120,7 @@ archive_write_set_format_ar_svr4(struct archive *_a)
 static int
 archive_write_set_format_ar(struct archive_write *a)
 {
-	struct ar_w *ar;
+	struct ar *ar;
 
 	/* If someone else was already registered, unregister them. */
 	(void)__archive_write_unregister_format(a);
@@ -147,7 +147,7 @@ archive_write_ar_header(struct archive_write *a, struct archive_entry *entry)
 	int ret, append_fn;
 	char buff[60];
 	char *ss;
-	struct ar_w *ar = a->format_data;
+	struct ar *ar = a->format_data;
 	struct archive_string se;
 	const char *pathname;
 	const char *filename;
@@ -363,7 +363,7 @@ size:
 static ssize_t
 archive_write_ar_data(struct archive_write *a, const void *buff, size_t s)
 {
-	struct ar_w *ar = a->format_data;
+	struct ar *ar = a->format_data;
 	int ret;
 
 	if (s > ar->entry_bytes_remaining)
@@ -398,7 +398,7 @@ archive_write_ar_data(struct archive_write *a, const void *buff, size_t s)
 static int
 archive_write_ar_free(struct archive_write *a)
 {
-	struct ar_w *ar = a->format_data;
+	struct ar *ar = a->format_data;
 
 	if (ar == NULL)
 		return (ARCHIVE_OK);
@@ -416,7 +416,7 @@ archive_write_ar_free(struct archive_write *a)
 static int
 archive_write_ar_close(struct archive_write *a)
 {
-	struct ar_w *ar = a->format_data;
+	struct ar *ar = a->format_data;
 	int ret;
 
 	/*
@@ -435,7 +435,7 @@ archive_write_ar_close(struct archive_write *a)
 static int
 archive_write_ar_finish_entry(struct archive_write *a)
 {
-	struct ar_w *ar = a->format_data;
+	struct ar *ar = a->format_data;
 	int ret;
 
 	if (ar->entry_bytes_remaining != 0) {

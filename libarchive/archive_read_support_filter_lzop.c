@@ -127,14 +127,14 @@ archive_read_support_filter_lzop(struct archive *_a)
  * Bidder just verifies the header and returns the number of verified bits.
  */
 static int
-lzop_bidder_bid(struct archive_read_filter_bidder *self,
-    struct archive_read_filter *filter)
+lzop_bidder_bid(struct archive_read_filter_bidder *b,
+    struct archive_read_filter *f)
 {
 	const unsigned char *p;
 
-	(void)self; /* UNUSED */
+	(void)b; /* UNUSED */
 
-	p = __archive_read_filter_ahead(filter, LZOP_HEADER_MAGIC_LEN, NULL);
+	p = __archive_read_filter_ahead(f, LZOP_HEADER_MAGIC_LEN, NULL);
 	if (p == NULL)
 		return (0);
 
@@ -151,16 +151,16 @@ lzop_bidder_bid(struct archive_read_filter_bidder *self,
  * in case that's available.
  */
 static int
-lzop_bidder_init(struct archive_read_filter *self)
+lzop_bidder_init(struct archive_read_filter *f)
 {
 	int r;
 
-	r = __archive_read_program(self, "lzop -d");
+	r = __archive_read_program(f, "lzop -d");
 	/* Note: We set the format here even if __archive_read_program()
 	 * above fails.  We do, after all, know what the format is
 	 * even if we weren't able to read it. */
-	self->code = ARCHIVE_FILTER_LZOP;
-	self->name = "lzop";
+	f->code = ARCHIVE_FILTER_LZOP;
+	f->name = "lzop";
 	return (r);
 }
 #else
@@ -175,47 +175,47 @@ lzop_reader_vtable = {
  * Initialize the filter object.
  */
 static int
-lzop_bidder_init(struct archive_read_filter *self)
+lzop_bidder_init(struct archive_read_filter *f)
 {
 	struct lzop *lzop;
 
-	self->code = ARCHIVE_FILTER_LZOP;
-	self->name = "lzop";
+	f->code = ARCHIVE_FILTER_LZOP;
+	f->name = "lzop";
 
 	lzop = calloc(1, sizeof(*lzop));
 	if (lzop == NULL) {
-		archive_set_error(&self->archive->archive, ENOMEM,
+		archive_set_error(&f->archive->archive, ENOMEM,
 		    "Can't allocate data for lzop decompression");
 		return (ARCHIVE_FATAL);
 	}
 
-	self->data = lzop;
-	self->vtable = &lzop_reader_vtable;
+	f->data = lzop;
+	f->vtable = &lzop_reader_vtable;
 
 	return (ARCHIVE_OK);
 }
 
 static int
-consume_header(struct archive_read_filter *self)
+consume_header(struct archive_read_filter *f)
 {
-	struct lzop *lzop = self->data;
+	struct lzop *lzop = f->data;
 	const unsigned char *p, *_p;
 	unsigned checksum, flags, len, method, version;
 
 	/*
 	 * Check LZOP magic code.
 	 */
-	p = __archive_read_filter_ahead(self->upstream,
+	p = __archive_read_filter_ahead(f->upstream,
 		LZOP_HEADER_MAGIC_LEN, NULL);
 	if (p == NULL)
 		return (ARCHIVE_EOF);
 
 	if (memcmp(p, LZOP_HEADER_MAGIC, LZOP_HEADER_MAGIC_LEN))
 		return (ARCHIVE_EOF);
-	__archive_read_filter_consume(self->upstream,
+	__archive_read_filter_consume(f->upstream,
 	    LZOP_HEADER_MAGIC_LEN);
 
-	p = __archive_read_filter_ahead(self->upstream, 29, NULL);
+	p = __archive_read_filter_ahead(f->upstream, 29, NULL);
 	if (p == NULL)
 		goto truncated;
 	_p = p;
@@ -225,7 +225,7 @@ consume_header(struct archive_read_filter *self)
 	if (version >= 0x940) {
 		unsigned reqversion = archive_be16dec(p); p += 2;
 		if (reqversion < 0x900) {
-			archive_set_error(&self->archive->archive,
+			archive_set_error(&f->archive->archive,
 			    ARCHIVE_ERRNO_MISC, "Invalid required version");
 			return (ARCHIVE_FAILED);
 		}
@@ -233,7 +233,7 @@ consume_header(struct archive_read_filter *self)
 
 	method = *p++;
 	if (method < 1 || method > 3) {
-		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
+		archive_set_error(&f->archive->archive, ARCHIVE_ERRNO_MISC,
 		    "Unsupported method");
 		return (ARCHIVE_FAILED);
 	}
@@ -252,7 +252,7 @@ consume_header(struct archive_read_filter *self)
 			;/* NOP */
 #endif
 		else if (level > 9) {
-			archive_set_error(&self->archive->archive,
+			archive_set_error(&f->archive->archive,
 			    ARCHIVE_ERRNO_MISC, "Invalid level");
 			return (ARCHIVE_FAILED);
 		}
@@ -270,7 +270,7 @@ consume_header(struct archive_read_filter *self)
 	len = *p++; /* Read filename length */
 	len += p - _p;
 	/* Make sure we have all bytes we need to calculate checksum. */
-	p = __archive_read_filter_ahead(self->upstream, len + 4, NULL);
+	p = __archive_read_filter_ahead(f->upstream, len + 4, NULL);
 	if (p == NULL)
 		goto truncated;
 	if (flags & CRC32_HEADER)
@@ -281,92 +281,92 @@ consume_header(struct archive_read_filter *self)
 	if (archive_be32dec(p + len) != checksum)
 		goto corrupted;
 #endif
-	__archive_read_filter_consume(self->upstream, len + 4);
+	__archive_read_filter_consume(f->upstream, len + 4);
 	if (flags & EXTRA_FIELD) {
 		/* Skip extra field */
-		p = __archive_read_filter_ahead(self->upstream, 4, NULL);
+		p = __archive_read_filter_ahead(f->upstream, 4, NULL);
 		if (p == NULL)
 			goto truncated;
 		len = archive_be32dec(p);
-		__archive_read_filter_consume(self->upstream,
+		__archive_read_filter_consume(f->upstream,
 		    (int64_t)len + 4 + 4);
 	}
 	lzop->flags = flags;
 	lzop->in_stream = 1;
 	return (ARCHIVE_OK);
 truncated:
-	archive_set_error(&self->archive->archive,
+	archive_set_error(&f->archive->archive,
 	    ARCHIVE_ERRNO_FILE_FORMAT, "Truncated lzop data");
 	return (ARCHIVE_FAILED);
 corrupted:
-	archive_set_error(&self->archive->archive,
+	archive_set_error(&f->archive->archive,
 	    ARCHIVE_ERRNO_FILE_FORMAT, "Corrupted lzop header");
 	return (ARCHIVE_FAILED);
 }
 
 static int
-consume_block_info(struct archive_read_filter *self)
+consume_block_info(struct archive_read_filter *f)
 {
-	struct lzop *lzop = self->data;
+	struct lzop *lzop = f->data;
 	const unsigned char *p;
 	unsigned flags = lzop->flags;
 
-	p = __archive_read_filter_ahead(self->upstream, 4, NULL);
+	p = __archive_read_filter_ahead(f->upstream, 4, NULL);
 	if (p == NULL)
 		goto truncated;
 	lzop->uncompressed_size = archive_be32dec(p);
-	__archive_read_filter_consume(self->upstream, 4);
+	__archive_read_filter_consume(f->upstream, 4);
 	if (lzop->uncompressed_size == 0)
 		return (ARCHIVE_EOF);
 	if (lzop->uncompressed_size > MAX_BLOCK_SIZE)
 		goto corrupted;
 
-	p = __archive_read_filter_ahead(self->upstream, 4, NULL);
+	p = __archive_read_filter_ahead(f->upstream, 4, NULL);
 	if (p == NULL)
 		goto truncated;
 	lzop->compressed_size = archive_be32dec(p);
-	__archive_read_filter_consume(self->upstream, 4);
+	__archive_read_filter_consume(f->upstream, 4);
 	if (lzop->compressed_size > lzop->uncompressed_size)
 		goto corrupted;
 
 	if (flags & (CRC32_UNCOMPRESSED | ADLER32_UNCOMPRESSED)) {
-		p = __archive_read_filter_ahead(self->upstream, 4, NULL);
+		p = __archive_read_filter_ahead(f->upstream, 4, NULL);
 		if (p == NULL)
 			goto truncated;
 		lzop->compressed_cksum = lzop->uncompressed_cksum =
 		    archive_be32dec(p);
-		__archive_read_filter_consume(self->upstream, 4);
+		__archive_read_filter_consume(f->upstream, 4);
 	}
 	if ((flags & (CRC32_COMPRESSED | ADLER32_COMPRESSED)) &&
 	    lzop->compressed_size < lzop->uncompressed_size) {
-		p = __archive_read_filter_ahead(self->upstream, 4, NULL);
+		p = __archive_read_filter_ahead(f->upstream, 4, NULL);
 		if (p == NULL)
 			goto truncated;
 		lzop->compressed_cksum = archive_be32dec(p);
-		__archive_read_filter_consume(self->upstream, 4);
+		__archive_read_filter_consume(f->upstream, 4);
 	}
 	return (ARCHIVE_OK);
 truncated:
-	archive_set_error(&self->archive->archive,
+	archive_set_error(&f->archive->archive,
 	    ARCHIVE_ERRNO_FILE_FORMAT, "Truncated lzop data");
 	return (ARCHIVE_FAILED);
 corrupted:
-	archive_set_error(&self->archive->archive,
+	archive_set_error(&f->archive->archive,
 	    ARCHIVE_ERRNO_FILE_FORMAT, "Corrupted lzop header");
 	return (ARCHIVE_FAILED);
 }
 
 static ssize_t
-lzop_filter_read(struct archive_read_filter *self, const void **p)
+lzop_filter_read(struct archive_read_filter *f, const void **p)
 {
-	struct lzop *lzop = self->data;
+	struct lzop *lzop = f->data;
 	const void *b;
 	lzo_uint out_size;
 	uint32_t cksum;
 	int ret, r;
 
 	if (lzop->unconsumed_bytes) {
-		__archive_read_filter_consume(self->upstream,
+		__archive_read_filter_consume(f->upstream,
 		    lzop->unconsumed_bytes);
 		lzop->unconsumed_bytes = 0;
 	}
@@ -375,7 +375,7 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 
 	for (;;) {
 		if (!lzop->in_stream) {
-			ret = consume_header(self);
+			ret = consume_header(f);
 			if (ret < ARCHIVE_OK)
 				return (ret);
 			if (ret == ARCHIVE_EOF) {
@@ -383,7 +383,7 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 				return (0);
 			}
 		}
-		ret = consume_block_info(self);
+		ret = consume_block_info(f);
 		if (ret < ARCHIVE_OK)
 			return (ret);
 		if (ret == ARCHIVE_EOF)
@@ -398,7 +398,7 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 
 		new_block = realloc(lzop->out_block, lzop->uncompressed_size);
 		if (new_block == NULL) {
-			archive_set_error(&self->archive->archive, ENOMEM,
+			archive_set_error(&f->archive->archive, ENOMEM,
 			    "Can't allocate data for lzop decompression");
 			return (ARCHIVE_FATAL);
 		}
@@ -406,10 +406,10 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 		lzop->out_block_size = lzop->uncompressed_size;
 	}
 
-	b = __archive_read_filter_ahead(self->upstream,
+	b = __archive_read_filter_ahead(f->upstream,
 		lzop->compressed_size, NULL);
 	if (b == NULL) {
-		archive_set_error(&self->archive->archive,
+		archive_set_error(&f->archive->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT, "Truncated lzop data");
 		return (ARCHIVE_FATAL);
 	}
@@ -420,7 +420,7 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 	else
 		cksum = lzop->compressed_cksum;
 	if (cksum != lzop->compressed_cksum) {
-		archive_set_error(&self->archive->archive,
+		archive_set_error(&f->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Corrupted data");
 		return (ARCHIVE_FATAL);
 	}
@@ -445,15 +445,15 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 	case LZO_E_OK:
 		if (out_size == lzop->uncompressed_size)
 			break;
-		archive_set_error(&self->archive->archive,
+		archive_set_error(&f->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Corrupted data");
 		return (ARCHIVE_FATAL);
 	case LZO_E_OUT_OF_MEMORY:
-		archive_set_error(&self->archive->archive, ENOMEM,
+		archive_set_error(&f->archive->archive, ENOMEM,
 		    "lzop decompression failed: out of memory");
 		return (ARCHIVE_FATAL);
 	default:
-		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
+		archive_set_error(&f->archive->archive, ARCHIVE_ERRNO_MISC,
 		    "lzop decompression failed: %d", r);
 		return (ARCHIVE_FATAL);
 	}
@@ -467,12 +467,12 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 	else
 		cksum = lzop->uncompressed_cksum;
 	if (cksum != lzop->uncompressed_cksum) {
-		archive_set_error(&self->archive->archive,
+		archive_set_error(&f->archive->archive,
 		    ARCHIVE_ERRNO_MISC, "Corrupted data");
 		return (ARCHIVE_FATAL);
 	}
 
-	__archive_read_filter_consume(self->upstream, lzop->compressed_size);
+	__archive_read_filter_consume(f->upstream, lzop->compressed_size);
 	*p = lzop->out_block;
 	return ((ssize_t)out_size);
 }
@@ -481,9 +481,9 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
  * Clean up the decompressor.
  */
 static int
-lzop_filter_close(struct archive_read_filter *self)
+lzop_filter_close(struct archive_read_filter *f)
 {
-	struct lzop *lzop = self->data;
+	struct lzop *lzop = f->data;
 
 	free(lzop->out_block);
 	free(lzop);

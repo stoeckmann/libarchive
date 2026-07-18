@@ -98,11 +98,8 @@ shar_quote(struct archive_string *buf, const char *str, int in_shell)
 	}
 }
 
-/*
- * Set output format to 'shar' format.
- */
-int
-archive_write_set_format_shar(struct archive *_a)
+static int
+shar_set_format(struct archive *_a, int dump)
 {
 	struct archive_write *a = (struct archive_write *)_a;
 	struct shar *shar;
@@ -120,16 +117,32 @@ archive_write_set_format_shar(struct archive *_a)
 	}
 	archive_string_init(&shar->work);
 	archive_string_init(&shar->quoted_name);
+	if (dump) {
+		shar->dump = 1;
+		a->format_write_data = archive_write_shar_data_uuencode;
+		a->archive.archive_format = ARCHIVE_FORMAT_SHAR_DUMP;
+		a->archive.archive_format_name = "shar dump";
+	} else {
+		a->format_write_data = archive_write_shar_data_sed;
+		a->archive.archive_format = ARCHIVE_FORMAT_SHAR_BASE;
+		a->archive.archive_format_name = "shar";
+	}
 	a->format_data = shar;
 	a->format_name = "shar";
 	a->format_write_header = archive_write_shar_header;
 	a->format_close = archive_write_shar_close;
 	a->format_free = archive_write_shar_free;
-	a->format_write_data = archive_write_shar_data_sed;
 	a->format_finish_entry = archive_write_shar_finish_entry;
-	a->archive.archive_format = ARCHIVE_FORMAT_SHAR_BASE;
-	a->archive.archive_format_name = "shar";
 	return (ARCHIVE_OK);
+}
+
+/*
+ * Set output format to 'shar' format.
+ */
+int
+archive_write_set_format_shar(struct archive *a)
+{
+	return shar_set_format(a, 0);
 }
 
 /*
@@ -139,22 +152,9 @@ archive_write_set_format_shar(struct archive *_a)
  * and other extended file information.
  */
 int
-archive_write_set_format_shar_dump(struct archive *_a)
+archive_write_set_format_shar_dump(struct archive *a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct shar *shar;
-	int ret;
-
-	ret = archive_write_set_format_shar(&a->archive);
-	if (ret != ARCHIVE_OK)
-		return ret;
-
-	shar = a->format_data;
-	shar->dump = 1;
-	a->format_write_data = archive_write_shar_data_uuencode;
-	a->archive.archive_format = ARCHIVE_FORMAT_SHAR_DUMP;
-	a->archive.archive_format_name = "shar dump";
-	return (ARCHIVE_OK);
+	return shar_set_format(a, 1);
 }
 
 static int

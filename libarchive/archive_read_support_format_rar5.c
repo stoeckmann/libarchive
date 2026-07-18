@@ -514,10 +514,6 @@ uint8_t bf_is_last_block(const struct compressed_block_header* hdr) {
 	return (hdr->block_flags_u8 >> 6) & 1;
 }
 
-static inline struct rar5* get_context(struct archive_read* a) {
-	return (struct rar5*) a->format->data;
-}
-
 /* Convenience functions used by filter implementations. */
 static void circular_memcpy(uint8_t* dst, uint8_t* window, const ssize_t mask,
     int64_t start, int64_t end)
@@ -666,8 +662,8 @@ static int run_arm_filter(struct rar5* rar, struct filter_info* flt) {
 }
 
 static int run_filter(struct archive_read* a, struct filter_info* flt) {
+	struct rar5 *rar = a->format->data;
 	int ret;
-	struct rar5* rar = get_context(a);
 
 	clear_data_ready_stack(rar);
 	free(rar->cstate.filtered_buf);
@@ -776,8 +772,8 @@ static void push_window_data(struct archive_read* a, struct rar5* rar,
 }
 
 static int apply_filters(struct archive_read* a) {
+	struct rar5 *rar = a->format->data;
 	struct filter_info* flt;
-	struct rar5* rar = get_context(a);
 	int ret;
 
 	rar->cstate.all_filters_applied = 0;
@@ -2186,7 +2182,7 @@ static int process_head_main(struct archive_read* a, struct rar5* rar,
 }
 
 static int skip_unprocessed_bytes(struct archive_read* a) {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	int ret;
 
 	if(rar->file.bytes_remaining) {
@@ -2298,7 +2294,7 @@ static int process_base_block(struct archive_read* a,
 {
 	const size_t SMALLEST_RAR5_BLOCK_SIZE = 3;
 
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	uint32_t hdr_crc, computed_crc;
 	size_t raw_hdr_size = 0, hdr_size_len, hdr_size;
 	size_t header_id = 0;
@@ -2474,8 +2470,8 @@ static int process_base_block(struct archive_read* a,
 }
 
 static int skip_base_block(struct archive_read* a) {
+	struct rar5 *rar = a->format->data;
 	int ret;
-	struct rar5* rar = get_context(a);
 
 	/* Create a new local archive_entry structure that will be operated on
 	 * by header reader; operations on this archive_entry will be discarded.
@@ -2559,7 +2555,7 @@ fatal:
 static int rar5_read_header(struct archive_read *a,
     struct archive_entry *entry)
 {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	int ret;
 
 	/*
@@ -2734,10 +2730,10 @@ static int create_decode_tables(uint8_t* bit_length,
 static int decode_number(struct archive_read* a, struct decode_table* table,
     const uint8_t* p, uint16_t* num)
 {
+	struct rar5 *rar = a->format->data;
 	int i, bits, dist, ret;
 	uint16_t bitfield;
 	uint32_t pos;
-	struct rar5* rar = get_context(a);
 
 	if(ARCHIVE_OK != (ret = read_bits_16(a, rar, p, &bitfield))) {
 		return ret;
@@ -3064,10 +3060,10 @@ static int is_valid_filter_block_start(struct rar5* rar,
 /* The function will create a new filter, read its parameters from the input
  * stream and add it to the filter collection. */
 static int parse_filter(struct archive_read* ar, const uint8_t* p) {
+	struct rar5 *rar = ar->format->data;
 	uint32_t block_start, block_length;
 	uint16_t filter_type;
 	struct filter_info* filt = NULL;
-	struct rar5* rar = get_context(ar);
 	int ret;
 
 	/* Read the parameters from the input stream. */
@@ -3152,7 +3148,7 @@ static int decode_code_length(struct archive_read* a, struct rar5* rar,
 }
 
 static int copy_string(struct archive_read* a, int len, int dist) {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	const ssize_t cmask = rar->cstate.window_mask;
 	const uint64_t write_ptr = rar->cstate.write_ptr +
 	    rar->cstate.solid_offset;
@@ -3187,7 +3183,7 @@ static int copy_string(struct archive_read* a, int len, int dist) {
 }
 
 static int do_uncompress_block(struct archive_read* a, const uint8_t* p) {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	uint16_t num;
 	int ret;
 
@@ -3464,8 +3460,8 @@ static int scan_for_signature(struct archive_read* a) {
 /* This function will switch the multivolume archive file to another file,
  * i.e. from part03 to part 04. */
 static int advance_multivolume(struct archive_read* a) {
+	struct rar5 *rar = a->format->data;
 	int lret;
-	struct rar5* rar = get_context(a);
 
 	/* A small state machine that will skip unnecessary data, needed to
 	 * switch from one multivolume to another. Such skipping is needed if
@@ -3541,7 +3537,7 @@ static int advance_multivolume(struct archive_read* a) {
 static int merge_block(struct archive_read* a, ssize_t block_size,
     const uint8_t** p)
 {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	ssize_t cur_block_size, partial_offset = 0;
 	const uint8_t* lp;
 	int ret;
@@ -3659,8 +3655,8 @@ static int merge_block(struct archive_read* a, ssize_t block_size,
 }
 
 static int process_block(struct archive_read* a) {
+	struct rar5 *rar = a->format->data;
 	const uint8_t* p;
-	struct rar5* rar = get_context(a);
 	int ret;
 
 	/* If we don't have any data to be processed, this most probably means
@@ -3938,7 +3934,7 @@ static int push_data_ready(struct archive_read* a, struct rar5* rar,
  * */
 
 static int do_uncompress_file(struct archive_read* a) {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 	int ret;
 	int64_t max_end_pos;
 
@@ -4161,8 +4157,8 @@ static int do_unpack(struct archive_read* a, struct rar5* rar,
 }
 
 static int verify_checksums(struct archive_read* a) {
+	struct rar5 *rar = a->format->data;
 	int verify_crc;
-	struct rar5* rar = get_context(a);
 
 	/* Check checksums only when actually unpacking the data. There's no
 	 * need to calculate checksum when we're skipping data in solid archives
@@ -4276,8 +4272,8 @@ static void rar5_signature(char *buf) {
 
 static int rar5_read_data(struct archive_read *a, const void **buff,
     size_t *size, int64_t *offset) {
+	struct rar5 *rar = a->format->data;
 	int ret;
-	struct rar5* rar = get_context(a);
 
 	if (size)
 		*size = 0;
@@ -4341,7 +4337,7 @@ static int rar5_read_data(struct archive_read *a, const void **buff,
 }
 
 static int rar5_read_data_skip(struct archive_read *a) {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 
 	if(rar->main.solid && (rar->cstate.data_encrypted == 0)) {
 		/* In solid archives, instead of skipping the data, we need to
@@ -4407,7 +4403,7 @@ static int64_t rar5_seek_data(struct archive_read *a, int64_t offset,
 }
 
 static int rar5_cleanup(struct archive_read *a) {
-	struct rar5* rar = get_context(a);
+	struct rar5 *rar = a->format->data;
 
 	free(rar->cstate.window_buf);
 	free(rar->cstate.filtered_buf);
@@ -4432,7 +4428,7 @@ static int rar5_capabilities(struct archive_read * a) {
 
 static int rar5_has_encrypted_entries(struct archive_read *_a) {
 	if (_a && _a->format) {
-		struct rar5 *rar = (struct rar5 *)_a->format->data;
+		struct rar5 *rar = _a->format->data;
 		if (rar) {
 			return rar->has_encrypted_entries;
 		}

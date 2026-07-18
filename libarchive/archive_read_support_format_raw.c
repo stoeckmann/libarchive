@@ -55,8 +55,8 @@ static int	archive_read_format_raw_read_header(struct archive_read *,
 int
 archive_read_support_format_raw(struct archive *_a)
 {
-	struct raw_info *info;
 	struct archive_read *a = (struct archive_read *)_a;
+	struct raw_info *info;
 	int r;
 
 	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
@@ -108,9 +108,8 @@ static int
 archive_read_format_raw_read_header(struct archive_read *a,
     struct archive_entry *entry)
 {
-	struct raw_info *info;
+	struct raw_info *info = a->format->data;
 
-	info = (struct raw_info *)(a->format->data);
 	if (info->end_of_file)
 		return (ARCHIVE_EOF);
 
@@ -129,10 +128,8 @@ static int
 archive_read_format_raw_read_data(struct archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
-	struct raw_info *info;
+	struct raw_info *info = a->format->data;
 	ssize_t avail;
-
-	info = (struct raw_info *)(a->format->data);
 
 	/* Consume the bytes we read last time. */
 	if (info->unconsumed) {
@@ -175,7 +172,7 @@ archive_read_format_raw_read_data(struct archive_read *a,
 static int
 archive_read_format_raw_read_data_skip(struct archive_read *a)
 {
-	struct raw_info *info = (struct raw_info *)(a->format->data);
+	struct raw_info *info = a->format->data;
 
 	/* Consume the bytes we read last time. */
 	if (info->unconsumed) {
@@ -189,9 +186,8 @@ archive_read_format_raw_read_data_skip(struct archive_read *a)
 static int
 archive_read_format_raw_cleanup(struct archive_read *a)
 {
-	struct raw_info *info;
+	struct raw_info *info = a->format->data;
 
-	info = (struct raw_info *)(a->format->data);
 	free(info);
 	a->format->data = NULL;
 	return (ARCHIVE_OK);

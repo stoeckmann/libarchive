@@ -147,7 +147,7 @@ archive_write_ar_header(struct archive_write *a, struct archive_entry *entry)
 	int ret, append_fn;
 	char buff[60];
 	char *ss;
-	struct ar_w *ar;
+	struct ar_w *ar = a->format_data;
 	struct archive_string se;
 	const char *pathname;
 	const char *filename;
@@ -155,7 +155,6 @@ archive_write_ar_header(struct archive_write *a, struct archive_entry *entry)
 	int64_t size;
 
 	append_fn = 0;
-	ar = (struct ar_w *)a->format_data;
 	ar->is_strtab = 0;
 	filename = NULL;
 	filename_length = 0;
@@ -364,10 +363,9 @@ size:
 static ssize_t
 archive_write_ar_data(struct archive_write *a, const void *buff, size_t s)
 {
-	struct ar_w *ar;
+	struct ar_w *ar = a->format_data;
 	int ret;
 
-	ar = (struct ar_w *)a->format_data;
 	if (s > ar->entry_bytes_remaining)
 		s = (size_t)ar->entry_bytes_remaining;
 
@@ -400,9 +398,7 @@ archive_write_ar_data(struct archive_write *a, const void *buff, size_t s)
 static int
 archive_write_ar_free(struct archive_write *a)
 {
-	struct ar_w *ar;
-
-	ar = (struct ar_w *)a->format_data;
+	struct ar_w *ar = a->format_data;
 
 	if (ar == NULL)
 		return (ARCHIVE_OK);
@@ -420,14 +416,13 @@ archive_write_ar_free(struct archive_write *a)
 static int
 archive_write_ar_close(struct archive_write *a)
 {
-	struct ar_w *ar;
+	struct ar_w *ar = a->format_data;
 	int ret;
 
 	/*
 	 * If we haven't written anything yet, we need to write
 	 * the ar global header now to make it a valid ar archive.
 	 */
-	ar = (struct ar_w *)a->format_data;
 	if (!ar->wrote_global_header) {
 		ar->wrote_global_header = 1;
 		ret = __archive_write_output(a, "!<arch>\n", 8);
@@ -440,10 +435,8 @@ archive_write_ar_close(struct archive_write *a)
 static int
 archive_write_ar_finish_entry(struct archive_write *a)
 {
-	struct ar_w *ar;
+	struct ar_w *ar = a->format_data;
 	int ret;
-
-	ar = (struct ar_w *)a->format_data;
 
 	if (ar->entry_bytes_remaining != 0) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,

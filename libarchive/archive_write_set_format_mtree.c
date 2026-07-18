@@ -913,7 +913,7 @@ static int
 archive_write_mtree_header(struct archive_write *a,
     struct archive_entry *entry)
 {
-	struct mtree_writer *mtree= a->format_data;
+	struct mtree_writer *mtree = a->format_data;
 	struct mtree_entry *mtree_entry;
 	int r, r2;
 
@@ -1261,7 +1261,7 @@ archive_write_mtree_finish_entry(struct archive_write *a)
 static int
 archive_write_mtree_close(struct archive_write *a)
 {
-	struct mtree_writer *mtree= a->format_data;
+	struct mtree_writer *mtree = a->format_data;
 	int ret;
 
 	if (mtree->root != NULL) {
@@ -1278,7 +1278,7 @@ archive_write_mtree_close(struct archive_write *a)
 static ssize_t
 archive_write_mtree_data(struct archive_write *a, const void *buff, size_t n)
 {
-	struct mtree_writer *mtree= a->format_data;
+	struct mtree_writer *mtree = a->format_data;
 
 	if (n > mtree->entry_bytes_remaining)
 		n = (size_t)mtree->entry_bytes_remaining;
@@ -1297,7 +1297,7 @@ archive_write_mtree_data(struct archive_write *a, const void *buff, size_t n)
 static int
 archive_write_mtree_free(struct archive_write *a)
 {
-	struct mtree_writer *mtree= a->format_data;
+	struct mtree_writer *mtree = a->format_data;
 
 	if (mtree == NULL)
 		return (ARCHIVE_OK);
@@ -1317,7 +1317,7 @@ static int
 archive_write_mtree_options(struct archive_write *a, const char *key,
     const char *value)
 {
-	struct mtree_writer *mtree= a->format_data;
+	struct mtree_writer *mtree = a->format_data;
 	int keybit = 0;
 
 	switch (key[0]) {
@@ -1480,9 +1480,7 @@ archive_write_set_format_mtree_classic(struct archive *_a)
 		"archive_write_set_format_mtree_classic");
 	if (r == ARCHIVE_OK) {
 		struct archive_write *a = (struct archive_write *)_a;
-		struct mtree_writer *mtree;
-
-		mtree = (struct mtree_writer *)a->format_data;
+		struct mtree_writer *mtree = a->format_data;
 
 		/* Set to output a mtree archive in classic format. */
 		mtree->classic = 1;
@@ -2072,6 +2070,7 @@ get_path_component(char *name, size_t n, const char *fn)
 static int
 mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 {
+	struct mtree_writer *mtree = a->format_data;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	char name[_MAX_FNAME];/* Included null terminator size. */
 #elif defined(NAME_MAX) && NAME_MAX >= 255
@@ -2079,7 +2078,6 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 #else
 	char name[256];
 #endif
-	struct mtree_writer *mtree = (struct mtree_writer *)a->format_data;
 	struct mtree_entry *dent, *file, *np;
 	const char *fn, *p;
 	int l, r;

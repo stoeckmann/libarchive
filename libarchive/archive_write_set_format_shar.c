@@ -143,11 +143,13 @@ archive_write_set_format_shar_dump(struct archive *_a)
 {
 	struct archive_write *a = (struct archive_write *)_a;
 	struct shar *shar;
+	int ret;
 
-	int ret = archive_write_set_format_shar(&a->archive);
+	ret = archive_write_set_format_shar(&a->archive);
 	if (ret != ARCHIVE_OK)
 		return ret;
-	shar = (struct shar *)a->format_data;
+
+	shar = a->format_data;
 	shar->dump = 1;
 	a->format_write_data = archive_write_shar_data_uuencode;
 	a->archive.archive_format = ARCHIVE_FORMAT_SHAR_DUMP;
@@ -158,12 +160,11 @@ archive_write_set_format_shar_dump(struct archive *_a)
 static int
 archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 {
+	struct shar *shar = a->format_data;
 	const char *linkname;
 	const char *name;
 	char *p, *pp;
-	struct shar *shar;
 
-	shar = (struct shar *)a->format_data;
 	if (!shar->wrote_header) {
 		archive_strcat(&shar->work, "#!/bin/sh\n");
 		archive_strcat(&shar->work, "# This is a shell archive\n");
@@ -342,14 +343,13 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 static ssize_t
 archive_write_shar_data_sed(struct archive_write *a, const void *buff, size_t n)
 {
+	struct shar *shar = a->format_data;
 	static const size_t ensured = 65533;
-	struct shar *shar;
 	const char *src;
 	char *buf, *buf_end;
 	int ret;
 	size_t written = n;
 
-	shar = (struct shar *)a->format_data;
 	if (!shar->has_data || n == 0)
 		return (0);
 
@@ -474,12 +474,11 @@ static ssize_t
 archive_write_shar_data_uuencode(struct archive_write *a, const void *buff,
     size_t length)
 {
-	struct shar *shar;
+	struct shar *shar = a->format_data;
 	const char *src;
 	size_t n;
 	int ret;
 
-	shar = (struct shar *)a->format_data;
 	if (!shar->has_data)
 		return (ARCHIVE_OK);
 	src = (const char *)buff;
@@ -523,11 +522,10 @@ archive_write_shar_data_uuencode(struct archive_write *a, const void *buff,
 static int
 archive_write_shar_finish_entry(struct archive_write *a)
 {
+	struct shar *shar = a->format_data;
 	const char *g, *p, *u;
-	struct shar *shar;
 	int ret;
 
-	shar = (struct shar *)a->format_data;
 	if (shar->entry == NULL)
 		return (ARCHIVE_OK);
 
@@ -601,15 +599,13 @@ archive_write_shar_finish_entry(struct archive_write *a)
 static int
 archive_write_shar_close(struct archive_write *a)
 {
-	struct shar *shar;
+	struct shar *shar = a->format_data;
 	int ret;
 
 	/*
 	 * TODO: Accumulate list of directory names/modes and
 	 * fix them all up at end-of-archive.
 	 */
-
-	shar = (struct shar *)a->format_data;
 
 	/*
 	 * Only write the end-of-archive markers if the archive was
@@ -639,9 +635,8 @@ archive_write_shar_close(struct archive_write *a)
 static int
 archive_write_shar_free(struct archive_write *a)
 {
-	struct shar *shar;
+	struct shar *shar = a->format_data;
 
-	shar = (struct shar *)a->format_data;
 	if (shar == NULL)
 		return (ARCHIVE_OK);
 

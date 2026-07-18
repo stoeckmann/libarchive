@@ -215,12 +215,10 @@ bzip2_reader_init(struct archive_read_filter *self)
 static ssize_t
 bzip2_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	size_t decompressed;
 	const char *read_buf;
 	ssize_t ret;
-
-	state = (struct private_data *)self->data;
 
 	if (state->eof) {
 		*p = NULL;
@@ -338,10 +336,8 @@ bzip2_filter_read(struct archive_read_filter *self, const void **p)
 static int
 bzip2_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	int ret = ARCHIVE_OK;
-
-	state = (struct private_data *)self->data;
 
 	if (state->valid) {
 		switch (BZ2_bzDecompressEnd(&state->stream)) {

@@ -237,7 +237,7 @@ static int
 archive_compressor_zstd_options(struct archive_write_filter *f, const char *key,
     const char *value)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (strcmp(key, "compression-level") == 0) {
 		intmax_t level;
@@ -378,7 +378,7 @@ archive_compressor_zstd_options(struct archive_write_filter *f, const char *key,
 static int
 archive_compressor_zstd_open(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (data->out.dst == NULL) {
 		size_t bs = ZSTD_CStreamOutSize(), bpb;
@@ -426,7 +426,7 @@ static int
 archive_compressor_zstd_write(struct archive_write_filter *f, const void *buff,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return (drive_compressor(f, data, 0, buff, length));
 }
@@ -437,7 +437,7 @@ archive_compressor_zstd_write(struct archive_write_filter *f, const void *buff,
 static int
 archive_compressor_zstd_flush(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (data->frame_per_file && data->state == running) {
 		if (data->cur_frame_in > data->min_frame_in &&
@@ -454,7 +454,7 @@ archive_compressor_zstd_flush(struct archive_write_filter *f)
 static int
 archive_compressor_zstd_close(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (data->state == running)
 		data->state = finishing;
@@ -540,7 +540,7 @@ free_data(struct private_data *data)
 static int
 archive_compressor_zstd_open(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	struct archive_string as;
 	int r;
 
@@ -575,7 +575,7 @@ static int
 archive_compressor_zstd_write(struct archive_write_filter *f, const void *buff,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return __archive_write_program_write(f, data->pdata, buff, length);
 }
@@ -591,7 +591,7 @@ archive_compressor_zstd_flush(struct archive_write_filter *f)
 static int
 archive_compressor_zstd_close(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return __archive_write_program_close(f, data->pdata);
 }

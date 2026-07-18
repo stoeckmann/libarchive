@@ -333,7 +333,7 @@ static int
 archive_compressor_compress_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct private_data *state = (struct private_data *)f->data;
+	struct private_data *state = f->data;
 	int i;
 	int ratio;
 	int c, disp, ret;
@@ -421,7 +421,7 @@ archive_compressor_compress_write(struct archive_write_filter *f,
 static int
 archive_compressor_compress_close(struct archive_write_filter *f)
 {
-	struct private_data *state = (struct private_data *)f->data;
+	struct private_data *state = f->data;
 	int ret;
 
 	ret = output_code(f, state->cur_code);

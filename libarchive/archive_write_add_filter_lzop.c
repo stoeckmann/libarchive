@@ -207,7 +207,7 @@ static int
 archive_write_lzop_options(struct archive_write_filter *f, const char *key,
     const char *value)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 
 	if (strcmp(key, "compression-level") == 0) {
 		if (value == NULL || !(value[0] >= '1' && value[0] <= '9') ||
@@ -229,7 +229,7 @@ archive_write_lzop_options(struct archive_write_filter *f, const char *key,
 static int
 archive_write_lzop_open(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 
 	switch (data->compression_level) {
 	case 1:
@@ -288,7 +288,7 @@ archive_write_lzop_open(struct archive_write_filter *f)
 static int
 make_header(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 	int64_t t;
 	uint32_t checksum;
 
@@ -317,7 +317,7 @@ make_header(struct archive_write_filter *f)
 static int
 drive_compressor(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 	unsigned char *p;
 	const int block_info_bytes = 12;
 	int header_bytes, r;
@@ -392,7 +392,7 @@ static int
 archive_write_lzop_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 	const char *p = buff;
 	int r;
 
@@ -424,7 +424,7 @@ archive_write_lzop_write(struct archive_write_filter *f,
 static int
 archive_write_lzop_close(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 	const uint32_t endmark = 0;
 	int r;
 
@@ -454,7 +454,7 @@ free_data(struct write_lzop *data)
 static int
 archive_write_lzop_open(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 	struct archive_string as;
 	int r;
 
@@ -476,7 +476,7 @@ static int
 archive_write_lzop_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 
 	return __archive_write_program_write(f, data->pdata, buff, length);
 }
@@ -484,7 +484,7 @@ archive_write_lzop_write(struct archive_write_filter *f,
 static int
 archive_write_lzop_close(struct archive_write_filter *f)
 {
-	struct write_lzop *data = (struct write_lzop *)f->data;
+	struct write_lzop *data = f->data;
 
 	return __archive_write_program_close(f, data->pdata);
 }

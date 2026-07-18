@@ -394,7 +394,7 @@ archive_write_client_write(struct archive_write_filter *f,
     const void *_buff, size_t length)
 {
 	struct archive_write *a = (struct archive_write *)f->archive;
-        struct archive_none *state = (struct archive_none *)f->data;
+        struct archive_none *state = f->data;
 	const char *buff = (const char *)_buff;
 	ssize_t remaining, to_copy;
 	ssize_t bytes_written;
@@ -475,7 +475,7 @@ static int
 archive_write_client_free(struct archive_write_filter *f)
 {
 	struct archive_write *a = (struct archive_write *)f->archive;
-	struct archive_none *state = (struct archive_none *)f->data;
+	struct archive_none *state = f->data;
 
 	if (a->client_freer)
 		(*a->client_freer)(&a->archive, a->client_data);
@@ -502,7 +502,7 @@ static int
 archive_write_client_close(struct archive_write_filter *f)
 {
 	struct archive_write *a = (struct archive_write *)f->archive;
-	struct archive_none *state = (struct archive_none *)f->data;
+	struct archive_none *state = f->data;
 	ssize_t block_length;
 	ssize_t target_block_length;
 	ssize_t bytes_written;

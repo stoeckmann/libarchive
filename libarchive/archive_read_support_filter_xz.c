@@ -528,14 +528,13 @@ xz_lzma_bidder_init(struct archive_read_filter *self)
 static int
 lzip_init(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	const unsigned char *h;
 	lzma_filter filters[2];
 	unsigned char props[5];
 	uint32_t dicsize;
 	int log2dic, ret;
 
-	state = (struct private_data *)self->data;
 	h = __archive_read_filter_ahead(self->upstream, 6, NULL);
 	if (h == NULL)
 		return (ARCHIVE_FATAL);
@@ -583,12 +582,11 @@ lzip_init(struct archive_read_filter *self)
 static int
 lzip_tail(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	const unsigned char *f;
 	ssize_t avail_in;
 	int tail;
 
-	state = (struct private_data *)self->data;
 	if (state->lzip_ver == 0)
 		tail = 12;
 	else
@@ -646,13 +644,11 @@ lzip_tail(struct archive_read_filter *self)
 static ssize_t
 xz_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	size_t decompressed;
 	ssize_t avail_in;
 	int64_t member_in;
 	int ret;
-
-	state = (struct private_data *)self->data;
 
 	redo:
 	/* Empty our output buffer. */
@@ -734,9 +730,8 @@ xz_filter_read(struct archive_read_filter *self, const void **p)
 static int
 xz_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 
-	state = (struct private_data *)self->data;
 	lzma_end(&(state->stream));
 	free(state->out_block);
 	free(state);

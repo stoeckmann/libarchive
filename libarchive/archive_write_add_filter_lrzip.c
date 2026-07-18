@@ -97,7 +97,7 @@ static int
 archive_write_lrzip_options(struct archive_write_filter *f, const char *key,
     const char *value)
 {
-	struct write_lrzip *data = (struct write_lrzip *)f->data;
+	struct write_lrzip *data = f->data;
 
 	if (strcmp(key, "compression") == 0) {
 		if (value == NULL) {
@@ -140,7 +140,7 @@ archive_write_lrzip_options(struct archive_write_filter *f, const char *key,
 static int
 archive_write_lrzip_open(struct archive_write_filter *f)
 {
-	struct write_lrzip *data = (struct write_lrzip *)f->data;
+	struct write_lrzip *data = f->data;
 	struct archive_string as;
 	int r;
 
@@ -183,7 +183,7 @@ static int
 archive_write_lrzip_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct write_lrzip *data = (struct write_lrzip *)f->data;
+	struct write_lrzip *data = f->data;
 
 	return __archive_write_program_write(f, data->pdata, buff, length);
 }
@@ -191,7 +191,7 @@ archive_write_lrzip_write(struct archive_write_filter *f,
 static int
 archive_write_lrzip_close(struct archive_write_filter *f)
 {
-	struct write_lrzip *data = (struct write_lrzip *)f->data;
+	struct write_lrzip *data = f->data;
 
 	return __archive_write_program_close(f, data->pdata);
 }

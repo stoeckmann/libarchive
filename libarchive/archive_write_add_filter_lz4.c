@@ -169,7 +169,7 @@ static int
 archive_filter_lz4_options(struct archive_write_filter *f,
     const char *key, const char *value)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (strcmp(key, "compression-level") == 0) {
 		int val;
@@ -240,7 +240,7 @@ static ssize_t lz4_write_one_block(struct archive_write_filter *, const char *,
 static int
 archive_filter_lz4_open(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	size_t required_size;
 	static const size_t bkmap[] = { 64 * 1024, 256 * 1024, 1 * 1024 * 1024,
 			   4 * 1024 * 1024 };
@@ -304,7 +304,7 @@ static int
 archive_filter_lz4_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	int ret = ARCHIVE_OK;
 	const char *p;
 	size_t remaining;
@@ -350,7 +350,7 @@ archive_filter_lz4_write(struct archive_write_filter *f,
 static int
 archive_filter_lz4_close(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	int ret;
 
 	/* Finish compression cycle. */
@@ -380,7 +380,7 @@ archive_filter_lz4_close(struct archive_write_filter *f)
 static int
 lz4_write_stream_descriptor(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	uint8_t *sd;
 
 	sd = (uint8_t *)data->out;
@@ -410,7 +410,7 @@ static ssize_t
 lz4_write_one_block(struct archive_write_filter *f, const char *p,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	ssize_t r;
 
 	if (p == NULL) {
@@ -458,7 +458,7 @@ lz4_write_one_block(struct archive_write_filter *f, const char *p,
 static int
 drive_compressor(struct archive_write_filter *f, const char *p, size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (data->stream_checksum)
 		__archive_xxhash.XXH32_update(data->xxh32_state,
@@ -473,7 +473,7 @@ static int
 drive_compressor_independence(struct archive_write_filter *f, const char *p,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	unsigned int outsize;
 
 #ifdef HAVE_LZ4HC_H
@@ -523,7 +523,7 @@ static int
 drive_compressor_dependence(struct archive_write_filter *f, const char *p,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	int outsize;
 
 #define DICT_SIZE	(64 * 1024)
@@ -653,7 +653,7 @@ free_data(struct private_data *data)
 static int
 archive_filter_lz4_open(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	struct archive_string as;
 	int r;
 
@@ -685,7 +685,7 @@ static int
 archive_filter_lz4_write(struct archive_write_filter *f, const void *buff,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return __archive_write_program_write(f, data->pdata, buff, length);
 }
@@ -693,7 +693,7 @@ archive_filter_lz4_write(struct archive_write_filter *f, const void *buff,
 static int
 archive_filter_lz4_close(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return __archive_write_program_close(f, data->pdata);
 }

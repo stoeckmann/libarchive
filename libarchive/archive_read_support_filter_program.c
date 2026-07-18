@@ -450,12 +450,10 @@ program_bidder_init(struct archive_read_filter *self)
 static ssize_t
 program_filter_read(struct archive_read_filter *self, const void **buff)
 {
-	struct program_filter *state;
+	struct program_filter *state = self->data;
 	ssize_t bytes;
 	size_t total;
 	char *p;
-
-	state = (struct program_filter *)self->data;
 
 	total = 0;
 	p = state->out_buf;
@@ -479,10 +477,9 @@ program_filter_read(struct archive_read_filter *self, const void **buff)
 static int
 program_filter_close(struct archive_read_filter *self)
 {
-	struct program_filter	*state;
+	struct program_filter *state = self->data;
 	int e;
 
-	state = (struct program_filter *)self->data;
 	e = child_stop(self, state);
 
 	/* Release our private data. */

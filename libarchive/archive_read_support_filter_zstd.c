@@ -270,14 +270,12 @@ zstd_bidder_init(struct archive_read_filter *self)
 static ssize_t
 zstd_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	size_t decompressed;
 	ssize_t avail_in;
 	ZSTD_outBuffer out;
 	ZSTD_inBuffer in;
 	size_t ret;
-
-	state = (struct private_data *)self->data;
 
 	out = (ZSTD_outBuffer) { state->out_block, state->out_block_size, 0 };
 
@@ -346,9 +344,7 @@ zstd_filter_read(struct archive_read_filter *self, const void **p)
 static int
 zstd_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state;
-
-	state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 
 	ZSTD_freeDStream(state->dstream);
 	free(state->out_block);

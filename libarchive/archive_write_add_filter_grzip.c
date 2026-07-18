@@ -103,7 +103,7 @@ archive_write_grzip_options(struct archive_write_filter *f, const char *key,
 static int
 archive_write_grzip_open(struct archive_write_filter *f)
 {
-	struct write_grzip *data = (struct write_grzip *)f->data;
+	struct write_grzip *data = f->data;
 
 	return __archive_write_program_open(f, data->pdata, "grzip");
 }
@@ -112,7 +112,7 @@ static int
 archive_write_grzip_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct write_grzip *data = (struct write_grzip *)f->data;
+	struct write_grzip *data = f->data;
 
 	return __archive_write_program_write(f, data->pdata, buff, length);
 }
@@ -120,7 +120,7 @@ archive_write_grzip_write(struct archive_write_filter *f,
 static int
 archive_write_grzip_close(struct archive_write_filter *f)
 {
-	struct write_grzip *data = (struct write_grzip *)f->data;
+	struct write_grzip *data = f->data;
 
 	return __archive_write_program_close(f, data->pdata);
 }

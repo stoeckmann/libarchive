@@ -274,9 +274,7 @@ gzip_bidder_init(struct archive_read_filter *self)
 static int
 gzip_read_header(struct archive_read_filter *self, struct archive_entry *entry)
 {
-	struct private_data *state;
-
-	state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 
 	/* An mtime of 0 is considered invalid/missing. */
 	if (state->mtime != 0)
@@ -334,12 +332,10 @@ gzip_bidder_init(struct archive_read_filter *self)
 static int
 consume_header(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	ssize_t avail, max_in;
 	size_t len;
 	int ret;
-
-	state = (struct private_data *)self->data;
 
 	/* If this is a real header, consume it. */
 	len = peek_at_header(self->upstream, NULL, state);
@@ -404,10 +400,8 @@ consume_header(struct archive_read_filter *self)
 static int
 consume_trailer(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	const unsigned char *p;
-
-	state = (struct private_data *)self->data;
 
 	state->in_stream = 0;
 	switch (inflateEnd(&(state->stream))) {
@@ -436,12 +430,10 @@ consume_trailer(struct archive_read_filter *self)
 static ssize_t
 gzip_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	size_t decompressed;
 	ssize_t avail_in, max_in;
 	int ret;
-
-	state = (struct private_data *)self->data;
 
 	/* Empty our output buffer. */
 	state->stream.next_out = state->out_block;
@@ -520,10 +512,9 @@ gzip_filter_read(struct archive_read_filter *self, const void **p)
 static int
 gzip_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	int ret;
 
-	state = (struct private_data *)self->data;
 	ret = ARCHIVE_OK;
 
 	if (state->in_stream) {

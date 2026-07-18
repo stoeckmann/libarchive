@@ -441,8 +441,7 @@ static int
 uudecode_read_header(struct archive_read_filter *self, struct archive_entry *entry)
 {
 
-	struct uudecode *uudecode;
-	uudecode = (struct uudecode *)self->data;
+	struct uudecode *uudecode = self->data;
 
 	if (uudecode->mode_set != 0)
 		archive_entry_set_mode(entry, S_IFREG | uudecode->mode);
@@ -456,15 +455,13 @@ uudecode_read_header(struct archive_read_filter *self, struct archive_entry *ent
 static ssize_t
 uudecode_filter_read(struct archive_read_filter *self, const void **buff)
 {
-	struct uudecode *uudecode;
+	struct uudecode *uudecode = self->data;
 	const unsigned char *b, *d;
 	unsigned char *out;
 	ssize_t avail_in, ravail;
 	ssize_t used;
 	ssize_t total;
 	ssize_t len, llen, nl, namelen;
-
-	uudecode = (struct uudecode *)self->data;
 
 read_more:
 	d = __archive_read_filter_ahead(self->upstream, 1, &avail_in);
@@ -731,9 +728,8 @@ finish:
 static int
 uudecode_filter_close(struct archive_read_filter *self)
 {
-	struct uudecode *uudecode;
+	struct uudecode *uudecode = self->data;
 
-	uudecode = (struct uudecode *)self->data;
 	free(uudecode->in_buff);
 	free(uudecode->out_buff);
 	free(uudecode->name);

@@ -321,7 +321,7 @@ lz4_reader_init(struct archive_read_filter *self)
 static int
 lz4_allocate_out_block(struct archive_read_filter *self)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	size_t out_block_size = state->flags.block_maximum_size;
 	void *out_block;
 
@@ -348,7 +348,7 @@ lz4_allocate_out_block(struct archive_read_filter *self)
 static int
 lz4_allocate_out_block_for_legacy(struct archive_read_filter *self)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	size_t out_block_size = LEGACY_BLOCK_SIZE;
 	void *out_block;
 
@@ -374,7 +374,7 @@ lz4_allocate_out_block_for_legacy(struct archive_read_filter *self)
 static ssize_t
 lz4_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	ssize_t ret;
 
 	if (state->eof) {
@@ -461,7 +461,7 @@ lz4_filter_read(struct archive_read_filter *self, const void **p)
 static int
 lz4_filter_read_descriptor(struct archive_read_filter *self)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	const char *read_buf;
 	ssize_t bytes_remaining;
 	ssize_t descriptor_bytes;
@@ -565,7 +565,7 @@ malformed_error:
 static ssize_t
 lz4_filter_read_data_block(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	ssize_t compressed_size;
 	const char *read_buf;
 	int checksum_size;
@@ -707,7 +707,7 @@ truncated_error:
 static ssize_t
 lz4_filter_read_default_stream(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	const char *read_buf;
 	ssize_t ret;
 
@@ -761,7 +761,7 @@ lz4_filter_read_default_stream(struct archive_read_filter *self, const void **p)
 static ssize_t
 lz4_filter_read_legacy_stream(struct archive_read_filter *self, const void **p)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	uint32_t compressed;
 	const char *read_buf;
 	ssize_t ret;
@@ -817,10 +817,9 @@ lz4_filter_read_legacy_stream(struct archive_read_filter *self, const void **p)
 static int
 lz4_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	int ret = ARCHIVE_OK;
 
-	state = (struct private_data *)self->data;
 	free(state->xxh32_state);
 	free(state->out_block);
 	free(state);

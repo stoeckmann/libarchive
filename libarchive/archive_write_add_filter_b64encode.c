@@ -122,7 +122,7 @@ static int
 archive_filter_b64encode_options(struct archive_write_filter *f, const char *key,
     const char *value)
 {
-	struct private_b64encode *state = (struct private_b64encode *)f->data;
+	struct private_b64encode *state = f->data;
 
 	if (strcmp(key, "mode") == 0) {
 		int64_t val;
@@ -162,7 +162,7 @@ archive_filter_b64encode_options(struct archive_write_filter *f, const char *key
 static int
 archive_filter_b64encode_open(struct archive_write_filter *f)
 {
-	struct private_b64encode *state = (struct private_b64encode *)f->data;
+	struct private_b64encode *state = f->data;
 	size_t bs = 65536, bpb;
 
 	if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
@@ -229,7 +229,7 @@ static int
 archive_filter_b64encode_write(struct archive_write_filter *f, const void *buff,
     size_t length)
 {
-	struct private_b64encode *state = (struct private_b64encode *)f->data;
+	struct private_b64encode *state = f->data;
 	const unsigned char *p = buff;
 	int ret = ARCHIVE_OK;
 
@@ -274,7 +274,7 @@ archive_filter_b64encode_write(struct archive_write_filter *f, const void *buff,
 static int
 archive_filter_b64encode_close(struct archive_write_filter *f)
 {
-	struct private_b64encode *state = (struct private_b64encode *)f->data;
+	struct private_b64encode *state = f->data;
 
 	/* Flush remaining bytes. */
 	if (state->hold_len != 0)

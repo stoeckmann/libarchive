@@ -198,7 +198,7 @@ lzop_bidder_init(struct archive_read_filter *self)
 static int
 consume_header(struct archive_read_filter *self)
 {
-	struct read_lzop *state = (struct read_lzop *)self->data;
+	struct read_lzop *state = self->data;
 	const unsigned char *p, *_p;
 	unsigned checksum, flags, len, method, version;
 
@@ -307,7 +307,7 @@ corrupted:
 static int
 consume_block_info(struct archive_read_filter *self)
 {
-	struct read_lzop *state = (struct read_lzop *)self->data;
+	struct read_lzop *state = self->data;
 	const unsigned char *p;
 	unsigned flags = state->flags;
 
@@ -359,7 +359,7 @@ corrupted:
 static ssize_t
 lzop_filter_read(struct archive_read_filter *self, const void **p)
 {
-	struct read_lzop *state = (struct read_lzop *)self->data;
+	struct read_lzop *state = self->data;
 	const void *b;
 	lzo_uint out_size;
 	uint32_t cksum;
@@ -483,7 +483,7 @@ lzop_filter_read(struct archive_read_filter *self, const void **p)
 static int
 lzop_filter_close(struct archive_read_filter *self)
 {
-	struct read_lzop *state = (struct read_lzop *)self->data;
+	struct read_lzop *state = self->data;
 
 	free(state->out_block);
 	free(state);

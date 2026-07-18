@@ -138,7 +138,7 @@ static int
 archive_compressor_bzip2_options(struct archive_write_filter *f,
     const char *key, const char *value)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	if (strcmp(key, "compression-level") == 0) {
 		if (value == NULL || !(value[0] >= '0' && value[0] <= '9') ||
@@ -180,7 +180,7 @@ static int drive_compressor(struct archive_write_filter *,
 static int
 archive_compressor_bzip2_open(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	int ret;
 
 	if (data->compressed == NULL) {
@@ -250,7 +250,7 @@ static int
 archive_compressor_bzip2_write(struct archive_write_filter *f,
     const void *buff, size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	/* Compress input data to output buffer */
 	SET_NEXT_IN(data, buff);
@@ -267,7 +267,7 @@ archive_compressor_bzip2_write(struct archive_write_filter *f,
 static int
 archive_compressor_bzip2_close(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	int ret;
 
 	/* Finish compression cycle. */
@@ -364,7 +364,7 @@ free_data(struct private_data *data)
 static int
 archive_compressor_bzip2_open(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 	struct archive_string as;
 	int r;
 
@@ -386,7 +386,7 @@ static int
 archive_compressor_bzip2_write(struct archive_write_filter *f, const void *buff,
     size_t length)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return __archive_write_program_write(f, data->pdata, buff, length);
 }
@@ -394,7 +394,7 @@ archive_compressor_bzip2_write(struct archive_write_filter *f, const void *buff,
 static int
 archive_compressor_bzip2_close(struct archive_write_filter *f)
 {
-	struct private_data *data = (struct private_data *)f->data;
+	struct private_data *data = f->data;
 
 	return __archive_write_program_close(f, data->pdata);
 }

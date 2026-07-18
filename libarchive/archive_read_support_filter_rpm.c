@@ -220,10 +220,8 @@ skip_prologue(struct archive_read_filter *self)
 static ssize_t
 rpm_filter_read(struct archive_read_filter *self, const void **buff)
 {
-	struct rpm *rpm;
+	struct rpm *rpm = self->data;
 	ssize_t r;
-
-	rpm = (struct rpm *)self->data;
 
 	if (!rpm->data_reached) {
 		r = skip_prologue(self);
@@ -242,9 +240,8 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 static int
 rpm_filter_close(struct archive_read_filter *self)
 {
-	struct rpm *rpm;
+	struct rpm *rpm = self->data;
 
-	rpm = (struct rpm *)self->data;
 	free(rpm);
 
 	return (ARCHIVE_OK);

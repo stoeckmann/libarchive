@@ -238,7 +238,7 @@ compress_bidder_init(struct archive_read_filter *self)
 static int
 compress_filter_init(struct archive_read_filter *self)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	int code;
 
 	state->initialized = 1;
@@ -281,11 +281,10 @@ compress_filter_init(struct archive_read_filter *self)
 static ssize_t
 compress_filter_read(struct archive_read_filter *self, const void **pblock)
 {
-	struct private_data *state;
+	struct private_data *state = self->data;
 	unsigned char *p, *start, *end;
 	int ret;
 
-	state = (struct private_data *)self->data;
 	if (!state->initialized) {
 		ret = compress_filter_init(self);
 		if (ret != ARCHIVE_OK)
@@ -320,7 +319,7 @@ compress_filter_read(struct archive_read_filter *self, const void **pblock)
 static int
 compress_filter_close(struct archive_read_filter *self)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 
 	free(state->out_block);
 	free(state);
@@ -335,7 +334,7 @@ compress_filter_close(struct archive_read_filter *self)
 static int
 next_code(struct archive_read_filter *self)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	int code, newcode;
 
 again:
@@ -420,7 +419,7 @@ again:
 static int
 getbits(struct archive_read_filter *self, int n)
 {
-	struct private_data *state = (struct private_data *)self->data;
+	struct private_data *state = self->data;
 	int code;
 	ssize_t ret;
 	static const int mask[] = {

@@ -340,7 +340,7 @@ __archive_write_filters_flush(struct archive_write *a)
 }
 
 int
-__archive_write_nulls(struct archive_write *a, size_t length)
+__archive_write_nulls(struct archive_write *a, uint64_t length)
 {
 	if (length == 0)
 		return (ARCHIVE_OK);

@@ -63,7 +63,7 @@ struct uu {
 };
 
 static int	uudecode_bidder_bid(struct archive_read_filter_bidder *,
-		    struct archive_read_filter *filter);
+		    struct archive_read_filter *f);
 static int	uudecode_bidder_init(struct archive_read_filter *);
 
 static int	uudecode_read_header(struct archive_read_filter *,

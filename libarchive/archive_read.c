@@ -482,7 +482,7 @@ int
 archive_read_open1(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter *filter, *tmp;
+	struct archive_read_filter *f, *tmp;
 	int slot, e = ARCHIVE_OK;
 
 	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
@@ -506,23 +506,23 @@ archive_read_open1(struct archive *_a)
 		}
 	}
 
-	filter = calloc(1, sizeof(*filter));
-	if (filter == NULL)
+	f = calloc(1, sizeof(*f));
+	if (f == NULL)
 		return (ARCHIVE_FATAL);
-	filter->bidder = NULL;
-	filter->upstream = NULL;
-	filter->archive = a;
-	filter->data = a->client.dataset[0].data;
-	filter->vtable = &none_reader_vtable;
-	filter->name = "none";
-	filter->code = ARCHIVE_FILTER_NONE;
-	filter->can_skip = 1;
-	filter->can_seek = 1;
+	f->bidder = NULL;
+	f->upstream = NULL;
+	f->archive = a;
+	f->data = a->client.dataset[0].data;
+	f->vtable = &none_reader_vtable;
+	f->name = "none";
+	f->code = ARCHIVE_FILTER_NONE;
+	f->can_skip = 1;
+	f->can_seek = 1;
 
 	a->client.dataset[0].begin_position = 0;
 	if (!a->filter || !a->bypass_filter_bidding)
 	{
-		a->filter = filter;
+		a->filter = f;
 		/* Build out the input pipeline. */
 		e = choose_filters(a);
 		if (e < ARCHIVE_WARN) {
@@ -536,7 +536,7 @@ archive_read_open1(struct archive *_a)
 		tmp = a->filter;
 		while (tmp->upstream)
 			tmp = tmp->upstream;
-		tmp->upstream = filter;
+		tmp->upstream = f;
 	}
 
 	if (!a->format)
@@ -571,7 +571,7 @@ choose_filters(struct archive_read *a)
 {
 	int number_bidders, i, bid, best_bid, number_filters;
 	struct archive_read_filter_bidder *bidder, *best_bidder;
-	struct archive_read_filter *filter;
+	struct archive_read_filter *f;
 	ssize_t avail;
 	int r;
 
@@ -603,13 +603,13 @@ choose_filters(struct archive_read *a)
 			return (ARCHIVE_OK);
 		}
 
-		filter = calloc(1, sizeof(*filter));
-		if (filter == NULL)
+		f = calloc(1, sizeof(*f));
+		if (f == NULL)
 			return (ARCHIVE_FATAL);
-		filter->bidder = best_bidder;
-		filter->archive = a;
-		filter->upstream = a->filter;
-		a->filter = filter;
+		f->bidder = best_bidder;
+		f->archive = a;
+		f->upstream = a->filter;
+		a->filter = f;
 		r = (best_bidder->vtable->init)(a->filter);
 		if (r != ARCHIVE_OK) {
 			__archive_read_free_filters(a);
@@ -1563,7 +1563,7 @@ __archive_read_consume(struct archive_read *a, int64_t request)
 }
 
 int64_t
-__archive_read_filter_consume(struct archive_read_filter * filter,
+__archive_read_filter_consume(struct archive_read_filter *f,
     int64_t request)
 {
 	int64_t skipped;
@@ -1573,13 +1573,13 @@ __archive_read_filter_consume(struct archive_read_filter * filter,
 	if (request == 0)
 		return 0;
 
-	skipped = advance_file_pointer(filter, request);
+	skipped = advance_file_pointer(f, request);
 	if (skipped == request)
 		return (skipped);
 	/* We hit EOF before we satisfied the skip request. */
 	if (skipped < 0)  /* Map error code to 0 for error message below. */
 		skipped = 0;
-	archive_set_error(&filter->archive->archive,
+	archive_set_error(&f->archive->archive,
 	    ARCHIVE_ERRNO_MISC,
 	    "Truncated input file (needed %jd bytes, only %jd available)",
 	    (intmax_t)request, (intmax_t)skipped);

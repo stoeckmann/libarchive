@@ -526,7 +526,7 @@ read_more:
 			return (ARCHIVE_FATAL);
 		}
 		llen = len;
-		if ((nl == 0) && (uu->state != ST_UUEND)) {
+		if ((nl == 0) && (uu->state != ST_UUEND || len < 3)) {
 			if (total == 0 && ravail <= 0) {
 				/* There is nothing more to read, fail */
 				archive_set_error(&f->archive->archive,
@@ -713,6 +713,12 @@ read_more:
 			}
 			break;
 		}
+	}
+	if (total == 0 && ravail > 0) {
+		/* Do not return 0; it means end-of-file.
+		 * We should try to read more bytes. */
+		__archive_read_filter_consume(f->upstream, ravail);
+		goto read_more;
 	}
 finish:
 	if (ravail < avail_in)

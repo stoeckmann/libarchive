@@ -658,7 +658,7 @@ read_more:
 			}
 			break;
 		case ST_UUEND:
-			if (len - nl == 3 && memcmp(b, "end ", 3) == 0)
+			if (len - nl == 3 && memcmp(b, "end", 3) == 0)
 				uu->state = ST_FIND_HEAD;
 			else {
 				archive_set_error(&f->archive->archive,

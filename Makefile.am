@@ -1473,7 +1473,7 @@ bsdcpio_DEPENDENCIES = libarchive.la libarchive_fe.la
 
 
 if STATIC_BSDCPIO
-bsdcpio_ldstatic= -static
+bsdcpio_ldstatic= -all-static
 bsdcpio_ccstatic= -DLIBARCHIVE_STATIC
 else
 bsdcpio_ldstatic=
@@ -1631,7 +1631,7 @@ bsdcat_DEPENDENCIES = libarchive.la libarchive_fe.la
 
 
 if STATIC_BSDCAT
-bsdcat_ldstatic= -static
+bsdcat_ldstatic= -all-static
 bsdcat_ccstatic= -DLIBARCHIVE_STATIC
 else
 bsdcat_ldstatic=
@@ -1743,7 +1743,7 @@ bsdunzip_DEPENDENCIES = libarchive.la libarchive_fe.la
 
 
 if STATIC_BSDUNZIP
-bsdunzip_ldstatic= -static
+bsdunzip_ldstatic= -all-static
 bsdunzip_ccstatic= -DLIBARCHIVE_STATIC
 else
 bsdunzip_ldstatic=

@@ -394,6 +394,16 @@ AC_CHECK_HEADERS([winioctl.h],[],[],
 ]])
 
 dnl Checks for libraries.
+AC_SEARCH_LIBS([pthread_create], [pthread], [
+  AS_CASE([$CFLAGS],
+    [*"-pthread"*], [],
+    [
+      CFLAGS="$CFLAGS -pthread"
+      LIBS="-pthread $LIBS"
+    ]
+  )
+])
+
 AC_ARG_WITH([zlib],
   AS_HELP_STRING([--without-zlib], [Don't build support for gzip through zlib]))
 
@@ -449,6 +459,11 @@ if test "x$with_bz2lib" != "xno"; then
 fi
 
 PKG_PROG_PKG_CONFIG
+AS_CASE([$LDFLAGS],
+  [*"-all-static"* | *"-static"*], [
+    PKG_CONFIG="$PKG_CONFIG --static"
+  ]
+)
 
 AC_ARG_WITH([libb2],
   AS_HELP_STRING([--without-libb2], [Don't build support for BLAKE2 through libb2]))
@@ -468,24 +483,29 @@ AC_ARG_WITH([iconv],
   AS_HELP_STRING([--without-iconv], [Don't try to link against iconv]))
 
 if test "x$with_iconv" != "xno"; then
-  AM_ICONV
-  AC_CHECK_HEADERS([iconv.h],[],[],[#include <stdlib.h>])
-  if test "x$am_cv_func_iconv" = "xyes"; then
-    AC_CHECK_HEADERS([localcharset.h])
-    LIBS="${LIBS} ${LIBICONV}"
-    if test -n "$LIBICONV"; then
-      AC_DEFINE([HAVE_LIBICONV], [1], [Define to 1 if you have the 'iconv' library (-liconv).])
+  PKG_CHECK_MODULES(ICONV_PC, [iconv], [
+    LIBS="${ICONV_PC_LIBS} ${LIBS}"
+    CPPFLAGS="${CPPFLAGS} ${ICONV_PC_CFLAGS}"
+    LIBSREQUIRED="$LIBSREQUIRED${LIBSREQUIRED:+ }${LIBICONV_PC_LIBS}"
+    have_iconv=yes
+  ], [
+    saved_LIBS="$LIBS"
+    AC_SEARCH_LIBS([iconv_open], [iconv], [
+      have_iconv=yes
+    ], [
+      LIBS="$saved_LIBS"
+    ])
+  ])
 
-      dnl Most platforms do not provide iconv.pc, but MSYS2 MinGW does.
-      dnl We add it to our Requires.private only if it exists.
-      PKG_CHECK_MODULES(ICONV_PC, [iconv], [
-        LIBSREQUIRED="$LIBSREQUIRED${LIBSREQUIRED:+ }iconv"
-      ], [true])
-    fi
+  if test "xhave_iconv=yes" = "xyes"; then
+    AC_DEFINE([HAVE_LIBICONV], [1], [Define to 1 if you have the 'iconv' library (-liconv).])
+    AC_CHECK_HEADERS([iconv.h localcharset.h], [], [], [#include <stdlib.h>])
     AC_CHECK_FUNCS([locale_charset])
     if test "x$ac_cv_func_locale_charset" != "xyes"; then
       dnl If locale_charset() is not in libiconv, we have to find libcharset.
-      AC_CHECK_LIB(charset,locale_charset)
+      AC_SEARCH_LIBS([locale_charset], [charset], [
+        AC_DEFINE([HAVE_LOCALE_CHARSET], [1], [Define if locale_charset is available.])
+      ])
     fi
   fi
 fi
@@ -514,13 +534,14 @@ AC_ARG_WITH([lzma],
   AS_HELP_STRING([--without-lzma], [Don't build support for xz through lzma]))
 
 if test "x$with_lzma" != "xno"; then
-  PKG_PROG_PKG_CONFIG
   PKG_CHECK_MODULES(LZMA_PC, [liblzma], [
     CPPFLAGS="${CPPFLAGS} ${LZMA_PC_CFLAGS}"
     LIBS="${LIBS} ${LZMA_PC_LIBS}"
     AC_DEFINE(HAVE_LIBLZMA, [1], [Define to 1 if you have the 'lzma' library.])
   ], [
-    AC_CHECK_LIB(lzma,lzma_stream_decoder)
+    AC_SEARCH_LIBS([lzma_stream_decoder], [lzma], [
+      AC_DEFINE(HAVE_LIBLZMA, [1], [Define to 1 if you have the 'lzma' library.])
+    ])
   ])
   AC_CHECK_HEADERS([lzma.h])
 
@@ -570,13 +591,17 @@ AC_ARG_WITH([expat],
   AS_HELP_STRING([--without-expat], [Don't build support for xar through expat]))
 
 if test "x$with_xml2" != "xno"; then
-  PKG_PROG_PKG_CONFIG
   PKG_CHECK_MODULES(LIBXML2_PC, [libxml-2.0], [
     CPPFLAGS="${CPPFLAGS} ${LIBXML2_PC_CFLAGS}"
-    LIBS="${LIBS} ${LIBXML2_PC_LIBS}"
-    AC_CHECK_LIB(xml2,xmlInitParser,[true],AC_MSG_FAILURE(Missing xml2 library))
+    LIBS="${LIBXML2_PC_LIBS} ${LIBS}"
+    AC_DEFINE(HAVE_LIBXML2, [1], [Define to 1 if you have the 'xml2' library.])
   ], [
-    AC_CHECK_LIB(xml2,xmlInitParser)
+    saved_LIBS="$LIBS"
+    AC_SEARCH_LIBS([xmlInitParser], [xml2], [
+      AC_DEFINE(HAVE_LIBXML2, [1], [Define to 1 if you have the 'xml2' library.])
+    ], [
+      LIBS="$saved_LIBS"
+    ])
   ])
   AC_CHECK_HEADERS([libxml/xmlreader.h libxml/xmlwriter.h libxml/xmlversion.h])
 fi

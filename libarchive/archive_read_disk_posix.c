@@ -380,9 +380,10 @@ const char *
 archive_read_disk_gname(struct archive *_a, la_int64_t gid)
 {
 	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	if (ARCHIVE_OK != __archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-		ARCHIVE_STATE_ANY, "archive_read_disk_gname"))
-		return (NULL);
+
+	archive_check_magic2(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "archive_read_disk_gname");
+
 	if (a->lookup_gname == NULL)
 		return (NULL);
 	return ((*a->lookup_gname)(a->lookup_gname_data, gid));
@@ -392,9 +393,10 @@ const char *
 archive_read_disk_uname(struct archive *_a, la_int64_t uid)
 {
 	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	if (ARCHIVE_OK != __archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-		ARCHIVE_STATE_ANY, "archive_read_disk_uname"))
-		return (NULL);
+
+	archive_check_magic2(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "archive_read_disk_uname");
+
 	if (a->lookup_uname == NULL)
 		return (NULL);
 	return ((*a->lookup_uname)(a->lookup_uname_data, uid));

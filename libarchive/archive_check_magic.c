@@ -123,7 +123,7 @@ write_all_states(char *buff, unsigned int states)
 }
 
 /*
- * Check magic value and current state.
+ * Set archive error according to encountered issue.
  *   Magic value mismatches are fatal and result in calls to abort().
  *   State mismatches return ARCHIVE_FATAL.
  *   Otherwise, returns ARCHIVE_OK.
@@ -131,8 +131,8 @@ write_all_states(char *buff, unsigned int states)
  * This is designed to catch serious programming errors that violate
  * the libarchive API.
  */
-int
-__archive_check_magic(struct archive *a, unsigned int magic,
+static void
+set_archive_error(struct archive *a, unsigned int magic,
     unsigned int state, const char *function)
 {
 	char states1[64];
@@ -160,7 +160,6 @@ __archive_check_magic(struct archive *a, unsigned int magic,
 		    function,
 		    handle_type);
 		a->state = ARCHIVE_STATE_FATAL;
-		return (ARCHIVE_FATAL);
 	}
 
 	if ((a->state & state) == 0) {
@@ -177,7 +176,39 @@ __archive_check_magic(struct archive *a, unsigned int magic,
 			    states2);
 		}
 		a->state = ARCHIVE_STATE_FATAL;
-		return (ARCHIVE_FATAL);
 	}
-	return (ARCHIVE_OK);
+}
+
+/*
+ * Set archive error according to encountered issue and return ARCHIVE_FATAL.
+ *   Magic value mismatches are fatal and result in calls to abort().
+ *   State mismatches return ARCHIVE_FATAL.
+ *   Otherwise, returns ARCHIVE_OK.
+ *
+ * This is designed to catch serious programming errors that violate
+ * the libarchive API.
+ */
+int
+__archive_check_magic_fatal(struct archive *a, unsigned int magic,
+    unsigned int state, const char *function)
+{
+	set_archive_error(a, magic, state, function);
+	return (ARCHIVE_FATAL);
+}
+
+/*
+ * Set archive error according to encountered issue and return NULL.
+ *   Magic value mismatches are fatal and result in calls to abort().
+ *   State mismatches return ARCHIVE_FATAL.
+ *   Otherwise, returns ARCHIVE_OK.
+ *
+ * This is designed to catch serious programming errors that violate
+ * the libarchive API.
+ */
+const void *
+__archive_check_magic_null(struct archive *a, unsigned int magic,
+    unsigned int state, const char *function)
+{
+	set_archive_error(a, magic, state, function);
+	return (NULL);
 }

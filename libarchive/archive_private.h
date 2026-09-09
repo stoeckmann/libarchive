@@ -172,16 +172,65 @@ struct archive {
 	size_t		  read_data_requested;
 };
 
-/* Check magic value and state; return(ARCHIVE_FATAL) if it isn't valid. */
-int	__archive_check_magic(struct archive *, unsigned int magic,
+/* Set error message and return (ARCHIVE_FATAL). */
+int	__archive_check_magic_fatal(struct archive *, unsigned int magic,
 	    unsigned int state, const char *func);
-#define	archive_check_magic(a, expected_magic, allowed_states, function_name) \
+/* Set error message and return (NULL). */
+const void *__archive_check_magic_null(struct archive *, unsigned int magic,
+	    unsigned int state, const char *func);
+#define __archive_valid_magic(magic) \
+	((magic) == ARCHIVE_WRITE_MAGIC || \
+	(magic) == ARCHIVE_READ_MAGIC || \
+	(magic) == ARCHIVE_WRITE_DISK_MAGIC || \
+	(magic) == ARCHIVE_READ_DISK_MAGIC || \
+	(magic) == ARCHIVE_MATCH_MAGIC)
+#define __archive_valid_state(state) \
+	(((state) & ~(ARCHIVE_STATE_NEW | \
+	ARCHIVE_STATE_OPEN | \
+	ARCHIVE_STATE_HEADER | \
+	ARCHIVE_STATE_DATA | \
+	ARCHIVE_STATE_DATA_RECOVERY | \
+	ARCHIVE_STATE_EOF | \
+	ARCHIVE_STATE_CLOSED | \
+	ARCHIVE_STATE_FATAL)) == 0 || \
+	(state) == ARCHIVE_STATE_ANY || \
+	(state) == (ARCHIVE_STATE_ANY|ARCHIVE_STATE_FATAL))
+#define ARCHIVE_MAGIC_FATAL 0
+#define ARCHIVE_MAGIC_NULL 1
+#define	__archive_check_magic(a, expected_magic, states, function_name, fct) \
 	do { \
-		int magic_test = __archive_check_magic((a), (expected_magic), \
-			(allowed_states), (function_name)); \
-		if (magic_test == ARCHIVE_FATAL) \
-			return ARCHIVE_FATAL; \
+		int ck1[2 * (__archive_valid_magic(expected_magic)) - 1]; \
+		int ck2[2 * (__archive_valid_state(states)) - 1]; \
+		(void)ck1; \
+		(void)ck2; \
+		\
+		if (a == NULL || (a)->magic != (expected_magic) || \
+		    ((a)->state & states) == 0) \
+			return (fct)((a), \
+			    (expected_magic), (states), \
+			    (function_name)); \
 	} while (0)
+#define	archive_check_magic3(a, expected_magic, states, function_name) \
+	do { \
+		int ck1[2 * (__archive_valid_magic(expected_magic)) - 1]; \
+		int ck2[2 * (__archive_valid_state(states)) - 1]; \
+		(void)ck1; \
+		(void)ck2; \
+		\
+		if (a == NULL || (a)->magic != (expected_magic) || \
+		    ((a)->state & states) == 0) { \
+			(void)__archive_check_magic_fatal((a), \
+			    (expected_magic), (states), \
+			    (function_name)); \
+			return; \
+		} \
+	} while (0)
+#define	archive_check_magic2(a, magic, states, function_name) \
+	__archive_check_magic((a), (magic), (states), (function_name), \
+	    __archive_check_magic_null)
+#define	archive_check_magic(a, magic, states, function_name) \
+	__archive_check_magic((a), (magic), (states), (function_name), \
+	    __archive_check_magic_fatal)
 
 __LA_NORETURN void	__archive_errx(int retvalue, const char *msg);
 

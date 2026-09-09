@@ -38,12 +38,10 @@ parse_option(char **str,
 int
 _archive_set_option(struct archive *a,
     const char *m, const char *o, const char *v,
-    unsigned int magic, const char *fn, option_handler use_option)
+    option_handler use_option)
 {
 	const char *mp, *op, *vp;
 	int r;
-
-	archive_check_magic(a, magic, ARCHIVE_STATE_NEW, fn);
 
 	mp = (m != NULL && m[0] != '\0') ? m : NULL;
 	op = (o != NULL && o[0] != '\0') ? o : NULL;
@@ -99,13 +97,11 @@ _archive_set_either_option(struct archive *a, const char *m, const char *o, cons
 
 int
 _archive_set_options(struct archive *a, const char *options,
-    unsigned int magic, const char *fn, option_handler use_option)
+    option_handler use_option)
 {
 	int allok = 1, anyok = 0, ignore_mod_err = 0, r;
 	char *data, *s;
 	const char *mod, *opt, *val;
-
-	archive_check_magic(a, magic, ARCHIVE_STATE_NEW, fn);
 
 	if (options == NULL || options[0] == '\0')
 		return ARCHIVE_OK;

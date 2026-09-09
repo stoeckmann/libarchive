@@ -39,35 +39,39 @@ int
 archive_write_set_format_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_option(a, m, o, v,
-	    ARCHIVE_WRITE_MAGIC, "archive_write_set_format_option",
-	    archive_set_format_option);
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_write_set_format_option");
+
+	return _archive_set_option(a, m, o, v, archive_set_format_option);
 }
 
 int
 archive_write_set_filter_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_option(a, m, o, v,
-	    ARCHIVE_WRITE_MAGIC, "archive_write_set_filter_option",
-	    archive_set_filter_option);
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_write_set_filter_option");
+
+	return _archive_set_option(a, m, o, v, archive_set_filter_option);
 }
 
 int
 archive_write_set_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_option(a, m, o, v,
-	    ARCHIVE_WRITE_MAGIC, "archive_write_set_option",
-	    archive_set_option);
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_write_set_option");
+
+	return _archive_set_option(a, m, o, v, archive_set_option);
 }
 
 int
 archive_write_set_options(struct archive *a, const char *options)
 {
-	return _archive_set_options(a, options,
-	    ARCHIVE_WRITE_MAGIC, "archive_write_set_options",
-	    archive_set_option);
+	archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_write_set_options");
+
+	return _archive_set_options(a, options, archive_set_option);
 }
 
 static int

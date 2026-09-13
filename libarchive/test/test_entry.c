@@ -931,7 +931,7 @@ DEFINE_TEST(test_entry)
 	/*
 	 * Exercise the character-conversion logic, if we can.
 	 */
-	if (NULL == setlocale(LC_ALL, "en_US.UTF-8")) {
+	if (!setTestLocale("en_US.UTF-8", "UTF-8")) {
 		skipping("Can't exercise charset-conversion logic without"
 			" a suitable locale.");
 	} else {
@@ -967,7 +967,7 @@ DEFINE_TEST(test_entry)
 
 	l = 0x12345678L;
 	wc = (wchar_t)l; /* Wide character too big for UTF-8. */
-	if (NULL == setlocale(LC_ALL, "C") || (long)wc != l) {
+	if (!setTestLocale("C", NULL) || (long)wc != l) {
 		skipping("Testing charset conversion failure requires 32-bit wchar_t and support for \"C\" locale.");
 	} else {
 		/*

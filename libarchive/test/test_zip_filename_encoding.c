@@ -33,7 +33,7 @@ DEFINE_TEST(test_zip_filename_encoding_UTF8)
 	char buff[4096];
 	size_t used;
 
-	if (NULL == setlocale(LC_ALL, "en_US.UTF-8")) {
+	if (!setTestLocale("en_US.UTF-8", "UTF-8")) {
 		skipping("en_US.UTF-8 locale not available on this system.");
 		return;
 	}
@@ -124,7 +124,7 @@ DEFINE_TEST(test_zip_filename_encoding_KOI8R)
 	char buff[4096];
 	size_t used;
 
-	if (NULL == setlocale(LC_ALL, "ru_RU.KOI8-R")) {
+	if (!setTestLocale("ru_RU.KOI8-R", "KOI8-R")) {
 		skipping("KOI8-R locale not available on this system.");
 		return;
 	}
@@ -224,7 +224,7 @@ DEFINE_TEST(test_zip_filename_encoding_ru_RU_CP1251)
 	char buff[4096];
 	size_t used;
 
-	if (NULL == setlocale(LC_ALL, "ru_RU.CP1251")) {
+	if (!setTestLocale("ru_RU.CP1251", "1251")) {
 		skipping("Russian_Russia locale not available on this system.");
 		return;
 	}
@@ -267,7 +267,7 @@ DEFINE_TEST(test_zip_filename_encoding_Russian_Russia)
 	char buff[4096];
 	size_t used;
 
-	if (NULL == setlocale(LC_ALL, "Russian_Russia")) {
+	if (!setTestLocale("Russian_Russia", "1251")) {
 		skipping("Russian_Russia locale not available on this system.");
 		return;
 	}
@@ -336,7 +336,7 @@ DEFINE_TEST(test_zip_filename_encoding_EUCJP)
 	char buff[4096];
 	size_t used;
 
-	if (NULL == setlocale(LC_ALL, "ja_JP.eucJP")) {
+	if (!setTestLocale("ja_JP.eucJP", "EUC")) {
 		skipping("eucJP locale not available on this system.");
 		return;
 	}
@@ -435,8 +435,8 @@ DEFINE_TEST(test_zip_filename_encoding_CP932)
 	char buff[4096];
 	size_t used;
 
-	if (NULL == setlocale(LC_ALL, "Japanese_Japan") &&
-	    NULL == setlocale(LC_ALL, "ja_JP.SJIS")) {
+	if (!setTestLocale("Japanese_Japan", "932") &&
+	    !setTestLocale("ja_JP.SJIS", "JIS")) {
 		skipping("CP932/SJIS locale not available on this system.");
 		return;
 	}

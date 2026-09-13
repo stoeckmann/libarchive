@@ -35,7 +35,7 @@ test_read_format_cab_filename_CP932_eucJP(const char *refname)
 	/*
 	 * Read CAB filename in ja_JP.eucJP with "hdrcharset=CP932" option.
 	 */
-	if (NULL == setlocale(LC_ALL, "ja_JP.eucJP")) {
+	if (!setTestLocale("ja_JP.eucJP", "EUC")) {
 		skipping("ja_JP.eucJP locale not available on this system.");
 		return;
 	}
@@ -92,7 +92,7 @@ test_read_format_cab_filename_CP932_UTF8(const char *refname)
 	/*
 	 * Read CAB filename in en_US.UTF-8 with "hdrcharset=CP932" option.
 	 */
-	if (NULL == setlocale(LC_ALL, "en_US.UTF-8")) {
+	if (!setTestLocale("en_US.UTF-8", "UTF-8")) {
 		skipping("en_US.UTF-8 locale not available on this system.");
 		return;
 	}

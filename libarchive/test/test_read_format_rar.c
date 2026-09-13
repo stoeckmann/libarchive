@@ -205,7 +205,7 @@ DEFINE_TEST(test_read_format_rar_unicode_UTF8)
   struct archive_entry *ae;
   struct archive *a;
 
-  if (NULL == setlocale(LC_ALL, "en_US.UTF-8")) {
+  if (!setTestLocale("en_US.UTF-8", "UTF-8")) {
 	skipping("en_US.UTF-8 locale not available on this system.");
 	return;
   }
@@ -344,8 +344,8 @@ DEFINE_TEST(test_read_format_rar_unicode_CP932)
   struct archive_entry *ae;
   struct archive *a;
 
-  if (NULL == setlocale(LC_ALL, "Japanese_Japan") &&
-    NULL == setlocale(LC_ALL, "ja_JP.SJIS")) {
+  if (!setTestLocale("Japanese_Japan", "932") &&
+	  !setTestLocale("ja_JP.SJIS", "JIS")) {
 	skipping("CP932 locale not available on this system.");
 	return;
   }

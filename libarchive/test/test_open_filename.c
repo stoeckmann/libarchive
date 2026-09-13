@@ -205,7 +205,7 @@ DEFINE_TEST(test_open_filename_wcs_oob)
 	struct archive *a;
 
 	/* Continue even if not available for best test coverage. */
-	setlocale(LC_ALL, "en_US.UTF-8");
+	setTestLocale("en_US.UTF-8", "UTF-8");
 
 	/*
 	 * Try to open file with filename which might use more bytes in

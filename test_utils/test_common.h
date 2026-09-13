@@ -335,6 +335,9 @@ int systemf(const char *fmt, ...) __LA_PRINTFLIKE(1, 2);
 /* Delay until time() returns a value after this. */
 void sleepUntilAfter(time_t);
 
+/* Set locale to use within test */
+int setTestLocale(const char *, const char *);
+
 /* Return true if this platform can create symlinks. */
 int canSymlink(void);
 

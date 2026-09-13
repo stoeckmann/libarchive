@@ -25,6 +25,7 @@
 
 #include "test.h"
 #include "test_utils.h"
+#include <string.h>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -47,6 +48,9 @@
 #endif
 #ifdef HAVE_LINUX_FS_H
 #include <linux/fs.h>
+#endif
+#if defined(HAVE_LANGINFO_H)
+#include <langinfo.h>
 #endif
 #include <limits.h>
 #include <locale.h>
@@ -3615,6 +3619,33 @@ set_environment(const char *key, const char *value)
 			fprintf(stderr, "setenv: %s\n", strerror(errno));
 	}
 #endif
+}
+
+int
+setTestLocale(const char *locale, const char *codeset_needle)
+{
+#ifdef HAVE_NL_LANGINFO
+	const char *codeset = NULL;
+	const char *p;
+#endif
+
+	if (setlocale(LC_ALL, locale) == NULL)
+		return (0);
+
+#ifdef HAVE_NL_LANGINFO
+	codeset = nl_langinfo(CODESET);
+	if (codeset == NULL || codeset_needle == NULL)
+		return (1);
+
+#ifdef HAVE_STRCASESTR
+	p = strcasestr(codeset, codeset_needle);
+#else
+	p = strstr(codeset, codeset_needle);
+#endif /* HAVE_STRCASESTR */
+	return p != NULL;
+#else
+	return (1);
+#endif /* HAVE_NL_LANGINFO */
 }
 
 /*

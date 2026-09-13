@@ -20,7 +20,7 @@ DEFINE_TEST(test_I)
 	int r;
 
 #if HAVE_SETLOCALE
-	if (NULL == setlocale(LC_ALL, "en_US.UTF-8")) {
+	if (!setTestLocale("en_US.UTF-8", "UTF-8")) {
 		skipping("en_US.UTF-8 locale not available on this system.");
 		return;
 	}

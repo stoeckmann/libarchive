@@ -850,8 +850,8 @@ AC_CHECK_FUNCS(m4_flatten([
 	pipe poll posix_spawn posix_spawnp
 	readlink readlinkat readpassphrase
 	select setenv setlocale sigaction statfs statvfs
-	strchr strdup strerror strncpy_s strnlen strrchr symlink
-	sysconf
+	strcasestr strchr strdup strerror strncpy_s strnlen strrchr
+	symlink sysconf
 	tcgetattr tcsetattr timegm tzset
 	unlinkat unsetenv utime utimensat utimes
 	vfork

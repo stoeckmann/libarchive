@@ -230,7 +230,7 @@ verify(const char *refname, enum comp_type comp)
 	/* Verify regular file1. */
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
 	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("dir1/file1", archive_entry_pathname(ae));
+	assertEqualString("dir1/file1invalid", archive_entry_pathname(ae));
 	assertEqualInt(0, archive_entry_uid(ae));
 	assertEqualInt(0, archive_entry_gid(ae));
 	assertEqualInt(archive_entry_is_encrypted(ae), 0);

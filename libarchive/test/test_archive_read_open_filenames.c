@@ -60,7 +60,7 @@ DEFINE_TEST(test_archive_read_open_filenames_null)
 DEFINE_TEST(test_archive_read_open_filenames_split_uaf)
 {
 	const char *reffiles[] = {
-		"test_archive_read_open_filenames_split_uaf_1.tar",
+		"test_archive_read_open_filenames_split_uaf_3.tar",
 		"test_archive_read_open_filenames_split_uaf_2.tar",
 		NULL
 	};

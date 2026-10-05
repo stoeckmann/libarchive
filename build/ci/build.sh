@@ -163,7 +163,7 @@ for action in ${ACTIONS}; do
 			./usr/local/bin/bsdtar --version
 		;;
 		distcheck)
-			CTEST_OUTPUT_ON_FAILURE=1 ${MAKE} ${MAKE_ARGS} distcheck _VERBOSITY_LEVEL=2
+			${MAKE} ${MAKE_ARGS} distcheck _VERBOSITY_LEVEL=2
 		;;
 		artifact)
 			tar -c -J -C "${BUILDDIR}/destdir" -f "${CURDIR}/libarchive.tar.xz" usr

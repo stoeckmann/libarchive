@@ -116,6 +116,8 @@ static int xml_writer_destroy(struct xml_writer *ctx);
 #define HEADER_SIZE	28
 #define HEADER_VERSION	1
 
+#define TIME_FORMAT	"%Y-%m-%dT%H:%M:%S"
+
 enum sumalg {
 	CKSUM_NONE = 0,
 	CKSUM_SHA1 = 1,
@@ -963,9 +965,9 @@ xmlwrite_time(struct archive_write *a, struct xml_writer *writer,
 #endif
 	memset(&timestr, 0, sizeof(timestr));
 	/* Do not use %F and %T for portability. */
-	strftime(timestr, sizeof(timestr), "%Y-%m-%dT%H:%M:%S", &tm);
-	if (z)
-		strcat(timestr, "Z");
+	if (strftime(timestr, sizeof(timestr),
+	    z ? TIME_FORMAT "z" : TIME_FORMAT, &tm) == 0)
+		return (ARCHIVE_FATAL);
 	return (xmlwrite_string(a, writer, key, timestr));
 }
 

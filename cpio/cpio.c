@@ -768,8 +768,8 @@ file_to_archive(struct cpio *cpio, const char *srcpath)
 				lafe_errc(1, ENOMEM,
 				    "Can't allocate path buffer");
 		}
-		strcpy(cpio->pass_destpath, cpio->destdir);
-		strcat(cpio->pass_destpath, remove_leading_slash(srcpath));
+		snprintf(cpio->pass_destpath, len, "%s%s",
+		    cpio->destdir, remove_leading_slash(srcpath));
 		archive_entry_set_pathname(entry, cpio->pass_destpath);
 	} else {
 		archive_entry_set_pathname(entry, srcpath);

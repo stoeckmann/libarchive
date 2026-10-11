@@ -82,9 +82,9 @@ struct read_file_data {
 	char	 use_lseek;
 	enum fnt_e { FNT_STDIN, FNT_MBS, FNT_WCS } filename_type;
 	union {
-		char	 m[1];/* MBS filename. */
-		wchar_t	 w[1];/* WCS filename. */
-	} filename; /* Must be last! */
+		char	 *m;/* MBS filename. */
+		wchar_t	 *w;/* WCS filename. */
+	} filename;
 };
 
 static int	file_open(struct archive *, void *);
@@ -125,14 +125,14 @@ archive_read_open_filenames(struct archive *a, const char **filenames,
 	archive_clear_error(a);
 	do
 	{
-		size_t len;
 		if (filename == NULL)
 			filename = "";
-		len = strlen(filename);
-		mine = calloc(1, sizeof(*mine) + len);
+		mine = calloc(1, sizeof(*mine));
 		if (mine == NULL)
 			goto no_memory;
-		memcpy(mine->filename.m, filename, len + 1);
+		mine->filename.m = strdup(filename);
+		if (mine->filename.m == NULL)
+			goto no_memory;
 		mine->block_size = block_size;
 		mine->fd = -1;
 		mine->buffer = NULL;
@@ -141,10 +141,8 @@ archive_read_open_filenames(struct archive *a, const char **filenames,
 			mine->filename_type = FNT_STDIN;
 		} else
 			mine->filename_type = FNT_MBS;
-		if (archive_read_append_callback_data(a, mine) != (ARCHIVE_OK)) {
-			free(mine);
-			return (ARCHIVE_FATAL);
-		}
+		if (archive_read_append_callback_data(a, mine) != (ARCHIVE_OK))
+			goto no_memory;
 		if (filenames == NULL)
 			break;
 		filename = *(filenames++);
@@ -158,6 +156,10 @@ archive_read_open_filenames(struct archive *a, const char **filenames,
 
 	return (archive_read_open1(a));
 no_memory:
+	if (mine != NULL) {
+		free(mine->filename.m);
+		free(mine);
+	}
 	archive_set_error(a, ENOMEM, "No memory");
 	return (ARCHIVE_FATAL);
 }
@@ -173,7 +175,7 @@ int
 archive_read_open_filenames_w(struct archive *a, const wchar_t **wfilenames,
     size_t block_size)
 {
-	struct read_file_data *mine;
+	struct read_file_data *mine = NULL;
 	const wchar_t *wfilename = NULL;
 	if (wfilenames)
 		wfilename = *(wfilenames++);
@@ -183,8 +185,7 @@ archive_read_open_filenames_w(struct archive *a, const wchar_t **wfilenames,
 	{
 		if (wfilename == NULL)
 			wfilename = L"";
-		mine = calloc(1,
-			sizeof(*mine) + wcslen(wfilename) * MB_LEN_MAX);
+		mine = calloc(1, sizeof(*mine));
 		if (mine == NULL)
 			goto no_memory;
 		mine->block_size = block_size;
@@ -195,7 +196,9 @@ archive_read_open_filenames_w(struct archive *a, const wchar_t **wfilenames,
 		} else {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 			mine->filename_type = FNT_WCS;
-			wcscpy(mine->filename.w, wfilename);
+			mine->filename.w = _wcsdup(wfilename);
+			if (mine->filename.w == NULL)
+				goto no_memory;
 #else
 			/*
 			 * POSIX system does not support a wchar_t interface for
@@ -215,18 +218,17 @@ archive_read_open_filenames_w(struct archive *a, const wchar_t **wfilenames,
 					    "Failed to convert a wide-character"
 					    " filename to a multi-byte filename");
 				archive_string_free(&fn);
-				free(mine);
-				return (ARCHIVE_FATAL);
+				goto no_memory;
 			}
 			mine->filename_type = FNT_MBS;
-			strcpy(mine->filename.m, fn.s);
+			mine->filename.m = strdup(fn.s);
+			if (mine->filename.m == NULL)
+				goto no_memory;
 			archive_string_free(&fn);
 #endif
 		}
-		if (archive_read_append_callback_data(a, mine) != (ARCHIVE_OK)) {
-			free(mine);
-			return (ARCHIVE_FATAL);
-		}
+		if (archive_read_append_callback_data(a, mine) != (ARCHIVE_OK))
+			goto no_memory;
 		if (wfilenames == NULL)
 			break;
 		wfilename = *(wfilenames++);
@@ -240,6 +242,19 @@ archive_read_open_filenames_w(struct archive *a, const wchar_t **wfilenames,
 
 	return (archive_read_open1(a));
 no_memory:
+	if (mine != NULL) {
+		switch (mine->filename_type) {
+		case FNT_MBS:
+			free(mine->filename.m);
+			break;
+		case FNT_WCS:
+			free(mine->filename.w);
+			break;
+		default:
+			break;
+		}
+		free(mine);
+	}
 	archive_set_error(a, ENOMEM, "No memory");
 	return (ARCHIVE_FATAL);
 }
@@ -640,6 +655,18 @@ file_close(struct archive *a, void *client_data)
 {
 	struct read_file_data *mine = (struct read_file_data *)client_data;
 	file_close2(a, client_data);
+	switch (mine->filename_type) {
+	case FNT_MBS:
+		free(mine->filename.m);
+		mine->filename.m = NULL;
+		break;
+	case FNT_WCS:
+		free(mine->filename.w);
+		mine->filename.w = NULL;
+		break;
+	default:
+		break;
+	}
 	free(mine);
 	return (ARCHIVE_OK);
 }

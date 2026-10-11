@@ -1171,10 +1171,11 @@ static void
 list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 {
 	char			 size[32];
-	char			 date[32];
+	char			 datebuf[32];
 	char			 uids[22], gids[22];
 	const char 		*uname, *gname;
 	FILE			*out = stdout;
+	const char		*date;
 	const char		*fmt;
 	double			 age;
 	time_t			 mtime;
@@ -1239,10 +1240,11 @@ list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 #else
 	ltime = localtime(&mtime);
 #endif
-	if (ltime != NULL)
-		strftime(date, sizeof(date), fmt, ltime);
-	else
-		strcpy(date, "invalid mtime");
+	if (ltime != NULL) {
+		strftime(datebuf, sizeof(datebuf), fmt, ltime);
+		date = datebuf;
+	} else
+		date = "invalid mtime";
 
 	fprintf(out, "%s%3u %-8s %-8s %8s %12s %s",
 	    archive_entry_strmode(entry),

@@ -965,28 +965,28 @@ main(int argc, char **argv)
 	if (compression != '\0') {
 		switch (compression) {
 		case 'J': case 'j': case 'y': case 'Z': case 'z':
-			strcpy(buff, "-?");
+			buff[0] = '-';
 			buff[1] = (char)compression;
+			buff[2] = '\0';
 			break;
 		default:
-			strcpy(buff, "--");
-			strcat(buff, compression_name);
+			snprintf(buff, sizeof(buff), "--%s", compression_name);
 			break;
 		}
 		only_mode(bsdtar, buff, "cxt");
 		cset_add_filter(bsdtar->cset, compression_name);
 	}
 	if (compression2 != '\0') {
-		strcpy(buff, "--");
-		strcat(buff, compression2_name);
+		snprintf(buff, sizeof(buff), "--%s", compression2_name);
 		only_mode(bsdtar, buff, "cxt");
 		cset_add_filter(bsdtar->cset, compression2_name);
 	}
 	if (cset_get_format(bsdtar->cset) != NULL)
 		only_mode(bsdtar, "--format", "cru");
 	if (bsdtar->symlink_mode != '\0') {
-		strcpy(buff, "-?");
+		buff[0] = '-';
 		buff[1] = bsdtar->symlink_mode;
+		buff[2] = '\0';
 		only_mode(bsdtar, buff, "cru");
 	}
 

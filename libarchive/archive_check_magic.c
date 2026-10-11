@@ -46,6 +46,7 @@
 #endif
 
 #include "archive_private.h"
+#include "archive_string.h"
 
 static void
 errmsg(const char *m)
@@ -108,18 +109,20 @@ archive_handle_type_name(unsigned m)
 }
 
 static void
-write_all_states(char *buff, unsigned int states)
+write_all_states(struct archive_string *s, unsigned int states)
 {
 	unsigned int lowbit;
 
-	*buff = '\0';
+	/* Make sure that internal string buffer is NUL terminated. */
+	archive_string_init(s);
+	archive_strcpy(s, "");
 
 	/* A trick for computing the lowest set bit. */
 	while ((lowbit = states & (1 + ~states)) != 0) {
 		states &= ~lowbit;		/* Clear the low bit. */
-		strcat(buff, state_name(lowbit));
+		archive_strcat(s, state_name(lowbit));
 		if (states != 0)
-			strcat(buff, "/");
+			archive_strappend_char(s, '/');
 	}
 }
 
@@ -136,8 +139,6 @@ int
 __archive_check_magic(struct archive *a, unsigned int magic,
     unsigned int state, const char *function)
 {
-	char states1[64];
-	char states2[64];
 	const char *handle_type;
 
 	/*
@@ -167,15 +168,16 @@ __archive_check_magic(struct archive *a, unsigned int magic,
 	if ((a->state & state) == 0) {
 		/* If we're already FATAL, don't overwrite the error. */
 		if (a->state != ARCHIVE_STATE_FATAL) {
-			write_all_states(states1, a->state);
-			write_all_states(states2, state);
+			struct archive_string states1, states2;
+			write_all_states(&states1, a->state);
+			write_all_states(&states2, state);
 			archive_set_error(a, -1,
 			    "INTERNAL ERROR: Function '%s' invoked with"
 			    " archive structure in state '%s',"
 			    " should be in state '%s'",
 			    function,
-			    states1,
-			    states2);
+			    states1.s,
+			    states2.s);
 		}
 		a->state = ARCHIVE_STATE_FATAL;
 		return (ARCHIVE_FATAL);

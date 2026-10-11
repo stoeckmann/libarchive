@@ -53,8 +53,6 @@ static wchar_t * wcscpy(wchar_t *s1, const wchar_t *s2)
 
 DEFINE_TEST(test_entry)
 {
-	char buff[128];
-	wchar_t wbuff[128];
 	struct stat st;
 	struct archive_entry *e, *e2;
 	const struct stat *pst;
@@ -178,8 +176,7 @@ DEFINE_TEST(test_entry)
 	assertEqualString(archive_entry_gname(e), "group");
 	assertEqualString(archive_entry_gname_utf8(e), "group");
 	assertEqualWString(archive_entry_gname_w(e), L"group");
-	wcscpy(wbuff, L"wgroup");
-	archive_entry_copy_gname_w(e, wbuff);
+	archive_entry_copy_gname_w(e, L"wgroup");
 	assertEqualWString(archive_entry_gname_w(e), L"wgroup");
 	assertEqualWString(archive_entry_gname_w(e), L"wgroup");
 	assertEqualString(archive_entry_gname_utf8(e), "wgroup");
@@ -198,8 +195,7 @@ DEFINE_TEST(test_entry)
 	assertEqualString(archive_entry_hardlink(e), "hardlinkname");
 	assertEqualString(archive_entry_hardlink_utf8(e), "hardlinkname");
 	assertEqualWString(archive_entry_hardlink_w(e), L"hardlinkname");
-	strcpy(buff, "hardlinkname2");
-	archive_entry_copy_hardlink(e, buff);
+	archive_entry_copy_hardlink(e, "hardlinkname2");
 	assertEqualString(archive_entry_hardlink(e), "hardlinkname2");
 	assertEqualWString(archive_entry_hardlink_w(e), L"hardlinkname2");
 	assertEqualString(archive_entry_hardlink_utf8(e), "hardlinkname2");
@@ -210,8 +206,7 @@ DEFINE_TEST(test_entry)
 	assertEqualString(archive_entry_hardlink(e), NULL);
 	assertEqualWString(archive_entry_hardlink_w(e), NULL);
 	assertEqualString(archive_entry_hardlink_utf8(e), NULL);
-	wcscpy(wbuff, L"whardlink");
-	archive_entry_copy_hardlink_w(e, wbuff);
+	archive_entry_copy_hardlink_w(e, L"whardlink");
 	assertEqualWString(archive_entry_hardlink_w(e), L"whardlink");
 	assertEqualString(archive_entry_hardlink_utf8(e), "whardlink");
 	assertEqualString(archive_entry_hardlink(e), "whardlink");
@@ -301,16 +296,14 @@ DEFINE_TEST(test_entry)
 	assertEqualString(archive_entry_pathname(e), "path");
 	assertEqualWString(archive_entry_pathname_w(e), L"path");
 	assertEqualString(archive_entry_pathname_utf8(e), "path");
-	strcpy(buff, "path2");
-	archive_entry_copy_pathname(e, buff);
+	archive_entry_copy_pathname(e, "path2");
 	assertEqualString(archive_entry_pathname(e), "path2");
 	assertEqualWString(archive_entry_pathname_w(e), L"path2");
 	assertEqualString(archive_entry_pathname_utf8(e), "path2");
 	assertEqualString(archive_entry_pathname(e), "path2");
 	assertEqualString(archive_entry_pathname_utf8(e), "path2");
 	assertEqualWString(archive_entry_pathname_w(e), L"path2");
-	wcscpy(wbuff, L"wpath");
-	archive_entry_copy_pathname_w(e, wbuff);
+	archive_entry_copy_pathname_w(e, L"wpath");
 	assertEqualWString(archive_entry_pathname_w(e), L"wpath");
 	assertEqualString(archive_entry_pathname_utf8(e), "wpath");
 	assertEqualString(archive_entry_pathname(e), "wpath");
@@ -347,8 +340,7 @@ DEFINE_TEST(test_entry)
 	assertEqualString(archive_entry_symlink(e), "symlinkname");
 	assertEqualString(archive_entry_symlink_utf8(e), "symlinkname");
 	assertEqualWString(archive_entry_symlink_w(e), L"symlinkname");
-	strcpy(buff, "symlinkname2");
-	archive_entry_copy_symlink(e, buff);
+	archive_entry_copy_symlink(e, "symlinkname2");
 	assertEqualString(archive_entry_symlink(e), "symlinkname2");
 	assertEqualWString(archive_entry_symlink_w(e), L"symlinkname2");
 	assertEqualString(archive_entry_symlink_utf8(e), "symlinkname2");
@@ -385,8 +377,7 @@ DEFINE_TEST(test_entry)
 	assertEqualString(archive_entry_uname(e), "user");
 	assertEqualString(archive_entry_uname_utf8(e), "user");
 	assertEqualWString(archive_entry_uname_w(e), L"user");
-	wcscpy(wbuff, L"wuser");
-	archive_entry_copy_uname_w(e, wbuff);
+	archive_entry_copy_uname_w(e, L"wuser");
 	assertEqualWString(archive_entry_uname_w(e), L"wuser");
 	assertEqualWString(archive_entry_uname_w(e), L"wuser");
 	assertEqualString(archive_entry_uname_utf8(e), "wuser");
@@ -967,6 +958,7 @@ DEFINE_TEST(test_entry)
 		 * Build the string L"xxx\U12345678yyy\u5678zzz" without
 		 * using wcscpy or C99 \u#### syntax.
 		 */
+		wchar_t wbuff[128];
 		name = "xxxAyyyBzzz";
 		for (i = 0; i < (int)strlen(name); ++i)
 			wbuff[i] = name[i];

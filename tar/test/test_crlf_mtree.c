@@ -26,9 +26,11 @@ DEFINE_TEST(test_crlf_mtree)
 
 	/* an absolute path to mtree file */
 	char *mtree_file = "/METALOG.mtree";
-	char *absolute_path = malloc(strlen(testworkdir) + strlen(mtree_file) + 1);
-	strcpy(absolute_path, testworkdir);
-	strcat(absolute_path, mtree_file );
+	char *absolute_path;
+
+	s = strlen(testworkdir) + strlen(mtree_file) + 1;
+	absolute_path = malloc(s);
+	snprintf(absolute_path, s, "%s%s", testworkdir, mtree_file);
 
 	/* Create an archive using an mtree file. */
 	assertMakeFile(absolute_path, 0777, content);

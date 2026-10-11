@@ -62,7 +62,7 @@ DEFINE_TEST(test_write_format_tar)
 		assertEqualInt(1, archive_entry_mtime(ae));
 		assertEqualInt(10, archive_entry_mtime_nsec(ae));
 		p = strdup("file");
-		archive_entry_copy_pathname(ae, p);
+		archive_entry_copy_pathname(ae, "file");
 		strcpy(p, "XXXX");
 		free(p);
 		assertEqualString("file", archive_entry_pathname(ae));
